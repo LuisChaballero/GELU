@@ -7,10 +7,13 @@ tokens = [
     'CTEINT',
     'CTEFLOAT',
     'CTESTRING',
+    'CTECHAR',
     'LPAREN',
     'RPAREN',
     'LBRACE',
     'RBRACE',
+    'LBRACK',
+    'RBRACK',
     'COMMA',
     'SEMICOL',
     'PLUS',
@@ -37,6 +40,8 @@ reserved = {
     'float': 'FLOAT', 
     'char': 'CHAR',
     'print': 'PRINT',
+    'read': 'READ',
+    'return': 'RETURN',
     'if': 'IF',
     'else': 'ELSE',
     'while': 'WHILE',
@@ -60,7 +65,7 @@ def t_ID(t):
     return t
 
 ## Regular expression for NOTEQUAL symbol
-t_NOTEQUAL = r'<>' # Different symbol?
+t_NOTEQUAL = r'<>' # Different symbol
 
 ## Regular expressions for literals (one character symbols)
 t_LPAREN = r'\(' # Left parenthesis
@@ -94,11 +99,11 @@ def t_error(t):
 lexer = lex.lex()
 
 ## Read text file (prueba1.txt / prueba2.txt)
-# f = open("prueba1.txt","r")
-# data = f.read()
+f = open("prueba1.txt","r")
+data = f.read()
 
 ## Test lex with text file
-#lexer.input(data)
+lexer.input(data)
 
 ## Tokenize
 for tok in lexer:
@@ -137,34 +142,38 @@ def p_clases(p):
 def p_decVar(p): 
     '''decVar : tipo SEMICOL e 
                  | empty
-       tipo      : tipoSimple a b
+       tipo      : tiposimple a b
                  | tipoCompuesto c d 
        a         : ID 
                  | ID LBRACK CTEINT RBRACK
                  | ID LBRACK CTEINT COMMA CTEINT RBRACK
        b         : COMMA a b 
                  | empty
-       c         : id
-       d         : COMMA C D 
+       c         : ID
+       d         : COMMA c d 
                  | empty
        e         : decVar
                  | empty'''
 
-def p_tipoSimple(p):
-    'tipoSimple : INT | FLOAT | CHAR'
+def p_tiposimple(p):
+    '''tiposimple : INT 
+                  | FLOAT 
+                  | CHAR'''
 
 def p_tipoCompuesto(p):
-    '''tipoCompuesto : ID | DATAFRAME | FILE'''
+    '''tipoCompuesto : ID 
+                     | DATAFRAME
+                     | FILE'''
 
 def p_funciones(p):
     '''funciones : FUNC f ID LPAREN param RPAREN LBRACK decVar estatutos RBRACK z  
-       f : tipoSimple 
+       f : tiposimple 
          | VOID
        z : funciones
          | empty'''
 
 def p_param(p):
-    '''param : tipoSimple ID g 
+    '''param : tiposimple ID g 
              | empty
        g     : COMMA param
              | empty'''
@@ -180,13 +189,13 @@ def p_estatuto(p):
                 | cicloFor'''
 
 def p_variable(p):
-    '''variable : id h
+    '''variable : ID h
        h        : LBRACK expresion RBRACK 
-                | LBRACK expresion RBRACK
+                | LBRACK expresion COMMA expresion RBRACK
                 | empty '''
 
 def p_asignacion(p):
-    '''asignacion : variable EQ expresion SEMICOL'''
+    '''asignacion : variable EQUAL expresion SEMICOL'''
 
 def p_llamadaVoid(p):
     '''llamadaVoid : ID LPAREN expresion I RPAREN
@@ -215,13 +224,13 @@ def p_cicloWhile(p):
     '''cicloWhile : WHILE LPAREN expresion RPAREN bloque'''
 
 def p_cicloFor(p):
-    '''cicloFor : FOR variable EQ expresion UNTIL bloque'''
+    '''cicloFor : FOR variable EQUAL expresion UNTIL bloque'''
 
 def p_expresion(p):
     '''expresion : exp m
        m         : MT exp
                  | LT exp
-                 | MT LT exp
+                 | NOTEQUAL exp
                  | empty''' 
 
 def p_exp(p):
@@ -247,12 +256,12 @@ def p_factor(p):
               | LBRACK expresion COMMA expresion RBRACK
               | LPAREN expresion q RPAREN
               | DOT ID
-              | DOT ID LPREN r RPAREN
+              | DOT ID LPAREN r RPAREN
        q      : COMMA expresion q
               | empty 
        r      : varcte s
               | empty
-       s      | COMMA varcte  s
+       s      : COMMA varcte  s
               | empty'''
 
 def p_varcte(p):
@@ -269,11 +278,11 @@ def p_error(p):
 ## Build parser
 parser = yacc.yacc()
 
-# print(data)
-# parser.parse(data)
+print(data)
+parser.parse(data)
 
 ## Close file
-# f.close()
+f.close()
 
 
 
