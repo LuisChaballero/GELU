@@ -8,23 +8,23 @@ tokens = [
     'CTEFLOAT',
     'CTESTRING',
     'CTECHAR',
-    'LPAREN',
-    'RPAREN',
-    'LBRACE',
-    'RBRACE',
-    'LBRACK',
-    'RBRACK',
-    'COMMA',
-    'SEMICOL',
-    'PLUS',
-    'MINUS',
-    'TIMES',
-    'DIVIDE',
-    'EQUAL',
-    'NOTEQUAL',
-    'LT',
-    'MT',
-    'DOT'
+    'PARENTESIS_I',
+    'PARENTESIS_D',
+    'LLAVE_I',
+    'LLAVE_D',
+    'CORCHETE_I',
+    'CORCHETE_D',
+    'COMA',
+    'PUNTO_COMA',
+    'MAS',
+    'MENOS',
+    'POR',
+    'ENTRE',
+    'IGUAL',
+    'NO_IGUAL',
+    'MENOR_QUE',
+    'MAYOR_QUE',
+    'PUNTO'
 ]
 
 reserved = {
@@ -52,39 +52,37 @@ reserved = {
 
 tokens +=  reserved.values()
 
-## Regular expressions for types
+## Expresiones regulares para tipos de dato
 t_CTESTRING = r'\"([^\\\n]|(\\.))*?\"' # strings
-t_CTEINT = r'[0-9]+' # Non-negative int numbers
-t_CTEFLOAT = r'[0-9]+(\.[0-9]+)?' # Non-negative float numbers
+t_CTEINT = r'[0-9]+' # Numeros entersos no negativos
+t_CTEFLOAT = r'[0-9]+(\.[0-9]+)?' # Numeros flotantes no negativos
 t_CTECHAR = r'\'.\'' # char
 
 ## Regular ex
 def t_ID(t):
     r'[a-zA-Z_][0-9a-z_A-Z]*'
-    #if t.value in reserved:
     t.type = reserved.get(t.value,'ID')  # Check for keywords 
     return t
 
-## Regular expression for NOTEQUAL symbol
-t_NOTEQUAL = r'<>' # Different symbol
+t_NO_IGUAL = r'<>' # Simbolo de desigualdad
 
-## Regular expressions for literals (one character symbols)
-t_LPAREN = r'\(' # Left parenthesis
-t_RPAREN = r'\)' # Right parenthesis
-t_LBRACE = r'\{' # Left brace
-t_RBRACE = r'\}' # Right brace
-t_LBRACK = r'\[' # Left bracket
-t_RBRACK = r'\]' # Right bracket
-t_COMMA = r'\,' # comma
-t_SEMICOL = r'\;' # semicolon
-t_PLUS = r'\+' # Addition symmbol
-t_MINUS = r'\-' # Substraction symbol
-t_TIMES = r'\*' # Multiply
-t_DIVIDE= r'\/' # Divide
-t_EQUAL = r'\=' # Equal symbol
-t_LT = r'\<' # less than symbol
-t_MT = r'\>' # more than symbol
-t_DOT = r'\.' # dot symbol
+## Expresiones regulares par los literales (simbolos de un solo caracter)
+t_PARENTESIS_I = r'\(' # Parentesis izquierdo
+t_PARENTESIS_D = r'\)' # Parentesis derecho
+t_LLAVE_I = r'\{' # Llave izquierda
+t_LLAVE_D = r'\}' # Llave derecha
+t_CORCHETE_I = r'\[' # Corchete izquierdo
+t_CORCHETE_D = r'\]' # Corchete derecho
+t_COMA = r'\,' # coma
+t_PUNTO_COMA = r'\;' # Punto y coma
+t_MAS = r'\+' # Simbolo de suma
+t_MENOS = r'\-' # Simbolo de resta
+t_POR = r'\*' # Simbolo de multiplicación
+t_ENTRE = r'\/' # Simbolo de división
+t_IGUAL = r'\=' # Simbolo de iguak
+t_MENOR_QUE = r'\<' # Simbolo de menor que
+t_MAYOR_QUE = r'\>' # Simbolo de mayor que
+t_PUNTO = r'\.' # Punto
 
 def t_NEWLINE(t):
     r'\n+'
@@ -113,49 +111,49 @@ for tok in lexer:
 ## Start of grammar
 start = 'programa'
 
-def p_empty(p):
-     'empty :'
+def p_vacio(p):
+     'vacio :'
      pass
 
 def p_programa(p):
-    'programa : PROGRAM ID SEMICOL clases decVar funciones main'
+    'programa : PROGRAM ID PUNTO_COMA clases decVar funciones main'
 
 def p_main(p):
-    'main : MAIN LPAREN RPAREN bloque'
+    'main : MAIN PARENTESIS_I PARENTESIS_D bloque'
 
 def p_bloque(p):
-    '''bloque : LBRACE estatutos RBRACE 
+    '''bloque : LLAVE_I estatutos LLAVE_D 
        estatutos : estatuto estatutos
-                 | empty'''
+                 | vacio'''
 
 def p_clases(p):
-    '''clases    : CLASS ID heren LBRACE contenido RBRACE SEMICOL nuevacl
-                 | empty
-       heren     : LT INHERITS MT 
-                 | empty
+    '''clases    : CLASS ID heren LLAVE_I contenido LLAVE_D PUNTO_COMA nuevacl
+                 | vacio
+       heren     : MENOR_QUE INHERITS MAYOR_QUE 
+                 | vacio
        contenido : attr met
        attr      : decVar 
-                 | empty
+                 | vacio
        met       : funciones 
-                 | empty
+                 | vacio
        nuevacl   : clases
-                 | empty'''
+                 | vacio'''
 
 def p_decVar(p): 
-    '''decVar : VAR tipo SEMICOL e 
-                 | empty
+    '''decVar : VAR tipo PUNTO_COMA e 
+                 | vacio
        tipo      : tiposimple a b
                  | tipoCompuesto c d 
        a         : ID 
-                 | ID LBRACK CTEINT RBRACK
-                 | ID LBRACK CTEINT COMMA CTEINT RBRACK
-       b         : COMMA a b 
-                 | empty
+                 | ID CORCHETE_I CTEINT CORCHETE_D
+                 | ID CORCHETE_I CTEINT COMA CTEINT CORCHETE_D
+       b         : COMA a b 
+                 | vacio
        c         : ID
-       d         : COMMA c d 
-                 | empty
+       d         : COMA c d 
+                 | vacio
        e         : decVar
-                 | empty'''
+                 | vacio'''
 
 def p_tiposimple(p):
     '''tiposimple : INT 
@@ -168,18 +166,18 @@ def p_tipoCompuesto(p):
                      | FILE'''
 
 def p_funciones(p):
-    '''funciones : FUNC f ID LPAREN param RPAREN LBRACE decVar estatutos RBRACE z  
-                 | empty
+    '''funciones : FUNC f ID PARENTESIS_I param PARENTESIS_D LLAVE_I decVar estatutos LLAVE_D z  
+                 | vacio
        f         : tiposimple 
                  | VOID
        z         : funciones
-                 | empty'''
+                 | vacio'''
 
 def p_param(p):
     '''param : tiposimple ID g 
-             | empty
-       g     : COMMA param
-             | empty'''
+             | vacio
+       g     : COMA param
+             | vacio'''
 
 def p_estatuto(p):
     '''estatuto : asignacion
@@ -193,17 +191,17 @@ def p_estatuto(p):
 
 def p_variable(p):
     '''variable : ID h
-       h        : LBRACK expresion RBRACK 
-                | LBRACK expresion COMMA expresion RBRACK
-                | empty '''
+       h        : CORCHETE_I expresion CORCHETE_D 
+                | CORCHETE_I expresion COMA expresion CORCHETE_D
+                | vacio '''
 
 def p_asignacion(p):
-    '''asignacion : variable EQUAL expresion SEMICOL'''
+    '''asignacion : variable IGUAL expresion PUNTO_COMA'''
 
 def p_llamadaVoid(p):
-    '''llamadaVoid : ID LPAREN expresion I RPAREN
-       I           : COMMA expresion I 
-                   | empty'''
+    '''llamadaVoid : ID PARENTESIS_I expresion I PARENTESIS_D
+       I           : COMA expresion I 
+                   | vacio'''
 
 def p_lectura(p):
     'lectura : READ variable'
@@ -212,61 +210,61 @@ def p_retorno(p):
     'retorno : RETURN expresion'
 
 def p_escritura(p):
-    '''escritura : PRINT LPAREN j
+    '''escritura : PRINT PARENTESIS_I j
        j         : CTESTRING k 
                  | expresion k
-       k         : COMMA j 
-                 | RPAREN SEMICOL '''
+       k         : COMA j 
+                 | PARENTESIS_D PUNTO_COMA '''
                 
 def p_condicion(p):
-    '''condicion : IF LPAREN expresion RPAREN bloque l
+    '''condicion : IF PARENTESIS_I expresion PARENTESIS_D bloque l
        l         : ELSE bloque
-                 | empty'''
+                 | vacio'''
 
 def p_cicloWhile(p):
-    '''cicloWhile : WHILE LPAREN expresion RPAREN bloque'''
+    '''cicloWhile : WHILE PARENTESIS_I expresion PARENTESIS_D bloque'''
 
 def p_cicloFor(p):
-    '''cicloFor : FOR variable EQUAL expresion UNTIL bloque'''
+    '''cicloFor : FOR variable IGUAL expresion UNTIL bloque'''
 
 def p_expresion(p):
     '''expresion : exp m
-       m         : MT exp
-                 | LT exp
-                 | NOTEQUAL exp
-                 | empty''' 
+       m         : MAYOR_QUE exp
+                 | MENOR_QUE exp
+                 | NO_IGUAL exp
+                 | vacio''' 
 
 def p_exp(p):
     '''exp : termino n
-       n   : PLUS exp 
-           | MINUS exp
-           | empty'''               
+       n   : MAS exp 
+           | MENOS exp
+           | vacio'''               
 
 
 def p_termino(p):
     '''termino : factor o
-       o       : TIMES termino 
-               | DIVIDE termino
-               | empty'''
-# En p: agregue empty
+       o       : POR termino 
+               | ENTRE termino
+               | vacio'''
+
 def p_factor(p):
     '''factor : varcte 
               | ID p
-              | LPAREN expresion RPAREN
-              | PLUS varcte
-              | MINUS varcte
-       p      : LBRACK expresion RBRACK
-              | LBRACK expresion COMMA expresion RBRACK
-              | LPAREN expresion q RPAREN
-              | DOT ID
-              | DOT ID LPAREN r RPAREN
-              | empty
-       q      : COMMA expresion q
-              | empty 
+              | PARENTESIS_I expresion PARENTESIS_D
+              | MAS varcte
+              | MENOS varcte
+       p      : CORCHETE_I expresion CORCHETE_D
+              | CORCHETE_I expresion COMA expresion CORCHETE_D
+              | PARENTESIS_I expresion q PARENTESIS_D
+              | PUNTO ID
+              | PUNTO ID PARENTESIS_I r PARENTESIS_D
+              | vacio
+       q      : COMA expresion q
+              | vacio 
        r      : varcte s
-              | empty
-       s      : COMMA varcte  s
-              | empty'''
+              | vacio
+       s      : COMA varcte  s
+              | vacio'''
 
 def p_varcte(p):
     '''varcte : CTECHAR
@@ -279,13 +277,13 @@ def p_error(p):
     else:
         print("Syntax error at EOF")
 
-## Build parser
+## Contruir parser
 parser = yacc.yacc()
 
 print(data)
 parser.parse(data)
 
-## Close file
+## Cerrar archivo
 f.close()
 
 
