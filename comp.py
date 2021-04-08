@@ -1,4 +1,3 @@
-# Luis Alberto Caballero Noguez A01282700
 
 import ply.lex as lex
 import ply.yacc as yacc
@@ -47,23 +46,23 @@ reserved = {
 
 tokens +=  reserved.values()
 
-# Regular expressions for types
-t_CTESTRING = r'\"([^\\\n]|(\\.))*?\"' # strings (cte.String)
-t_CTEINT = r'[0-9]+' # Non-negative int numbers (cteI)
-t_CTEFLOAT = r'[0-9]+(\.[0-9]+)?' # Non-negative float numbers (cteF)
+## Regular expressions for types
+t_CTESTRING = r'\"([^\\\n]|(\\.))*?\"' # strings
+t_CTEINT = r'[0-9]+' # Non-negative int numbers
+t_CTEFLOAT = r'[0-9]+(\.[0-9]+)?' # Non-negative float numbers
 t_CTECHAR = r'\'.\'' # char
 
-# Regular ex
+## Regular ex
 def t_ID(t):
     r'[a-zA-Z_][0-9a-z_A-Z]*'
     #if t.value in reserved:
     t.type = reserved.get(t.value,'ID')  # Check for keywords 
     return t
 
-# Regular expression for NOTEQUAL symbol
+## Regular expression for NOTEQUAL symbol
 t_NOTEQUAL = r'<>' # Different symbol?
 
-# Regular expressions for literals (one character symbols)
+## Regular expressions for literals (one character symbols)
 t_LPAREN = r'\(' # Left parenthesis
 t_RPAREN = r'\)' # Right parenthesis
 t_LBRACE = r'\{' # Left brace
@@ -91,21 +90,21 @@ def t_error(t):
     print("Illegal character %s" % t.value[0])
     t.lexer.skip(1)
 
-# Build scanner (lexer)
+## Build scanner (lexer)
 lexer = lex.lex()
 
-# Read text file (prueba1.txt / prueba2.txt)
-f = open("prueba1.txt","r")
-data = f.read()
+## Read text file (prueba1.txt / prueba2.txt)
+# f = open("prueba1.txt","r")
+# data = f.read()
 
-# Test lex with text file
-lexer.input(data)
+## Test lex with text file
+#lexer.input(data)
 
-# Tokenize
+## Tokenize
 for tok in lexer:
     print(tok)
 
-# Start of grammar
+## Start of grammar
 start = 'programa'
 
 def p_empty(p):
@@ -158,10 +157,10 @@ def p_tipoCompuesto(p):
     '''tipoCompuesto : ID | DATAFRAME | FILE'''
 
 def p_funciones(p):
-    '''funciones : FUNC f ID LPAREN param RPAREN LBRACK decVar estatutos RBRACK   
+    '''funciones : FUNC f ID LPAREN param RPAREN LBRACK decVar estatutos RBRACK z  
        f : tipoSimple 
          | VOID
-       g : funciones
+       z : funciones
          | empty'''
 
 def p_param(p):
@@ -267,14 +266,14 @@ def p_error(p):
     else:
         print("Syntax error at EOF")
 
-# Build parser
+## Build parser
 parser = yacc.yacc()
 
-print(data)
-parser.parse(data)
+# print(data)
+# parser.parse(data)
 
-# Close file
-f.close()
+## Close file
+# f.close()
 
 
 
