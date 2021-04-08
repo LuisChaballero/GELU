@@ -34,6 +34,7 @@ reserved = {
     'inherits': 'INHERITS',
     'func': 'FUNC',
     'void': 'VOID',
+    'var':'VAR',
     'int': 'INT',
     'file': 'FILE',
     'dataframe': 'DATAFRAME',
@@ -141,7 +142,7 @@ def p_clases(p):
                  | empty'''
 
 def p_decVar(p): 
-    '''decVar : tipo SEMICOL e 
+    '''decVar : VAR tipo SEMICOL e 
                  | empty
        tipo      : tiposimple a b
                  | tipoCompuesto c d 
