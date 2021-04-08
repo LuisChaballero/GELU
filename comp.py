@@ -129,6 +129,7 @@ def p_bloque(p):
 
 def p_clases(p):
     '''clases    : CLASS ID heren LBRACE contenido RBRACE SEMICOL nuevacl
+                 | empty
        heren     : LT INHERITS MT 
                  | empty
        contenido : attr met
@@ -166,11 +167,12 @@ def p_tipoCompuesto(p):
                      | FILE'''
 
 def p_funciones(p):
-    '''funciones : FUNC f ID LPAREN param RPAREN LBRACK decVar estatutos RBRACK z  
-       f : tiposimple 
-         | VOID
-       z : funciones
-         | empty'''
+    '''funciones : FUNC f ID LPAREN param RPAREN LBRACE decVar estatutos RBRACE z  
+                 | empty
+       f         : tiposimple 
+                 | VOID
+       z         : funciones
+                 | empty'''
 
 def p_param(p):
     '''param : tiposimple ID g 
@@ -245,11 +247,11 @@ def p_termino(p):
        o       : TIMES termino 
                | DIVIDE termino
                | empty'''
-
+# En p: agregue empty
 def p_factor(p):
-    '''factor : ID p
+    '''factor : varcte 
+              | ID p
               | LPAREN expresion RPAREN
-              | varcte
               | PLUS varcte
               | MINUS varcte
        p      : LBRACK expresion RBRACK
@@ -257,6 +259,7 @@ def p_factor(p):
               | LPAREN expresion q RPAREN
               | DOT ID
               | DOT ID LPAREN r RPAREN
+              | empty
        q      : COMMA expresion q
               | empty 
        r      : varcte s

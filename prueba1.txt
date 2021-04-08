@@ -1,0 +1,18 @@
+
+program test1 ;
+
+class Carro {};
+
+int var1, var2, sumaRes;
+
+func int suma(int x, int y) {
+    int resultado;
+    
+    resultado = 0;
+    
+}
+
+main() {
+
+
+}
