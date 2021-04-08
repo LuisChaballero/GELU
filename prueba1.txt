@@ -1,7 +1,20 @@
 
 program test1 ;
 
-class Carro {};
+class Carro {
+    var int llantas;
+    var float precio, peso;
+    var file archivo;
+
+    func void calculo(){
+        var float resultado;
+        resultado = precio * 20;
+
+        return resultado;
+    }
+
+
+};
 
 var int num1, num2, sumaRes;
 var Carro car1,car2;

@@ -207,7 +207,7 @@ def p_lectura(p):
     'lectura : READ variable'
 
 def p_retorno(p):
-    'retorno : RETURN expresion'
+    'retorno : RETURN expresion PUNTO_COMA'
 
 def p_escritura(p):
     '''escritura : PRINT PARENTESIS_I j
