@@ -1,0 +1,100 @@
+
+<Program>
+Prog -> program id ; DecCl DecVar DecFunc Main
+
+<Main>
+Main -> main ( ) Bloque
+
+<Bloque>
+Bloque -> { Estatutos } 
+Estatutos -> Estatuto Estatutos | empty 
+
+<DecCl> 
+DecCl -> class id Heren { ContCl } ; NvaCl | empty
+Heren -> < inherits id > | empty
+ContCl -> Attr Met
+Attr   -> DecVar | empty
+Met    -> DecFunc | empty
+NvaCl  -> DecCl | empty
+
+<TipoSimple>
+TipoSimple -> int | float | char
+
+<TipoCompuesto>
+TipoCompuesto -> id | dataframe | file
+
+<DecVar>
+DecVar -> Tipo ; E | empty
+Tipo -> TipoSimple A B | TipoCompuesto C D
+A -> id | id [ cteINT ] | id [ cteINT , cteINT ]
+B -> , A B | empty
+C -> id 
+D -> , C D | empty
+E -> DecVar | empty
+
+<DecFunc>
+DecFunc -> func F id ( Param ) { DecVar Est } Z  
+F -> TipoSimple | void 
+Z -> DecFunc | empty
+
+<Param>
+Param -> TipoSimple id G | empty
+G -> , TipoSimple id G | empty
+
+<Estatuto>
+Estatuto -> Asignacion | LlamadaVoid | Retorno | Lectura | Escritura | Condicion | CicloWhile | CicloFor
+
+<Variable>
+Variable -> id H
+H -> [ Expresion ] | [ Expresion , Expresion ] | empty
+
+<Asignacion>
+Asignacion -> Variable = Expresion ;
+
+<LlamadaVoid>                   <= Funciones void (El otro tipo de llamada está en Exp)
+LlamadaVoid -> id ( Expresion I ) 
+I -> , Expresion I | empty
+
+<Lectura>
+Lectura -> read Variable
+
+<Retorno>
+Retorno -> return Expresion ;
+
+<Escritura>
+Escritura -> print ( J 
+J -> cteString K | Expresion K
+K -> , J | ) ;
+
+<Condicion>
+Condicion -> if ( Expresion ) Bloque L
+L -> else Bloque | empty
+
+<CicloWhile>
+CicloWhile -> while ( Expresion ) Bloque
+
+
+---------------------- Arriba DONE
+
+<CicloFor>  
+CicloFor -> for Variable = Expresion until Expresion Bloque
+
+<Expresion>
+Expresion -> Exp M
+M -> > Exp | < Exp | <> Exp | empty
+
+<Exp>
+Exp -> Termino N 
+N -> + Exp | - Exp | empty
+
+<Termino>
+Termino -> Factor O
+O -> * Termino | / Termino | empty
+
+<Factor>
+Factor -> id P | ( Expresion ) | VarCte
+P -> [ Expresion ] | [ Expresion , Expresion ] | ( Expresion Q ) | . id
+Q -> , Expresion Q | empty
+
+<VarCte>
+VarCte -> cteINT | floatCTE | cteCHAR
