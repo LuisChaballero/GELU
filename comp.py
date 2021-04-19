@@ -3,11 +3,10 @@ import ply.lex as lex
 import ply.yacc as yacc
 from collections import deque
 
-from SymbolTable import SymbolTable
+from Classes.SymbolTable import SymbolTable
 
 # Declare stack to keep track of scopes
 s_scopes = deque()
-#s_scopes = []
 
 tokens = [
     'ID',
@@ -106,7 +105,7 @@ def t_error(t):
 lexer = lex.lex()
 
 # Read text file (prueba1.txt / prueba2.txt)
-f = open('prueba_falla.txt','r')
+f = open('prueba1.txt','r')
 data = f.read()
 
 # Test lex with text file
