@@ -1,0 +1,11 @@
+
+program test0 ;
+
+var int foo , bar;
+var float foo1 , bar2;
+
+main() {}
+
+
+() {}
+

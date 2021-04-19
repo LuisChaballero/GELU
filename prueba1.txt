@@ -1,32 +1,17 @@
 
-program test1 ;
+program test0 ;
 
-class Carro {
-    var int llantas;
-    var float precio, peso;
-    var file archivo;
+var int foo , bar;
+var float foo1 , bar2;
 
-    func void calculo(){
-        var float resultado;
-        resultado = precio * 20;
-
-        return resultado;
-    }
-
-
-};
-
-var int num1, num2, sumaRes;
-var Carro car1,car2;
-
-func int suma(int x, int y) {
-    var int resultado;
-    
-    resultado = x + y;
-    
+func int suma() {
+    var int mat[3, 4];
+    var float arr[5];
 }
 
-main() {
-
-    sumaRes = suma(7,3);
+func int resta() {
+    var int mat[3, 4];
+    var float arr[5];
 }
+
+main() {}
