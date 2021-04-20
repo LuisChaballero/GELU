@@ -3,10 +3,16 @@ import ply.lex as lex
 import ply.yacc as yacc
 from collections import deque
 
-from Classes.SymbolTable import SymbolTable
+from SymbolTable import SymbolTable
 
 # Declare stack to keep track of scopes
 s_scopes = deque()
+
+# last type for declared variable 
+last_type = ''
+
+# curretn type for declared variable 
+current_type = ''
 
 tokens = [
     'ID',
@@ -145,6 +151,8 @@ def p_main(p):
     # 
     s_scopes.pop()
     print("Scope deleted from STACK: Global")
+    symbol_table.get_scope('Global').print()
+    #print("tttttttttt\n", symbol_table.get_scope('Global'))
 
 def p_bloque(p):
     '''bloque     : LLAVE_I estatutos LLAVE_D
@@ -162,75 +170,72 @@ def p_clases(p):
        contenido    : atributos metodos
 
        atributos    : declaracion_variables 
-                    | vacio
 
-       metodos      : funciones 
-                    | vacio
+       metodos      : declaracion_funciones 
 
-       nueva_clase  : clases
-                    | vacio'''
-
-# def p_declaracion_variables(p): 
-#     '''declaracion_variables : VAR variables2 PUNTO_COMA variables_repeticion 
-#                              | vacio
-                             
-#         variables_repeticion : declaracion_variables
-#                              | vacio '''
-
-# def p_variables2(p):
-#   '''variables2 : tipo_simple a b
-#                 | tipo_compuesto c d 
-#     a       : ID 
-#             | ID CORCHETE_I CTEINT CORCHETE_D
-#             | ID CORCHETE_I CTEINT COMA CTEINT CORCHETE_D
-#     b       : COMA a b 
-#             | vacio
-#     c       : ID
-#     d       : COMA c d 
-#             | vacio'''
-#     symbol_table.add_item(s_scopes.top(), id, tipo)
+       nueva_clase  : clases'''
 
 def p_declaracion_variables(p):
-  '''declaracion_variables : variables2 PUNTO_COMA declaracion_variables
+  '''declaracion_variables : variables PUNTO_COMA declaracion_variables
                            | vacio'''
 
+def p_variables(p):
+    '''variables : VAR tipo_compuesto ID aux1
+                 | VAR tipo_simple ID aux2 aux3
+    
+        aux1 : COMA ID aux1
+             | vacio
+        
+        aux2 : CORCHETE_I CTEINT CORCHETE_D
+             | CORCHETE_I CTEINT COMA CTEINT CORCHETE_D
+             | vacio
+            
+        aux3 : COMA ID aux2 aux3
+             | vacio'''
+    # Add variable into symbol table
+    if (p[1] == 'var'):
+        symbol_table.add_item(s_scopes[-1] , p[3], current_type)
+        global last_type
+        last_type = current_type
+        print("----- Added variable", p[3], "in scope", s_scopes[-1],"with type", current_type)
+    elif (p[1] == ','):
+        print("TOOO_EARLYYYY")
+        symbol_table.add_item(s_scopes[-1] , p[2], last_type)
 
-def p_variables2(p):
-  '''variables2 : VAR tipo_compuesto ID aux1
-                | VAR tipo_simple ID aux2 aux3
+# def p_variables2(p):
+#   '''variables2 : VAR tipo_compuesto ID aux1
+#                 | VAR tipo_simple ID aux2 aux3
   
-    aux1 : COMA ID aux1
-         | vacio
+#     aux1 : COMA ID aux1
+#          | vacio
          
     
-    aux2 : CORCHETE_I CTEINT CORCHETE_D
-         | CORCHETE_I CTEINT COMA CTEINT CORCHETE_D
-         | vacio
+#     aux2 : CORCHETE_I CTEINT CORCHETE_D
+#          | CORCHETE_I CTEINT COMA CTEINT CORCHETE_D
+#          | vacio
          
-    aux3 : COMA ID aux2 aux3
-         | vacio'''
-    
-  # Add variable into symbol table
-  if (len(p) == 4):
-    symbol_table.add_item(s_scopes[-1] , p[3], p[2])
-
+#     aux3 : COMA ID aux2 aux3
+#          | vacio'''
 
 def p_tipo_simple(p):
     '''tipo_simple : INT 
-                   | FLOAT 
-                   | CHAR'''
+                    | FLOAT 
+                    | CHAR'''
+    global current_type
+    current_type = p[1]
 
 def p_tipo_compuesto(p):
-  '''tipo_compuesto : ID 
+    '''tipo_compuesto : ID 
                     | DATAFRAME
                     | FILE'''
+    global current_type
+    current_type = p[1]
 
 def p_declaracion_funciones(p):
   '''declaracion_funciones : funciones funciones2
                            | vacio'''
 
 def p_funciones(p):
-
   '''funciones    : FUNC funciones_tipo ID  
 
     funciones_tipo : tipo_simple  
@@ -247,7 +252,7 @@ def p_funciones(p):
 
 
 def p_funciones2(p): 
-    '''funciones2  : PARENTESIS_I param PARENTESIS_D LLAVE_I declaracion_variables estatutos LLAVE_D pop_scope funciones_rep
+    '''funciones2  : PARENTESIS_I declaracion_parametros PARENTESIS_D LLAVE_I declaracion_variables estatutos LLAVE_D pop_scope funciones_rep
     funciones_rep  : funciones funciones2
                    | vacio'''
 
@@ -257,16 +262,18 @@ def p_pop_scope(p):
   #s_scopes.pop()
   print("Scope deleted from STACK:", s_scopes.pop())
 
+def p_declaracion_parametros(p):
+    '''declaracion_parametros : param param2
+                              | vacio'''
+
 def p_param(p):
-    '''param : tipo_simple ID g 
-             | vacio
+    '''param : tipo_simple ID '''    
+    symbol_table.add_item(s_scopes[-1], p[2], current_type)
+    print("----- Added parameter", p[2], "with type", current_type)
 
-       g     : COMA param
-             | vacio'''
-
-# def p_param2(p):
-#     '''param2 : COMA param
-#               | vacio'''
+def p_param2(p):
+    '''param2 : COMA param param2
+              | vacio'''
 
 def p_estatuto(p):
     '''estatuto : asignacion
@@ -280,7 +287,6 @@ def p_estatuto(p):
 
 def p_variable(p):
     '''variable : ID h
-
        h        : CORCHETE_I expresion CORCHETE_D 
                 | CORCHETE_I expresion COMA expresion CORCHETE_D
                 | vacio '''

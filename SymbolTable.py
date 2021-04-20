@@ -1,3 +1,4 @@
+# from Table import Table
 from Table import Table # Import Table class
 
 class SymbolTable:

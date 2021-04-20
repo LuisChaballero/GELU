@@ -1,16 +1,16 @@
 
 program test0 ;
 
-var int foo , bar;
+var int foo , bar, lero;
 var float foo1 , bar2;
 
-func int suma() {
+func int suma(char lol, int x, int y, float a) {
     var int mat[3, 4];
     var float arr[5];
 }
 
-func int resta() {
-    var int mat[3, 4];
+func int resta(int num) {
+    var int mat[3,4];
     var float arr[5];
 }
 
