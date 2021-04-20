@@ -21,7 +21,8 @@ Se agrego la creación de tablas de simbolos y de variables. Tambien se definió
 
 
 19/04/2021
-Falta implementación en declaración de variables multiples 
+
+Se implemento la declaración de variables multiples 
 
 
 

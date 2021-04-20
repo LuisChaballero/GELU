@@ -5,13 +5,9 @@ from collections import deque
 
 from SymbolTable import SymbolTable
 
-# Declare stack to keep track of scopes
-s_scopes = deque()
-
+# Declared stacks
+s_scopes = deque() # To keep track of scopes
 s_var_declaration_ids = deque() # To keep track of type for var declaration
-
-# last type for declared variable 
-last_type = ''
 
 # curretn type for declared variable 
 current_type = ''
@@ -149,7 +145,7 @@ def p_program_name(p):
 
 def p_main(p):
     'main : MAIN PARENTESIS_I PARENTESIS_D bloque'
-    # 
+    #   
     s_scopes.pop()
     print("Scope deleted from STACK: Global")
     symbol_table.get_scope('Global').print()
@@ -245,7 +241,6 @@ def p_funciones2(p):
 # Remove  scope from stack
 def p_pop_scope(p):
   'pop_scope :'
-  #s_scopes.pop()
   print("Scope deleted from STACK:", s_scopes.pop())
 
 def p_declaracion_parametros(p):
