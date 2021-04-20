@@ -17,5 +17,11 @@ Se llevó a cabo el planteamiento del proyecto y sus requerimientos, se definió
 
 ###*Segundo avance* - 16/04/2021
 
-Se agrego la creación de tablas de simbolos y de variables. Tambien se definió la tabla de consideraciones semanticas y las precedencia de los operadores
+Se agrego la creación de tablas de simbolos y de variables. Tambien se definió la tabla de consideraciones semanticas y las precedencia de los operadores.
+
+
+19/04/2021
+Falta implementación en declaración de variables multiples 
+
+
 
