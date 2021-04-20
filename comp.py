@@ -8,6 +8,8 @@ from SymbolTable import SymbolTable
 # Declare stack to keep track of scopes
 s_scopes = deque()
 
+s_var_declaration_ids = deque() # To keep track of type for var declaration
+
 # last type for declared variable 
 last_type = ''
 
@@ -144,7 +146,6 @@ def p_program_name(p):
   print("Scope added in STACK: Global")
   symbol_table.add_scope('Global', 'NP')
   print("Scope added in SYMBOL TABLE: Global")
-  
 
 def p_main(p):
     'main : MAIN PARENTESIS_I PARENTESIS_D bloque'
@@ -152,7 +153,6 @@ def p_main(p):
     s_scopes.pop()
     print("Scope deleted from STACK: Global")
     symbol_table.get_scope('Global').print()
-    #print("tttttttttt\n", symbol_table.get_scope('Global'))
 
 def p_bloque(p):
     '''bloque     : LLAVE_I estatutos LLAVE_D
@@ -194,28 +194,14 @@ def p_variables(p):
              | vacio'''
     # Add variable into symbol table
     if (p[1] == 'var'):
-        symbol_table.add_item(s_scopes[-1] , p[3], current_type)
-        global last_type
-        last_type = current_type
-        print("----- Added variable", p[3], "in scope", s_scopes[-1],"with type", current_type)
-    elif (p[1] == ','):
-        print("TOOO_EARLYYYY")
-        symbol_table.add_item(s_scopes[-1] , p[2], last_type)
+        s_var_declaration_ids.append(p[3])
+        while len(s_var_declaration_ids) > 0:
+            print("Variable added into symbolTable ->",s_var_declaration_ids[-1] )
+            symbol_table.add_item(s_scopes[-1] , s_var_declaration_ids.pop(), current_type)
 
-# def p_variables2(p):
-#   '''variables2 : VAR tipo_compuesto ID aux1
-#                 | VAR tipo_simple ID aux2 aux3
-  
-#     aux1 : COMA ID aux1
-#          | vacio
-         
-    
-#     aux2 : CORCHETE_I CTEINT CORCHETE_D
-#          | CORCHETE_I CTEINT COMA CTEINT CORCHETE_D
-#          | vacio
-         
-#     aux3 : COMA ID aux2 aux3
-#          | vacio'''
+    elif (p[1] == ','):
+        s_var_declaration_ids.append(p[2])
+        print("APPEND variable to var_declaration stack ->", p[2])
 
 def p_tipo_simple(p):
     '''tipo_simple : INT 
