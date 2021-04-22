@@ -121,9 +121,8 @@ for tok in lexer:
 
 # Precedence
 precedence = (
-    ('left', 'MENOR_QUE', ' MAYOR_QUE', 'NO_IGUAL'),
     ('left', 'MAS', 'MENOS'),
-    ('left', 'POR', ' ENTRE')
+    ('left', 'POR', 'ENTRE'),
 )
 
 # Start of grammar
