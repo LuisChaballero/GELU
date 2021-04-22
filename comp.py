@@ -119,6 +119,13 @@ lexer.input(data)
 for tok in lexer:
     print(tok)
 
+# Precedence
+precedence = (
+    ('left', 'MENOR_QUE', ' MAYOR_QUE', 'NO_IGUAL'),
+    ('left', 'MAS', 'MENOS'),
+    ('left', 'POR', ' ENTRE')
+)
+
 # Start of grammar
 start = 'programa'
 
@@ -188,14 +195,16 @@ def p_variables(p):
             
         aux3 : COMA ID aux2 aux3
              | vacio'''
-    # Add variable into symbol table
+    # Add variables into symbol table
     if (p[1] == 'var'):
         s_var_declaration_ids.append(p[3])
+        # Put variables from stack into symbol table
         while len(s_var_declaration_ids) > 0:
             print("Variable added into symbolTable ->",s_var_declaration_ids[-1] )
             symbol_table.add_item(s_scopes[-1] , s_var_declaration_ids.pop(), current_type)
 
     elif (p[1] == ','):
+        # Add variable into stack
         s_var_declaration_ids.append(p[2])
         print("APPEND variable to var_declaration stack ->", p[2])
 
