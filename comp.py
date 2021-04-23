@@ -8,8 +8,14 @@ from SymbolTable import SymbolTable
 # Declared stacks
 s_scopes = deque() # To keep track of scopes
 s_var_declaration_ids = deque() # To keep track of type for var declaration
+s_operators = deque() # To keep track of operators in expresions
+s_operands = deque() # To keep track of operands in expresions
+s_types = deque() # ???
 
-# curretn type for declared variable 
+# Declared lists
+l_quadrupules = [] # To save the code optimization in form of quadrupules. (op, op_izq, op_der, res)
+
+# current type for declared variable 
 current_type = ''
 
 tokens = [
@@ -145,9 +151,9 @@ def p_create_symbol_table(p):
 def p_program_name(p):
   'program_name :'
   s_scopes.append('Global')
-  print("Scope added in STACK: Global")
+#   print("Scope added in STACK: Global")
   symbol_table.add_scope('Global', 'NP')
-  print("Scope added in SYMBOL TABLE: Global")
+#   print("Scope added in SYMBOL TABLE: Global")
 
 def p_main(p):
     'main : MAIN PARENTESIS_I PARENTESIS_D bloque'
@@ -319,48 +325,127 @@ def p_ciclo_for(p):
 def p_expresion(p):
     '''expresion : exp m
 
-       m         : MAYOR_QUE exp
-                 | MENOR_QUE exp
+       m         : MAYOR_QUE greater_than_append exp
+                 | MENOR_QUE less_than_append exp
                  | NO_IGUAL exp
                  | vacio''' 
 
-def p_exp(p):
-    '''exp : termino n
+def p_greater_than_append(p):
+    'greater_than_append :'
+    s_operators.append('MAYOR_QUE')
+    print("$$$ Addition operator MAYOR_QUE appended in stack $$$")
 
-       n   : MAS exp 
-           | MENOS exp
+def p_less_than_append(p):
+    'less_than_append :'
+    s_operators.append('MENOR_QUE')
+    print("$$$ Addition operator MENOR_QUE appended in stack $$$")
+
+def p_exp(p):
+    '''exp : termino function4 n
+
+       n   : MAS addition_append exp 
+           | MENOS substraction_append exp
            | vacio'''               
+
+def p_addition_append(p):
+    'addition_append :'
+    s_operators.append('MAS')
+    print("$$$ Addition operator MAS appended in stack $$$")
+
+def p_substraction_append(p):
+    'substraction_append :'
+    s_operators.append('MENOS')
+    print("$$$ Substraction operator MENOS appended in stack $$$")
+
+def p_function4(p):
+    'function4 :'
+    print("function4 start")
+    if(len(s_operators) != 0): 
+        if(s_operators[-1] == 'MAS' or s_operators[-1] == 'MENOS'):
+            right_operand = s_operands.pop()
+            left_operand = s_operands.pop()
+
+            operator = s_operators.pop()
+
+            quadrupule = (operator, left_operand, right_operand, 'res') # 'res' is supposed to be temporal space
+            l_quadrupules.append(quadrupule)
+            print(quadrupule) 
+
+            s_operands.append('res')
+    # else:
+        # Error("Type mismatch")
 
 
 def p_termino(p):
-    '''termino : factor o
+    '''termino : factor function5 o
 
-       o       : POR termino 
-               | ENTRE termino
+       o       : POR multiplication_append termino 
+               | ENTRE divition_append termino
                | vacio'''
+
+def p_multiplication_append(p):
+    'multiplication_append :'
+    s_operators.append('POR')
+    print("$$$ Multiplication POR appended in stack$$$")
+
+def p_divition_append(p):
+    'divition_append :'
+    s_operators.append('ENTRE')
+    print("$$$ Divition operator ENTRE in stack $$$")
+
+def p_function5(p): 
+    'function5 :'
+    print("function 5 start")
+    if(len(s_operators) != 0):
+        if( s_operators[-1] == 'POR' or s_operators[-1] == 'ENTRE'):
+            right_operand = s_operands.pop()
+            left_operand = s_operands.pop()
+
+            operator = s_operators.pop()
+
+            quadrupule = (operator, left_operand, right_operand, 'res') # 'res' is supposed to be temporal space
+            l_quadrupules.append(quadrupule) # add quadrupule to list
+            print(quadrupule) 
+
+            s_operands.append('res') # add the result into the operands stack
+
+
+# def p_factor(p):
+#     '''factor : varcte 
+#               | ID factor2
+#               | PARENTESIS_I expresion PARENTESIS_D
+#               | MAS varcte
+#               | MENOS varcte'''
 
 def p_factor(p):
     '''factor : varcte 
-              | ID p
-              | PARENTESIS_I expresion PARENTESIS_D
-              | MAS varcte
-              | MENOS varcte
+              | ID factor2
+              | PARENTESIS_I expresion PARENTESIS_D'''
 
-       p      : CORCHETE_I expresion CORCHETE_D
-              | CORCHETE_I expresion COMA expresion CORCHETE_D
-              | PARENTESIS_I expresion q PARENTESIS_D
-              | PUNTO ID
-              | PUNTO ID PARENTESIS_I r PARENTESIS_D
-              | vacio
+    # Add ID into operands stack. 
+    if(len(p) == 3):
+        s_operands.append(p[1])
+        print("$$$ Operand ", p[1], "added into s_operands $$$")
+        #s_types.append(x) # Not yet implemented
 
-       q      : COMA expresion q
-              | vacio 
+
+def p_factor2(p):
+    '''factor2 : CORCHETE_I expresion CORCHETE_D
+               | CORCHETE_I expresion COMA expresion CORCHETE_D
+               | PARENTESIS_I expresion multiple_expresion PARENTESIS_D
+               | PUNTO ID
+               | PUNTO ID PARENTESIS_I r PARENTESIS_D
+               | vacio
 
        r      : varcte s
               | vacio
               
        s      : COMA varcte  s
-              | vacio'''
+              | vacio '''
+
+def p_multiple_expresion(p):
+    '''multiple_expresion : COMA expresion multiple_expresion
+                          | vacio '''
 
 def p_varcte(p):
     '''varcte : CTECHAR

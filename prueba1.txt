@@ -1,7 +1,7 @@
 
 program test0 ;
 
-var int foo , bar, lero;
+var int foo , A, B, C, D;
 var float foo1 , bar2;
 
 func int suma(char lol, int x, int y, float a) {
@@ -14,4 +14,6 @@ func int resta(int num) {
     var float arr[5];
 }
 
-main() {}
+main() {
+    foo = A + B / D * C;
+}
