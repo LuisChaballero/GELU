@@ -346,7 +346,7 @@ def p_less_than_append(p):
     print("$$$ Addition operator MENOR_QUE appended in stack $$$")
 
 def p_exp(p):
-    '''exp : termino function4 n
+    '''exp : termino quadrupule_creation_01 n
 
        n   : MAS addition_append exp 
            | MENOS substraction_append exp
@@ -364,9 +364,9 @@ def p_substraction_append(p):
     s_operators.append('MENOS')
     print("$$$ Substraction operator MENOS appended in stack $$$")
 
-def p_function4(p):
-    'function4 :'
-    print("function4 start")
+def p_quadrupule_creation_01(p):
+    'quadrupule_creation_01 :'
+    print("quadrupule_creation_01 start")
     if(len(s_operators) != 0): 
         if(s_operators[-1] == 'MAS' or s_operators[-1] == 'MENOS'):
             right_operand = s_operands.pop()
@@ -389,7 +389,7 @@ def p_function4(p):
         # Error("Type mismatch")
 
 def p_termino(p):
-    '''termino : factor function5 o
+    '''termino : factor quadrupule_creation_02 o
 
        o       : POR multiplication_append termino 
                | ENTRE divition_append termino
@@ -405,9 +405,9 @@ def p_divition_append(p):
     s_operators.append('ENTRE')
     print("$$$ Divition operator ENTRE in stack $$$")
 
-def p_function5(p): 
-    'function5 :'
-    print("function 5 start")
+def p_quadrupule_creation_02(p): 
+    'quadrupule_creation_02 :'
+    print("quadrupule_creation_02 start")
     if(len(s_operators) != 0):
         if( s_operators[-1] == 'POR' or s_operators[-1] == 'ENTRE'):
             right_operand = s_operands.pop()
