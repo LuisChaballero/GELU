@@ -18,6 +18,10 @@ l_quadrupules = [] # To save the code optimization in form of quadrupules. (op, 
 # current type for declared variable 
 current_type = ''
 
+# Simulates the implementation of temporal variables 
+temporal_variable_base_name = "temp"
+temporal_variable_count = 0
+
 tokens = [
     'ID',
     'CTEINT',
@@ -263,6 +267,7 @@ def p_declaracion_parametros(p):
 
 def p_param(p):
     '''param : tipo_simple ID '''    
+    # Add parameter (local variable) into function scope
     symbol_table.add_item(s_scopes[-1], p[2], current_type)
     print("----- Added parameter", p[2], "with type", current_type)
 
@@ -367,14 +372,18 @@ def p_function4(p):
 
             operator = s_operators.pop()
 
-            quadrupule = (operator, left_operand, right_operand, 'res') # 'res' is supposed to be temporal space
+            # simulation of temporal variables
+            global temporal_variable_count
+            result = temporal_variable_base_name + str(temporal_variable_count)
+            print("temporal variable: ", result) 
+
+            quadrupule = (operator, left_operand, right_operand, result) # 'res' is supposed to be temporal space
             l_quadrupules.append(quadrupule)
             print(quadrupule) 
 
-            s_operands.append('res')
+            s_operands.append(result)
     # else:
         # Error("Type mismatch")
-
 
 def p_termino(p):
     '''termino : factor function5 o
@@ -403,11 +412,17 @@ def p_function5(p):
 
             operator = s_operators.pop()
 
-            quadrupule = (operator, left_operand, right_operand, 'res') # 'res' is supposed to be temporal space
+            # temporable variable simulation
+            global temporal_variable_count
+            temporal_variable_count += 1
+            result = temporal_variable_base_name + str(temporal_variable_count)
+            print("temporal variable: ", result)
+
+            quadrupule = (operator, left_operand, right_operand, result) # 'res' is supposed to be temporal space
             l_quadrupules.append(quadrupule) # add quadrupule to list
             print(quadrupule) 
 
-            s_operands.append('res') # add the result into the operands stack
+            s_operands.append(result) # add the result into the operands stack
 
 
 # def p_factor(p):
