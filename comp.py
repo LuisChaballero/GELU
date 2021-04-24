@@ -354,11 +354,13 @@ def p_exp(p):
 
 def p_addition_append(p):
     'addition_append :'
+    # Push addition operator into operator stack
     s_operators.append('MAS')
     print("$$$ Addition operator MAS appended in stack $$$")
 
 def p_substraction_append(p):
     'substraction_append :'
+    # Push substraction operator into operator stack
     s_operators.append('MENOS')
     print("$$$ Substraction operator MENOS appended in stack $$$")
 
@@ -374,6 +376,7 @@ def p_function4(p):
 
             # simulation of temporal variables
             global temporal_variable_count
+            temporal_variable_count += 1
             result = temporal_variable_base_name + str(temporal_variable_count)
             print("temporal variable: ", result) 
 
