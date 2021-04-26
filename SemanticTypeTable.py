@@ -7,7 +7,7 @@
 
 class SemanticTypeTable:
     def __init__(self):
-        self.semantic_cube = (
+        self.semantic_type_table = (
             # INT as Left operand
             (#   +   -    *   /   >   <   ==   <>   &    |   !       <- Operators
                 (0,  0,   0,  0,  3,  3,  3,   3,  -1,  -1, -1),   # <- INT as Right Operand
@@ -54,11 +54,11 @@ class SemanticTypeTable:
             return 6
         elif(operator == 'NO_IGUAL'): 
             return 7
-        elif(operator == 'AND'): # Operador no implementado 
+        elif(operator == 'AND'): # Operator not yet implemented 
             return 8
-        elif(operator == 'OR'): # Operador no implementado
+        elif(operator == 'OR'):  # Operator not yet implemented 
             return 9
-        elif(operator == 'NOT'): # Operador no implementado
+        elif(operator == 'NOT'):  # Operator not yet implemented 
             return 10
 
     def transform_result_type(self, result):
@@ -78,4 +78,4 @@ class SemanticTypeTable:
         right_op = self.transform_operand_type(right_operand_type)
         op = self.transform_operator(operator)
 
-        return self.transform_result_type(self.semantic_cube[left_op][right_op][op]) 
+        return self.transform_result_type(self.semantic_type_table[left_op][right_op][op]) 
