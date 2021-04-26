@@ -4,6 +4,7 @@ import ply.yacc as yacc
 from collections import deque
 
 from SymbolTable import SymbolTable
+from SemanticTypeTable import SemanticTypeTable
 
 # Declared stacks
 s_scopes = deque() # To keep track of scopes
@@ -149,7 +150,9 @@ def p_programa(p):
 def p_create_symbol_table(p):
     'create_symbol_table :'
     global symbol_table
+    global semantic_cube
     symbol_table = SymbolTable()
+    semantic_cube = SemanticTypeTable()
 
 # Add row to SymbolTable for global
 def p_program_name(p):
@@ -369,24 +372,33 @@ def p_quadrupule_creation_01(p):
     print("quadrupule_creation_01 start")
     if(len(s_operators) != 0): 
         if(s_operators[-1] == 'MAS' or s_operators[-1] == 'MENOS'):
-            right_operand = s_operands.pop()
-            left_operand = s_operands.pop()
+            right_operand = s_operands.pop() # Get right operand from stack
+            right_type = s_types.pop() # Get right operand's type from stack
+            
+            left_operand = s_operands.pop() # Get left operand from stack
+            left_type = s_types.pop() # Get left operand's type from stack
 
-            operator = s_operators.pop()
+            operator = s_operators.pop() # Get operand from stack
 
-            # simulation of temporal variables
-            global temporal_variable_count
-            temporal_variable_count += 1
-            result = temporal_variable_base_name + str(temporal_variable_count)
-            print("temporal variable: ", result) 
+            res_type = semantic_cube.result_type(left_type, right_type, operator)
+            print("res_type : ", res_type)
 
-            quadrupule = (operator, left_operand, right_operand, result) # 'res' is supposed to be temporal space
-            l_quadrupules.append(quadrupule)
-            print(quadrupule) 
+            if(not res_type == 'ERROR'):
+                # Temporable variable simulation
+                global temporal_variable_count
+                temporal_variable_count += 1
+                result = temporal_variable_base_name + str(temporal_variable_count)
+                print("temporal variable: ", result)
 
-            s_operands.append(result)
-    # else:
-        # Error("Type mismatch")
+                quadrupule = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space
+                l_quadrupules.append(quadrupule) # Add quadrupule to list
+                print(quadrupule) 
+
+                s_operands.append(result) # Add the result into the operands stack
+                s_types.append(res_type) # Add result's type into the types stack
+            else:
+                print("Error: Type mismatch")
+                exit()
 
 def p_termino(p):
     '''termino : factor quadrupule_creation_02 o
@@ -409,24 +421,33 @@ def p_quadrupule_creation_02(p):
     'quadrupule_creation_02 :'
     print("quadrupule_creation_02 start")
     if(len(s_operators) != 0):
-        if( s_operators[-1] == 'POR' or s_operators[-1] == 'ENTRE'):
-            right_operand = s_operands.pop()
-            left_operand = s_operands.pop()
+        if(s_operators[-1] == 'POR' or s_operators[-1] == 'ENTRE'):
+            right_operand = s_operands.pop() # Get right operand from stack
+            right_type = s_types.pop() # Get right operand's type from stack
 
-            operator = s_operators.pop()
+            left_operand = s_operands.pop() # Get left operand from stack
+            left_type = s_types.pop() # Get left operand's type from stack
 
-            # temporable variable simulation
-            global temporal_variable_count
-            temporal_variable_count += 1
-            result = temporal_variable_base_name + str(temporal_variable_count)
-            print("temporal variable: ", result)
+            operator = s_operators.pop() # Get operand from stack
 
-            quadrupule = (operator, left_operand, right_operand, result) # 'res' is supposed to be temporal space
-            l_quadrupules.append(quadrupule) # add quadrupule to list
-            print(quadrupule) 
+            res_type = semantic_cube.result_type(left_type, right_type, operator)
 
-            s_operands.append(result) # add the result into the operands stack
+            if(not res_type == 'ERROR'):
+                # Temporable variable simulation
+                global temporal_variable_count
+                temporal_variable_count += 1
+                result = temporal_variable_base_name + str(temporal_variable_count)
+                print("temporal variable: ", result)
 
+                quadrupule = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space
+                l_quadrupules.append(quadrupule) # add quadrupule to list
+                print(quadrupule) 
+
+                s_operands.append(result) # Add the result into the operands stack
+                s_types.append(res_type) # Add result's type into the types stack
+            else:
+                print("Error: Type mismatch")
+                exit()
 
 # def p_factor(p):
 #     '''factor : varcte 
@@ -444,8 +465,10 @@ def p_factor(p):
     if(len(p) == 3):
         s_operands.append(p[1])
         print("$$$ Operand ", p[1], "added into s_operands $$$")
-        #s_types.append(x) # Not yet implemented
 
+        operand_type = symbol_table.get_scope(s_scopes[-1]).search(p[1]) # Get variable´s type
+        s_types.append(operand_type)
+        print("$$$ Operand_type added into stack: ", operand_type)
 
 def p_factor2(p):
     '''factor2 : CORCHETE_I expresion CORCHETE_D

@@ -20,9 +20,14 @@ Se llevó a cabo el planteamiento del proyecto y sus requerimientos, se definió
 Se agrego la creación de tablas de simbolos y de variables. Tambien se definió la tabla de consideraciones semanticas y las precedencia de los operadores.
 
 
-19/04/2021
+##19/04/2021
 
 Se implemento la declaración de variables multiples 
 
+###*Segundo avance* - 23/04/2021
 
+Se implemento la generación del código intermedio para las expresiones básicas (Sin considerar parentesis y operadores de comparación). Se agrego una implementación simple para los valores temporales sin utilizar el manejo de memoria.
 
+##26/04/2021
+
+Se implemento el cubo semantico de tipos.

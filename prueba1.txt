@@ -1,8 +1,9 @@
 
 program test0 ;
 
-var int foo , A, B, C, D;
-var float foo1 , bar2;
+var int foo , A, B;
+var float C, D, foo1 , bar2;
+var char c1;
 
 func int suma(char lol, int x, int y, float a) {
     var int mat[3, 4];
