@@ -242,7 +242,7 @@ def p_ciclo_for(p):
     'ciclo_for : FOR variable IGUAL expresion UNTIL bloque'
 
 def p_expresion(p):
-    '''expresion : exp quadrupule_creation_relational m
+    '''expresion : exp  m quadrupule_creation_relational
 
        m         : MAYOR_QUE greater_than_append exp
                  | MENOR_QUE less_than_append exp
@@ -253,7 +253,7 @@ def p_quadrupule_creation_relational(p):
     'quadrupule_creation_relational :'
     print("#################Quadrupul_creation_relation")
     if(len(s_operators) != 0):
-        if(s_operators[-1] == 'MAYOR_QUE' or s_operators[-1] == 'MENOR_QUE'):
+        if(s_operators[-1] == 'MAYOR_QUE' or s_operators[-1] == 'MENOR_QUE' or s_operators[-1] == 'NO_IGUAL' ):
             right_operand = s_operands.pop() # Get right operand from stack
             right_type = s_types.pop() # Get right operand's type from stack
 

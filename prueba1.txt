@@ -16,5 +16,5 @@ func int resta(int num) {
 }
 
 main() {
-    foo = A * ( B + C * D - E ) <> B + (C * D - E) ;
+    foo = ( A * ( B + C * D - E ) ) > ( B + (E - C * D / E + A) ) ;
 }
