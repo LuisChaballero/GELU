@@ -204,9 +204,36 @@ def p_variable(p):
        h        : CORCHETE_I expresion CORCHETE_D 
                 | CORCHETE_I expresion COMA expresion CORCHETE_D
                 | vacio '''
+    if(len(p) == 3):
+        s_operands.append(p[1])
+        variable_type = symbol_table.get_scope(s_scopes[-1]).search(p[1])
+        s_types.append(variable_type)
+
+        
 
 def p_asignacion(p):
     'asignacion : variable IGUAL expresion PUNTO_COMA'
+
+
+    expresion_result = s_operands.pop() # Result of the expresion 
+    expresion_type = s_types.pop() # Result's type
+
+    variable_operand = s_operands.pop()
+    variable_type = s_types.pop()
+
+    print("&&& Asignacion expresion_result: ", expresion_result) 
+    print("&&& Asignacion expresion_type: ", expresion_type) 
+    print("&&& Asignacion variable_operand: ", variable_operand) 
+    print("&&& Asignacion variable_type: ", variable_type) 
+
+    if(variable_type == expresion_type):
+        print("&&& Asignacion p[2](=): ", p[2])
+        quadrupule = (p[2], expresion_result, None, variable_operand) 
+        l_quadrupules.append(quadrupule) # add quadrupule to list
+        print(quadrupule) 
+    else:
+        print("Type mismatch in Asignacion:", expresion_type, "not assignable to", variable_type)
+        exit()
 
 def p_llamada_void(p):
     '''llamada_void : ID PARENTESIS_I expresion I PARENTESIS_D
