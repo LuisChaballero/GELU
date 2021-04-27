@@ -36,6 +36,8 @@ class SemanticTypeTable:
             return 1
         elif(operand_type == 'char'):
             return 2
+        else:
+            return -1
 
     def transform_operator(self, operator):
         if(operator == 'MAS'):
@@ -77,5 +79,8 @@ class SemanticTypeTable:
         left_op = self.transform_operand_type(left_operand_type)
         right_op = self.transform_operand_type(right_operand_type)
         op = self.transform_operator(operator)
+
+        if(left_op == -1 | right_op == -1):
+            return 'ERROR'
 
         return self.transform_result_type(self.semantic_type_table[left_op][right_op][op]) 

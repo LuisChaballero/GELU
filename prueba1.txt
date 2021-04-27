@@ -1,7 +1,7 @@
 
 program test0 ;
 
-var int foo , A, B;
+var int foo , A, B, E;
 var float C, D, foo1 , bar2;
 var char c1;
 
@@ -16,5 +16,5 @@ func int resta(int num) {
 }
 
 main() {
-    foo = A + B / D * C;
+    foo = A * ( B + C * D - E ) <> B + (C * D - E) ;
 }

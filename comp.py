@@ -1,10 +1,28 @@
-
 import ply.lex as lex
 import ply.yacc as yacc
+from lexer import *
+
 from collections import deque
 
 from SymbolTable import SymbolTable
 from SemanticTypeTable import SemanticTypeTable
+
+# --------------
+# Build lexer (lexer)
+lexer = lex.lex()
+
+# Read text file (prueba1.txt / prueba2.txt)
+f = open('prueba1.txt','r')
+data = f.read()
+
+# Test lex with text file
+lexer.input(data)
+
+# Tokenize
+for tok in lexer:
+    print(tok)
+
+#--------------
 
 # Declared stacks
 s_scopes = deque() # To keep track of scopes
@@ -22,113 +40,6 @@ current_type = ''
 # Simulates the implementation of temporal variables 
 temporal_variable_base_name = "temp"
 temporal_variable_count = 0
-
-tokens = [
-    'ID',
-    'CTEINT',
-    'CTEFLOAT',
-    'CTESTRING',
-    'CTECHAR',
-    'PARENTESIS_I',
-    'PARENTESIS_D',
-    'LLAVE_I',
-    'LLAVE_D',
-    'CORCHETE_I',
-    'CORCHETE_D',
-    'COMA',
-    'PUNTO_COMA',
-    'MAS',
-    'MENOS',
-    'POR',
-    'ENTRE',
-    'IGUAL',
-    'NO_IGUAL',
-    'MENOR_QUE',
-    'MAYOR_QUE',
-    'PUNTO'
-]
-
-reserved = {
-    'program' : 'PROGRAM',
-    'main': 'MAIN',
-    'class': 'CLASS',
-    'inherits': 'INHERITS',
-    'func': 'FUNC',
-    'void': 'VOID',
-    'var':'VAR',
-    'int': 'INT',
-    'file': 'FILE',
-    'dataframe': 'DATAFRAME',
-    'float': 'FLOAT', 
-    'char': 'CHAR',
-    'print': 'PRINT',
-    'read': 'READ',
-    'return': 'RETURN',
-    'if': 'IF',
-    'else': 'ELSE',
-    'while': 'WHILE',
-    'for': 'FOR',
-    'until': 'UNTIL',
-    'global': 'GLOBAL'
-} 
-
-tokens +=  reserved.values()
-
-## Expresiones regulares para tipos de dato
-t_CTESTRING = r'\"([^\\\n]|(\\.))*?\"' # strings
-t_CTEINT = r'[0-9]+' # Numeros entersos no negativos
-t_CTEFLOAT = r'[0-9]+\.[0-9]+' # Numeros flotantes no negativos
-t_CTECHAR = r'\'.\'' # char
-
-## Regular ex
-def t_ID(t):
-    r'[a-zA-Z_][0-9a-z_A-Z]*'
-    t.type = reserved.get(t.value,'ID')  # Check for keywords 
-    return t
-
-t_NO_IGUAL = r'<>' # Simbolo de desigualdad
-
-## Expresiones regulares par los literales (simbolos de un solo caracter)
-t_PARENTESIS_I = r'\(' # Parentesis izquierdo
-t_PARENTESIS_D = r'\)' # Parentesis derecho
-t_LLAVE_I = r'\{' # Llave izquierda
-t_LLAVE_D = r'\}' # Llave derecha
-t_CORCHETE_I = r'\[' # Corchete izquierdo
-t_CORCHETE_D = r'\]' # Corchete derecho
-t_COMA = r'\,' # coma
-t_PUNTO_COMA = r'\;' # Punto y coma
-t_MAS = r'\+' # Simbolo de suma
-t_MENOS = r'\-' # Simbolo de resta
-t_POR = r'\*' # Simbolo de multiplicación
-t_ENTRE = r'\/' # Simbolo de división
-t_IGUAL = r'\=' # Simbolo de iguak
-t_MENOR_QUE = r'\<' # Simbolo de menor que
-t_MAYOR_QUE = r'\>' # Simbolo de mayor que
-t_PUNTO = r'\.' # Punto
-
-def t_NEWLINE(t):
-    r'\n+'
-    t.lexer.lineno += len(t.value)
-
-t_ignore = ' \t'
-
-def t_error(t):
-    print('Illegal character %s' % t.value[0])
-    t.lexer.skip(1)
-
-# Build scanner (lexer)
-lexer = lex.lex()
-
-# Read text file (prueba1.txt / prueba2.txt)
-f = open('prueba1.txt','r')
-data = f.read()
-
-# Test lex with text file
-lexer.input(data)
-
-# Tokenize
-for tok in lexer:
-    print(tok)
 
 # Precedence
 precedence = (
@@ -331,12 +242,45 @@ def p_ciclo_for(p):
     'ciclo_for : FOR variable IGUAL expresion UNTIL bloque'
 
 def p_expresion(p):
-    '''expresion : exp m
+    '''expresion : exp quadrupule_creation_relational m
 
        m         : MAYOR_QUE greater_than_append exp
                  | MENOR_QUE less_than_append exp
-                 | NO_IGUAL exp
+                 | NO_IGUAL different_append exp
                  | vacio''' 
+
+def p_quadrupule_creation_relational(p):
+    'quadrupule_creation_relational :'
+    print("#################Quadrupul_creation_relation")
+    if(len(s_operators) != 0):
+        if(s_operators[-1] == 'MAYOR_QUE' or s_operators[-1] == 'MENOR_QUE'):
+            right_operand = s_operands.pop() # Get right operand from stack
+            right_type = s_types.pop() # Get right operand's type from stack
+
+            left_operand = s_operands.pop() # Get left operand from stack
+            left_type = s_types.pop() # Get left operand's type from stack
+
+            operator = s_operators.pop() # Get operand from stack
+
+            res_type = semantic_cube.result_type(left_type, right_type, operator)
+
+            if(not res_type == 'ERROR'):
+                # Temporable variable simulation
+                global temporal_variable_count
+                temporal_variable_count += 1
+                result = temporal_variable_base_name + str(temporal_variable_count)
+                print("temporal variable: ", result)
+
+                quadrupule = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space
+                l_quadrupules.append(quadrupule) # add quadrupule to list
+                print(quadrupule) 
+
+                s_operands.append(result) # Add the result into the operands stack
+                s_types.append(res_type) # Add result's type into the types stack
+            else:
+                print("Error: Type mismatch")
+                exit()
+
 
 def p_greater_than_append(p):
     'greater_than_append :'
@@ -347,6 +291,11 @@ def p_less_than_append(p):
     'less_than_append :'
     s_operators.append('MENOR_QUE')
     print("$$$ Addition operator MENOR_QUE appended in stack $$$")
+
+def p_different_append(p):
+    'different_append :'
+    s_operators.append('NO_IGUAL')
+    print("$$$ Different operator NO_IGUAL appended in stack $$$")
 
 def p_exp(p):
     '''exp : termino quadrupule_creation_01 n
@@ -459,7 +408,7 @@ def p_quadrupule_creation_02(p):
 def p_factor(p):
     '''factor : varcte 
               | ID factor2
-              | PARENTESIS_I expresion PARENTESIS_D'''
+              | PARENTESIS_I parenthesis_left_append expresion PARENTESIS_D parenthesis_left_pop'''
 
     # Add ID into operands stack. 
     if(len(p) == 3):
@@ -469,6 +418,15 @@ def p_factor(p):
         operand_type = symbol_table.get_scope(s_scopes[-1]).search(p[1]) # Get variable´s type
         s_types.append(operand_type)
         print("$$$ Operand_type added into stack: ", operand_type)
+def p_parenthesis_left_append(p):
+    'parenthesis_left_append :'
+    s_operators.append('PARENTESIS_I')
+    print("$$$ Parenteis Izquierdo en stack")
+
+def p_parenthesis_left_pop(p):
+    'parenthesis_left_pop :'
+    s_operators.pop()
+    print("$$$ Parenteis izquierdo sacado del stack $$$")
 
 def p_factor2(p):
     '''factor2 : CORCHETE_I expresion CORCHETE_D
