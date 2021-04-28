@@ -29,7 +29,8 @@ s_scopes = deque() # To keep track of scopes
 s_var_declaration_ids = deque() # To keep track of type for var declaration
 s_operators = deque() # To keep track of operators in expresions
 s_operands = deque() # To keep track of operands in expresions
-s_types = deque() # ???
+s_types = deque() # To keep track of the operands' types
+s_print_items = deque() # To keep track of all the strings and expresions used in a PRINT
 
 # Declared lists
 l_quadrupules = [] # To save the code optimization in form of quadrupules. (op, op_izq, op_der, res)
@@ -208,8 +209,7 @@ def p_variable(p):
         s_operands.append(p[1])
         variable_type = symbol_table.get_scope(s_scopes[-1]).search(p[1])
         s_types.append(variable_type)
-
-        
+       
 
 def p_asignacion(p):
     'asignacion : variable IGUAL expresion PUNTO_COMA'
@@ -228,9 +228,9 @@ def p_asignacion(p):
 
     if(variable_type == expresion_type):
         print("&&& Asignacion p[2](=): ", p[2])
-        quadrupule = (p[2], expresion_result, None, variable_operand) 
-        l_quadrupules.append(quadrupule) # add quadrupule to list
-        print(quadrupule) 
+        quadruple = (p[2], expresion_result, None, variable_operand) 
+        l_quadrupules.append(quadruple) # add quadrupule to list
+        print(quadruple) 
     else:
         print("Type mismatch in Asignacion:", expresion_type, "not assignable to", variable_type)
         exit()
@@ -248,13 +248,39 @@ def p_retorno(p):
     'retorno : RETURN expresion PUNTO_COMA'
 
 def p_escritura(p):
-    '''escritura : PRINT PARENTESIS_I j
+    '''escritura : PRINT PARENTESIS_I print_antes escritura2 PARENTESIS_D quad_print PUNTO_COMA'''
 
-       j         : CTESTRING k 
-                 | expresion k
+def p_print_antes(p):
+    'print_antes :'
+    print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<EMPIEZA ESCRITURA")
 
-       k         : COMA j 
-                 | PARENTESIS_D PUNTO_COMA '''
+def p_escritura2(p):
+    '''escritura2 : CTESTRING k
+                  | expresion k append_expresion_print
+
+       k         : COMA escritura2
+                 | vacio '''
+    if(len(p) == 3 and not p[1] == ',' and not p[1] == ')'):
+        print("\n\nESCRITURA:", p[1])
+        s_print_items.append(p[1])
+        print("PRINT STRING APPEND:",p[1])
+
+def p_quad_print(p):
+    'quad_print :'
+    print("QUAD_PRINT")
+    while(len(s_print_items) > 0):
+        item = s_print_items.pop()
+        quadruple = ('PRINT', None, None, item)
+        l_quadrupules.append(quadruple)
+        print(quadruple)
+
+def p_append_expresion_print(p):
+    'append_expresion_print : '
+    res_expresion = s_operands.pop() # Result of the expresion
+    s_types.pop() # Take out the expresion's result type
+
+    s_print_items.append(res_expresion)
+    print("PRINT EXPRESION APPEND:", res_expresion)
                 
 def p_condicion(p):
     '''condicion : IF PARENTESIS_I expresion PARENTESIS_D bloque l
@@ -269,7 +295,7 @@ def p_ciclo_for(p):
     'ciclo_for : FOR variable IGUAL expresion UNTIL bloque'
 
 def p_expresion(p):
-    '''expresion : exp  m quadrupule_creation_relational
+    '''expresion : exp m quadrupule_creation_relational
 
        m         : MAYOR_QUE greater_than_append exp
                  | MENOR_QUE less_than_append exp
@@ -298,9 +324,9 @@ def p_quadrupule_creation_relational(p):
                 result = temporal_variable_base_name + str(temporal_variable_count)
                 print("temporal variable: ", result)
 
-                quadrupule = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space
-                l_quadrupules.append(quadrupule) # add quadrupule to list
-                print(quadrupule) 
+                quadruple = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space
+                l_quadrupules.append(quadruple) # add quadrupule to list
+                print(quadruple) 
 
                 s_operands.append(result) # Add the result into the operands stack
                 s_types.append(res_type) # Add result's type into the types stack
@@ -366,9 +392,9 @@ def p_quadrupule_creation_01(p):
                 result = temporal_variable_base_name + str(temporal_variable_count)
                 print("temporal variable: ", result)
 
-                quadrupule = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space
-                l_quadrupules.append(quadrupule) # Add quadrupule to list
-                print(quadrupule) 
+                quadruple = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space
+                l_quadrupules.append(quadruple) # Add quadrupule to list
+                print(quadruple) 
 
                 s_operands.append(result) # Add the result into the operands stack
                 s_types.append(res_type) # Add result's type into the types stack
@@ -415,9 +441,9 @@ def p_quadrupule_creation_02(p):
                 result = temporal_variable_base_name + str(temporal_variable_count)
                 print("temporal variable: ", result)
 
-                quadrupule = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space
-                l_quadrupules.append(quadrupule) # add quadrupule to list
-                print(quadrupule) 
+                quadruple = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space
+                l_quadrupules.append(quadruple) # add quadrupule to list
+                print(quadruple) 
 
                 s_operands.append(result) # Add the result into the operands stack
                 s_types.append(res_type) # Add result's type into the types stack
@@ -439,12 +465,18 @@ def p_factor(p):
 
     # Add ID into operands stack. 
     if(len(p) == 3):
-        s_operands.append(p[1])
-        print("$$$ Operand ", p[1], "added into s_operands $$$")
-
         operand_type = symbol_table.get_scope(s_scopes[-1]).search(p[1]) # Get variable´s type
-        s_types.append(operand_type)
-        print("$$$ Operand_type added into stack: ", operand_type)
+
+        if(operand_type):
+            s_operands.append(p[1])
+            print("$$$ Operand ", p[1], "added into s_operands $$$")
+
+            s_types.append(operand_type)
+            print("$$$ Operand_type added into stack: ", operand_type)
+        else:
+            print("Variable", p[1], "is not declared")
+            exit()
+    
 def p_parenthesis_left_append(p):
     'parenthesis_left_append :'
     s_operators.append('PARENTESIS_I')

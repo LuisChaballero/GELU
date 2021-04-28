@@ -17,4 +17,5 @@ func int resta(int num) {
 
 main() {
     foo1 = ( A * ( B + C * D - E ) ) / ( B + (E - C * D / E + A) ) ;
+    print("HELLO WORLD UWU!", foo1, "LOL", foo1);
 }
