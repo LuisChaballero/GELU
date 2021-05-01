@@ -31,6 +31,7 @@ s_operators = deque() # To keep track of operators in expresions
 s_operands = deque() # To keep track of operands in expresions
 s_types = deque() # To keep track of the operands' types
 s_print_items = deque() # To keep track of all the strings and expresions used in a PRINT
+s_jumps = deque() # To keep track of all the conditional jumps for GOTO
 
 # Declared lists
 l_quadrupules = [] # To save the code optimization in form of quadrupules. (op, op_izq, op_der, res)
@@ -80,6 +81,8 @@ def p_main(p):
     s_scopes.pop()
     print("Scope deleted from STACK: Global")
     symbol_table.get_scope('Global').print()
+    print("---------------- QUADRUPULES LIST -------------------")
+    print(*l_quadrupules,sep = "\n")
 
 def p_bloque(p):
     '''bloque     : LLAVE_I estatutos LLAVE_D
@@ -283,10 +286,59 @@ def p_append_expresion_print(p):
     print("PRINT EXPRESION APPEND:", res_expresion)
                 
 def p_condicion(p):
-    '''condicion : IF PARENTESIS_I expresion PARENTESIS_D bloque l
+    '''condicion : IF PARENTESIS_I expresion PARENTESIS_D quad_IF_01 bloque l quad_IF_02
 
-       l         : ELSE bloque
+       l         : ELSE quad_IF_03 bloque
                  | vacio'''
+
+# Generate quadrupules of GOTOF 
+def p_quad_IF_01(p):
+    'quad_IF_01 : '
+    res_type = s_types.pop() # Obtain expression's type
+
+    if(not res_type == 'ERROR'):
+        res_expresion = s_operands.pop() # Obtain result of the expression
+
+        # Generate "incomplete" qudrupule
+        false_quadruple = ('GOTOF', res_expresion, None, None)
+        l_quadrupules.append(false_quadruple )
+
+        index_GOTOF = len(l_quadrupules)-1 # Obtain the current/last index of the quadrupule´s list
+        s_jumps.append(index_GOTOF) # Put the index of the incomplete qudrupule on stack
+    else:
+        print("Error: Type mismatch on expression IF")
+        exit()
+
+def p_quad_IF_02(p):
+    'quad_IF_02 :'
+    pending_GOTO_index= s_jumps.pop() # Index of an incompleted quadrupule
+    old_GOTO_quadrupule = l_quadrupules[pending_GOTO_index] # Obtain incompleted GOTO quadrupule
+    print("OLD QUADRUPULE", old_GOTO_quadrupule)
+
+    next_index = len(l_quadrupules) # index to skip over the else statement
+
+    # Replace GOTO quadrupule with the one that knows where to jump
+    new_GOTO_quadrupule = (old_GOTO_quadrupule[0], old_GOTO_quadrupule[1], None, next_index) # Complete quadrupule: (GOTOF, res_expresion, None, index)
+    l_quadrupules[pending_GOTO_index] = new_GOTO_quadrupule 
+    print("NEW QUADRUPULE", new_GOTO_quadrupule)
+
+def p_quad_IF_03(p):
+    'quad_IF_03 :'
+    false_quadrupule = s_jumps.pop()
+
+    quadrupule_GOTO = ('GOTO', None, None, None)
+    l_quadrupules.append(quadrupule_GOTO)
+
+    index_GOTO = len(l_quadrupules)-1 # Index of incompleted GOTO quadrupule
+    s_jumps.append(index_GOTO)
+
+    # Replace previous GOTOF quadrupule with the one that knows where to jump
+    qudrupule_GOTOF = l_quadrupules[false_quadrupule]
+    print("OLD qudrupule_GOTOF",qudrupule_GOTOF)
+    qudrupule_GOTOF = (qudrupule_GOTOF[0], qudrupule_GOTOF[1], None, index_GOTO + 1) 
+    print("NEW qudrupule_GOTOF",qudrupule_GOTOF)
+
+    l_quadrupules[false_quadrupule] = qudrupule_GOTOF 
 
 def p_ciclo_while(p):
     'ciclo_while : WHILE PARENTESIS_I expresion PARENTESIS_D bloque'
@@ -320,8 +372,8 @@ def p_quadrupule_creation_relational(p):
             if(not res_type == 'ERROR'):
                 # Temporable variable simulation
                 global temporal_variable_count
-                temporal_variable_count += 1
                 result = temporal_variable_base_name + str(temporal_variable_count)
+                temporal_variable_count += 1
                 print("temporal variable: ", result)
 
                 quadruple = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space
@@ -388,8 +440,8 @@ def p_quadrupule_creation_01(p):
             if(not res_type == 'ERROR'):
                 # Temporable variable simulation
                 global temporal_variable_count
-                temporal_variable_count += 1
                 result = temporal_variable_base_name + str(temporal_variable_count)
+                temporal_variable_count += 1
                 print("temporal variable: ", result)
 
                 quadruple = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space
@@ -437,8 +489,8 @@ def p_quadrupule_creation_02(p):
             if(not res_type == 'ERROR'):
                 # Temporable variable simulation
                 global temporal_variable_count
-                temporal_variable_count += 1
                 result = temporal_variable_base_name + str(temporal_variable_count)
+                temporal_variable_count += 1
                 print("temporal variable: ", result)
 
                 quadruple = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space

@@ -1,21 +1,21 @@
 
 program test0 ;
 
-var int foo , A, B, E;
-var float C, D, foo1 , bar2;
-var char c1;
+var int foo, A, B, C, D, E;
 
-func int suma(char lol, int x, int y, float a) {
-    var int mat[3, 4];
-    var float arr[5];
-}
-
-func int resta(int num) {
-    var int mat[3,4];
-    var float arr[5];
-}
 
 main() {
-    foo1 = ( A * ( B + C * D - E ) ) / ( B + (E - C * D / E + A) ) ;
-    print("HELLO WORLD UWU!", foo1, "LOL", foo1);
+    foo = ( A * ( B + C * D - E ) ) / ( B + (E - C * D / E + A) ) ;
+    print("HELLO WORLD UWU!", foo, "LOL", foo);
+    if ( A + B > C * D) {
+        print("True!");
+        A =  B + D;
+    }
+    else {
+        A = D-C;
+        print("False!");
+    }
+
+    B = A*C+D;   
+    print("HELLO WORLD UWU!");
 }
