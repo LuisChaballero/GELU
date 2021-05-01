@@ -211,8 +211,11 @@ def p_variable(p):
     if(len(p) == 3):
         s_operands.append(p[1])
         variable_type = symbol_table.get_scope(s_scopes[-1]).search(p[1])
-        s_types.append(variable_type)
-       
+        if(not variable_type == False):
+            s_types.append(variable_type)
+        else:
+            print("Variable", p[1], "is not declared")
+            exit()
 
 def p_asignacion(p):
     'asignacion : variable IGUAL expresion PUNTO_COMA'
