@@ -31,3 +31,8 @@ Se implemento la generación del código intermedio para las expresiones básica
 ##26/04/2021
 
 Se implemento el cubo semantico de tipos.
+
+###*Tercer avance* - 01/05/2021
+
+Se implementarion los cuadruplos para los estatutos no lineales IF y WHILE. Queda pediente el estatuto FOR y creación de cuadruplos para constantes.    
+
