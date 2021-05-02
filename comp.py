@@ -344,7 +344,49 @@ def p_quad_IF_03(p):
     l_quadrupules[false_quadrupule] = qudrupule_GOTOF 
 
 def p_ciclo_while(p):
-    'ciclo_while : WHILE PARENTESIS_I expresion PARENTESIS_D bloque'
+    'ciclo_while : WHILE PARENTESIS_I quad_while_01 expresion PARENTESIS_D quad_while_02 bloque quad_while_03'
+    
+def p_quad_while_01(p):
+    'quad_while_01 :'
+    print("---------------------------------------------------------------")
+    first_quadruple_expresion_index = len(l_quadrupules)
+    s_jumps.append(first_quadruple_expresion_index)
+    print("first_quadruple_expresion_index",first_quadruple_expresion_index)
+
+def p_quad_while_02(p):
+    'quad_while_02 :'
+    res_expresion_type = s_types.pop()
+
+    if(res_expresion_type == 'ERROR'):
+        print("Error: Type mismatch in while")
+        exit()
+    else:
+        res_expresion = s_operands.pop()
+        quadruple_GOTOF = ('GOTOF', res_expresion, None, None)
+        l_quadrupules.append(quadruple_GOTOF)
+        print("quadruple_GOTOF",quadruple_GOTOF)
+
+        index_previous_GOTOF = len(l_quadrupules)-1
+        s_jumps.append(index_previous_GOTOF)
+        print("index_previous_GOTOF",index_previous_GOTOF)
+
+def p_quad_while_03(p):
+    'quad_while_03 :'
+    index_previous_GOTOF = s_jumps.pop() 
+    index_expresion = s_jumps.pop()
+    print("index_previous_GOTOF",index_previous_GOTOF)
+    print("index_expresion",index_expresion)
+
+    quadruple_GOTO = ('GOTO', None, None, index_expresion)
+    l_quadrupules
+    l_quadrupules.append(quadruple_GOTO)
+    print("quadruple_GOTO",quadruple_GOTO)
+
+    index_skip = len(l_quadrupules) # index to skip while
+
+    quadruple_previous_GOTOF = l_quadrupules[index_previous_GOTOF] 
+    new_quadruple = (quadruple_previous_GOTOF[0], quadruple_previous_GOTOF[1], None, index_skip)
+    l_quadrupules[index_previous_GOTOF] = new_quadruple
 
 def p_ciclo_for(p):
     'ciclo_for : FOR variable IGUAL expresion UNTIL bloque'

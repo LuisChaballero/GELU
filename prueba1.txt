@@ -5,17 +5,14 @@ var int foo, A, B, C, D, E;
 
 
 main() {
-    foo = ( A * ( B + C * D - E ) ) / ( B + (E - C * D / E + A) ) ;
+    
     print("HELLO WORLD UWU!", foo, "LOL", foo);
-    if ( A + B > C * D) {
+    while( A + B > C * D) {
         print("True!");
         A =  B + D;
     }
-    else {
-        A = D-C;
-        print("False!");
-    }
 
-    B = A*C+D;   
-    print("HELLO WORLD UWU!");
+    foo = A * B;
+
+
 }
