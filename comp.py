@@ -201,7 +201,7 @@ def p_estatuto(p):
                 | escritura
                 | condicion
                 | ciclo_while
-                | ciclo_for'''
+                | ciclo_for_01'''
 
 def p_variable(p):
     '''variable : ID h
@@ -227,13 +227,12 @@ def p_asignacion(p):
     variable_operand = s_operands.pop()
     variable_type = s_types.pop()
 
-    print("&&& Asignacion expresion_result: ", expresion_result) 
-    print("&&& Asignacion expresion_type: ", expresion_type) 
-    print("&&& Asignacion variable_operand: ", variable_operand) 
-    print("&&& Asignacion variable_type: ", variable_type) 
+    # print("&&& Asignacion expresion_result: ", expresion_result) 
+    # print("&&& Asignacion expresion_type: ", expresion_type) 
+    # print("&&& Asignacion variable_operand: ", variable_operand) 
+    # print("&&& Asignacion variable_type: ", variable_type) 
 
     if(variable_type == expresion_type):
-        print("&&& Asignacion p[2](=): ", p[2])
         quadruple = (p[2], expresion_result, None, variable_operand) 
         l_quadrupules.append(quadruple) # add quadrupule to list
         print(quadruple) 
@@ -254,11 +253,7 @@ def p_retorno(p):
     'retorno : RETURN expresion PUNTO_COMA'
 
 def p_escritura(p):
-    '''escritura : PRINT PARENTESIS_I print_antes escritura2 PARENTESIS_D quad_print PUNTO_COMA'''
-
-def p_print_antes(p):
-    'print_antes :'
-    print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<EMPIEZA ESCRITURA")
+    '''escritura : PRINT PARENTESIS_I escritura2 PARENTESIS_D quad_print PUNTO_COMA'''
 
 def p_escritura2(p):
     '''escritura2 : CTESTRING k
@@ -273,7 +268,6 @@ def p_escritura2(p):
 
 def p_quad_print(p):
     'quad_print :'
-    print("QUAD_PRINT")
     while(len(s_print_items) > 0):
         item = s_print_items.pop()
         quadruple = ('PRINT', None, None, item)
@@ -286,7 +280,7 @@ def p_append_expresion_print(p):
     s_types.pop() # Take out the expresion's result type
 
     s_print_items.append(res_expresion)
-    print("PRINT EXPRESION APPEND:", res_expresion)
+    # print("PRINT EXPRESION APPEND:", res_expresion)
                 
 def p_condicion(p):
     '''condicion : IF PARENTESIS_I expresion PARENTESIS_D quad_IF_01 bloque l quad_IF_02
@@ -323,7 +317,7 @@ def p_quad_IF_02(p):
     # Replace GOTO quadrupule with the one that knows where to jump
     new_GOTO_quadrupule = (old_GOTO_quadrupule[0], old_GOTO_quadrupule[1], None, next_index) # Complete quadrupule: (GOTOF, res_expresion, None, index)
     l_quadrupules[pending_GOTO_index] = new_GOTO_quadrupule 
-    print("NEW QUADRUPULE", new_GOTO_quadrupule)
+    # print("NEW QUADRUPULE", new_GOTO_quadrupule)
 
 def p_quad_IF_03(p):
     'quad_IF_03 :'
@@ -337,9 +331,9 @@ def p_quad_IF_03(p):
 
     # Replace previous GOTOF quadrupule with the one that knows where to jump
     qudrupule_GOTOF = l_quadrupules[false_quadrupule]
-    print("OLD qudrupule_GOTOF",qudrupule_GOTOF)
+    # print("OLD qudrupule_GOTOF",qudrupule_GOTOF)
     qudrupule_GOTOF = (qudrupule_GOTOF[0], qudrupule_GOTOF[1], None, index_GOTO + 1) 
-    print("NEW qudrupule_GOTOF",qudrupule_GOTOF)
+    # print("NEW qudrupule_GOTOF",qudrupule_GOTOF)
 
     l_quadrupules[false_quadrupule] = qudrupule_GOTOF 
 
@@ -348,10 +342,8 @@ def p_ciclo_while(p):
     
 def p_quad_while_01(p):
     'quad_while_01 :'
-    print("---------------------------------------------------------------")
     first_quadruple_expresion_index = len(l_quadrupules)
     s_jumps.append(first_quadruple_expresion_index)
-    print("first_quadruple_expresion_index",first_quadruple_expresion_index)
 
 def p_quad_while_02(p):
     'quad_while_02 :'
@@ -364,23 +356,23 @@ def p_quad_while_02(p):
         res_expresion = s_operands.pop()
         quadruple_GOTOF = ('GOTOF', res_expresion, None, None)
         l_quadrupules.append(quadruple_GOTOF)
-        print("quadruple_GOTOF",quadruple_GOTOF)
+        # print("quadruple_GOTOF",quadruple_GOTOF)
 
         index_previous_GOTOF = len(l_quadrupules)-1
         s_jumps.append(index_previous_GOTOF)
-        print("index_previous_GOTOF",index_previous_GOTOF)
+        # print("index_previous_GOTOF",index_previous_GOTOF)
 
 def p_quad_while_03(p):
     'quad_while_03 :'
     index_previous_GOTOF = s_jumps.pop() 
     index_expresion = s_jumps.pop()
-    print("index_previous_GOTOF",index_previous_GOTOF)
-    print("index_expresion",index_expresion)
+    # print("index_previous_GOTOF",index_previous_GOTOF)
+    # print("index_expresion",index_expresion)
 
     quadruple_GOTO = ('GOTO', None, None, index_expresion)
-    l_quadrupules
+    # l_quadrupules
     l_quadrupules.append(quadruple_GOTO)
-    print("quadruple_GOTO",quadruple_GOTO)
+    # print("quadruple_GOTO",quadruple_GOTO)
 
     index_skip = len(l_quadrupules) # index to skip while
 
@@ -388,8 +380,75 @@ def p_quad_while_03(p):
     new_quadruple = (quadruple_previous_GOTOF[0], quadruple_previous_GOTOF[1], None, index_skip)
     l_quadrupules[index_previous_GOTOF] = new_quadruple
 
-def p_ciclo_for(p):
-    'ciclo_for : FOR variable IGUAL expresion UNTIL bloque'
+def p_ciclo_for_01(p):
+    'ciclo_for_01 : FOR variable IGUAL exp quad_for_01 ciclo_for_02'
+
+def p_ciclo_for_02(p):
+    'ciclo_for_02 : UNTIL quad_for_02 expresion quad_for_03 bloque quad_for_04'
+
+def p_quad_for_01(p):
+    'quad_for_01 :'
+    exp_type = s_types.pop()
+    exp_result = s_operands.pop()  
+    print("exp_type", exp_type)
+
+    var_type = s_types.pop()
+    variable = s_operands.pop()
+
+    if (exp_type != var_type):
+        print("Error: ", exp_type, "not assignable to", var_type)
+        exit()
+    elif(var_type != 'int'):
+        print("Error: ", variable, "is not of type INT")
+        exit()
+    else:
+        quadruple_EQUAL = ('EQUAL', exp_result, None, variable)
+        l_quadrupules.append(quadruple_EQUAL)
+
+        # s_operands.append(variable)
+        # s_types.append(var_type)
+
+def p_quad_for_02(p):
+    'quad_for_02 :'
+    # Save the index to the first quadrupule of the expression
+    index_before_exp = len(l_quadrupules)
+    s_jumps.append(index_before_exp)
+
+def p_quad_for_03(p):
+    'quad_for_03 :'
+    expresion_type = s_types.pop()
+    expresion_result = s_operands.pop()  
+    print("expresion_type:", expresion_type )
+
+    if(expresion_type != 'bool'):
+        print("Error: Expression result from FOR must be boolean ")
+        exit()
+    else:
+        # var_type = s_types.pop()
+        # variable = s_operands.pop()
+
+        # Generate incomplete quadrupule to skip Bloque
+        quad_GOTOF = ('GOTOF', expresion_result, None, None)
+        l_quadrupules.append(quad_GOTOF)
+
+        # Save the index to the incomplete GOTOF
+        index_GOTOF = len(l_quadrupules)-1
+        s_jumps.append(index_GOTOF)
+
+def p_quad_for_04(p):
+    'quad_for_04 :'
+    # Obtain saved indexes
+    index_pending_GOTF = s_jumps.pop()
+    index_to_expresion = s_jumps.pop()
+
+    # Quadrupule to check value of the FOR´s expression
+    quadruple_GOTO = ('GOTO', None, None, index_to_expresion)
+    l_quadrupules.append(quadruple_GOTO)
+
+    # Add the missing index to the previous GOTOF to skip Bloque when expression is false
+    pending_GOTF = l_quadrupules[index_pending_GOTF] 
+    pending_GOTF= (pending_GOTF[0], pending_GOTF[1], None, len(l_quadrupules))
+    l_quadrupules[index_pending_GOTF] = pending_GOTF
 
 def p_expresion(p):
     '''expresion : exp m quadrupule_creation_relational
@@ -573,6 +632,7 @@ def p_factor(p):
         else:
             print("Variable", p[1], "is not declared")
             exit()
+    # Pendiente considerar las constantes alv. Ponte vergas
     
 def p_parenthesis_left_append(p):
     'parenthesis_left_append :'

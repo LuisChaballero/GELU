@@ -1,18 +1,40 @@
 
 program test0 ;
 
-var int foo, A, B, C, D, E;
+var int foo, A, B, C, D, E, i;
+var int z, cont;
 
 
-main() {
-    
-    print("HELLO WORLD UWU!", foo, "LOL", foo);
-    while( A + B > C * D) {
-        print("True!");
-        A =  B + D;
+
+main() { 
+    print("HELLO WORLD UWU!", "LOL", foo);
+
+    if ( A < D) {
+        print("IF_01 STARTS!");
+        while( A + B > C * D) {
+            print("WHILE STARTS!");
+            A =  B + ( z + D / A);
+            print("WHILE ENDS!");
+        }
+        D = C / A - B;
+        print("IF_01 ENDS!");
     }
 
     foo = A * B;
+    print(foo);
 
+    for i = z until (A - E < B * C) {
+        print("FOR STARTS!");
+        if (z - B <> E) {
+            print("IF_02 STARTS!");
+            C = A + B * A;
+            print("IF_02 ENDS!");
+        }
+        
+        B = C - D;
+        print("FOR ENDS!");
+    }
 
+    z = A / E;
+    print(z);
 }

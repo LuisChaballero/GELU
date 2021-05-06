@@ -53,7 +53,7 @@ tokens +=  reserved.values()
 
 ## Expresiones regulares para tipos de dato
 t_CTESTRING = r'\"([^\\\n]|(\\.))*?\"' # strings
-t_CTEINT = r'[0-9]+' # Numeros entersos no negativos
+t_CTEINT = r'[0-9]+' # Numeros enteros no negativos
 t_CTEFLOAT = r'[0-9]+\.[0-9]+' # Numeros flotantes no negativos
 t_CTECHAR = r'\'.\'' # char
 
