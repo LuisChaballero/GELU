@@ -82,7 +82,9 @@ def p_main(p):
     print("Scope deleted from STACK: Global")
     symbol_table.get_scope('Global').print()
     print("---------------- QUADRUPULES LIST -------------------")
-    print(*l_quadrupules,sep = "\n")
+    for index in range(len(l_quadrupules)):
+        print(index, l_quadrupules[index])
+    # print(*l_quadrupules,sep = "\n")
 
 def p_bloque(p):
     '''bloque     : LLAVE_I estatutos LLAVE_D

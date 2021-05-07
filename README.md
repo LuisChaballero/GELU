@@ -36,6 +36,6 @@ Se implemento el cubo semantico de tipos.
 
 Se implementarion los cuadruplos para los estatutos no lineales IF y WHILE. Queda pediente el estatuto FOR y creación de cuadruplos para constantes.    
 
-##26/04/2021
+##06/05/2021
 
 Se implemento el cuadruplo para el estatuto no lineal FOR.

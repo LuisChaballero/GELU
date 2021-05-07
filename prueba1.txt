@@ -19,9 +19,13 @@ main() {
         D = C / A - B;
         print("IF_01 ENDS!");
     }
+    else {
+        print("ELSE!");
+        foo = A * B;
+        print(foo);
+    }   
 
-    foo = A * B;
-    print(foo);
+    B = B - A + z; 
 
     for i = z until (A - E < B * C) {
         print("FOR STARTS!");
