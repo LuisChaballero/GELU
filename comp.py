@@ -6,6 +6,7 @@ from collections import deque
 
 from SymbolTable import SymbolTable
 from SemanticTypeTable import SemanticTypeTable
+from ClassDirectory import ClassDirectory
 
 # --------------
 # Build lexer (lexer)
@@ -57,15 +58,18 @@ def p_vacio(p):
      pass
 
 def p_programa(p):
-    'programa : PROGRAM create_symbol_table ID program_name PUNTO_COMA clases declaracion_variables declaracion_funciones main'
+    'programa : PROGRAM init_global_env ID program_name PUNTO_COMA declaracion_clases declaracion_variables declaracion_funciones main'
 
-# Create an instance of SymbolTable
-def p_create_symbol_table(p):
-    'create_symbol_table :'
+# Create an instance of ...
+def p_init_global_env(p):
+    'init_global_env :'
     global symbol_table
     global semantic_cube
+    global class_directory
+
     symbol_table = SymbolTable()
     semantic_cube = SemanticTypeTable()
+    class_directory = ClassDirectory()
 
 # Add row to SymbolTable for global
 def p_program_name(p):
@@ -92,20 +96,41 @@ def p_bloque(p):
        estatutos  : estatuto estatutos
                   | vacio'''
 
+def p_declaracion_clases(p):
+    '''declaracion_clases : clases clases_02 
+                          | vacio '''
+
+# def p_append_classes_scope(p):
+#     '''append_classes_scope : '''
+#     s_scopes.append('Clases:')
+
+# def p_clases(p):
+#     '''clases       : CLASS ID herencia LLAVE_I clases_02 LLAVE_D PUNTO_COMA nueva_clase   
+#                     | vacio
+                    
+#        herencia     : MENOR_QUE INHERITS MAYOR_QUE 
+#                     | vacio
+
+       
+#        nueva_clase  : clases'''
 def p_clases(p):
-    '''clases       : CLASS ID herencia LLAVE_I contenido LLAVE_D PUNTO_COMA nueva_clase   
-                    | vacio
+    '''clases       : CLASS ID herencia LLAVE_I 
                     
        herencia     : MENOR_QUE INHERITS MAYOR_QUE 
-                    | vacio
+                    | vacio'''
+    if(p[1] == 'class'):
+        class_directory.add_class(p[2])
+        s_scopes.append(p[2])
 
-       contenido    : atributos metodos
+def p_clases_02(p):
+    '''clases_02 :  atributos metodos LLAVE_D PUNTO_COMA nueva_clase   
 
-       atributos    : declaracion_variables 
+       atributos   : declaracion_variables 
 
-       metodos      : declaracion_funciones 
-
-       nueva_clase  : clases'''
+       metodos     : declaracion_funciones
+       
+       nueva_clase : clases clases_02
+                   | vacio'''
 
 def p_declaracion_variables(p):
   '''declaracion_variables : variables PUNTO_COMA declaracion_variables
@@ -132,6 +157,13 @@ def p_variables(p):
             print("Variable added into symbolTable ->",s_var_declaration_ids[-1] )
             symbol_table.add_item(s_scopes[-1] , s_var_declaration_ids.pop(), current_type)
 
+            # if(s_scopes[-1] == 'Global' ): # Global variables: in symbolTable
+            #     # Variable global 
+            #     print("Variable added into symbolTable ->",s_var_declaration_ids[-1] )
+            #     symbol_table.add_item(s_scopes[-1] , s_var_declaration_ids.pop(), current_type)
+            # elif(len(s_scopes) == 3): # Local variables: in Function scope inside a class scope
+            #     print("Implementacion de variables locales dentro de un metodo de una clase")
+           
     elif (p[1] == ','):
         # Add variable into stack
         s_var_declaration_ids.append(p[2])

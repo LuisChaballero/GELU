@@ -24,7 +24,7 @@ Se agrego la creación de tablas de simbolos y de variables. Tambien se definió
 
 Se implemento la declaración de variables multiples 
 
-###*Segundo avance* - 23/04/2021
+###*Tercer avance* - 23/04/2021
 
 Se implemento la generación del código intermedio para las expresiones básicas (Sin considerar parentesis y operadores de comparación). Se agrego una implementación simple para los valores temporales sin utilizar el manejo de memoria.
 
@@ -32,10 +32,14 @@ Se implemento la generación del código intermedio para las expresiones básica
 
 Se implemento el cubo semantico de tipos.
 
-###*Tercer avance* - 01/05/2021
+###*Cuarto avance* - 01/05/2021
 
 Se implementarion los cuadruplos para los estatutos no lineales IF y WHILE. Queda pediente el estatuto FOR y creación de cuadruplos para constantes.    
 
 ##06/05/2021
 
 Se implemento el cuadruplo para el estatuto no lineal FOR.
+
+###*Quinto avance* - 10/05/2021
+
+Se creó el directorio para clases. Se modificó parte de la gramatica para los puntos neuralgicos de la implemetación de clases. Queda pendiente el añadir los atributos y metodos de cada clase al directorio de clases.

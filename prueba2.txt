@@ -1,0 +1,36 @@
+
+program test0 ;
+
+class mult {
+    var int num1, num2;
+
+    func int multiplicacion(int param_mult){
+        int res_mult;
+    }
+}
+
+class div {
+    var int num3, num4;
+
+    func int division(int param_div){
+        int res_div;
+    }
+}
+
+var int foo;
+var int z, cont;
+
+func int suma(int a) {
+    int b;
+
+}
+func int resta(int c) {
+    int d;
+    
+}
+
+
+
+main() { 
+
+}
