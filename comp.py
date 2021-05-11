@@ -121,9 +121,11 @@ def p_clases(p):
     if(p[1] == 'class'):
         class_directory.add_class(p[2])
         s_scopes.append(p[2])
+        # Create attribute Table (similar to Global variables in Symbol Table)
+        class_directory.add_attributes_Table(p[2], 'Class_Globals', 'NC')
 
 def p_clases_02(p):
-    '''clases_02 :  atributos metodos LLAVE_D PUNTO_COMA nueva_clase   
+    '''clases_02 :  atributos metodos LLAVE_D PUNTO_COMA pop_scope nueva_clase   
 
        atributos   : declaracion_variables 
 

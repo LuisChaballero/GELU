@@ -5,6 +5,14 @@ class SymbolTable:
   def __init__(self):
     self.dir = {}
 
+  # Add a scope to the SymbolTable
+  def add_scope(self, scope, data_type):
+    if self.scope_exists(scope):
+      return False
+    else:
+      self.dir[scope] = Table(data_type)
+      return True
+  
   # Check if scope exists
   def scope_exists(self, scope):
     return self.dir.get(scope, False)
@@ -17,14 +25,6 @@ class SymbolTable:
       return True
     else:
       return False
-
-  # Add a scope to the SymbolTable
-  def add_scope(self, scope, data_type):
-    if self.scope_exists(scope):
-      return False
-    else:
-      self.dir[scope] = Table(data_type)
-      return True
 
   # Add scope to table
   # def add_scope(self, scope, var_id, data_type):
