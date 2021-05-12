@@ -47,3 +47,7 @@ Se creó el directorio para clases. Se modificó parte de la gramatica para los 
 ##11/05/2021
 
 Se implementarion funciones adicionales en ClassDirectory. Se implementó la añadidura de los metodos y atributos de una clase al directorio de clases. Falta la añadidura de los parametros de los metodos de las clases.
+
+##12/05/2021
+
+Se implementó la añadidura de los parametros a los metodos de clases. 

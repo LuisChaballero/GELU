@@ -86,6 +86,7 @@ def p_main(p):
     print("Scope deleted from STACK: Global")
     print("---- SymbolTable")
     symbol_table.print()
+    symbol_table.get_scope('suma').print()
     print("---- ClassDirectory")
     class_directory.print()
     print("---- Mult_Class Table")
@@ -241,9 +242,12 @@ def p_funciones(p):
             # print("Scope added in stack: ", p[3])
 
             # Add function into Symbol Table
-            symbol_table.add_scope(function_name, current_type)
-            s_scopes.append(function_name)
-            print("FUNCTION added in Symbol Table: ", function_name, current_type)
+            if (symbol_table.add_scope(function_name, current_type) == False):
+                print('ERROR: Function',function_name,'already declared in symbol table')
+                exit()
+            else:
+                s_scopes.append(function_name)
+                print("FUNCTION added in Symbol Table: ", function_name, current_type)
 
         else: # Add method in class directory
             
@@ -252,9 +256,12 @@ def p_funciones(p):
             s_scopes.append(current_scope) # Add 'Class_Globals'
 
             # Add method in class
-            class_directory.add_method(class_name, function_name, current_type)
-            s_scopes.append(function_name)
-            print("METHOD added in Class Directory: ", class_name, function_name, current_type)
+            if (class_directory.add_method(class_name, function_name, current_type) == False):
+                print('ERROR: Method',function_name,' in class', class_name, 'already declared')
+                exit()
+            else:
+                s_scopes.append(function_name)
+                print("METHOD added in Class Directory: ", class_name, function_name, current_type)
 
 def p_funciones2(p):
     '''funciones2  : PARENTESIS_I declaracion_parametros PARENTESIS_D LLAVE_I declaracion_variables estatutos LLAVE_D pop_scope funciones_rep

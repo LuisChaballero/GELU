@@ -7,13 +7,20 @@ class mult {
     func int multiplicacion(int param_mult){
         var int res_mult;
     }
+    func int division(int param_mult_02){
+        var int res_mult_02;
+    }
 };
 
 class div {
     var int num3, num4;
 
-    func int division(int param_div){
+    func int multiplicacion(int param_div){
         var int res_div;
+    }
+
+    func int division(int param_div_02){
+        var int res_div_02;
     }
 };
 
