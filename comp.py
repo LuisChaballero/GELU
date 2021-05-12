@@ -88,7 +88,11 @@ def p_main(p):
     symbol_table.print()
     print("---- ClassDirectory")
     class_directory.print()
-    class_directory.get_scope('mult').print()
+    print("---- Mult_Class Table")
+    mult = class_directory.get_scope('mult')
+    mult.print()
+    print("---- Multiplicacion_MEthod Table")
+    mult.get_scope('multiplicacion').print()
     print("---------------- QUADRUPULES LIST -------------------")
     for index in range(len(l_quadrupules)):
         print(index, l_quadrupules[index])
@@ -110,12 +114,15 @@ def p_clases(p):
        herencia     : MENOR_QUE INHERITS MAYOR_QUE 
                     | vacio'''
     if(p[1] == 'class'):
-        class_directory.add_class(p[2])
-        s_scopes.append(p[2])
+        if (class_directory.add_class(p[2]) == False):
+            print("Error: Class",p[2],"already exists")
+            exit()
+        else:
+            s_scopes.append(p[2])
 
-        # Create attribute Table (similar to Global variables in Symbol Table)
-        class_directory.add_attributes_Table(p[2], 'Class_Globals', 'NC')
-        s_scopes.append('Class_Globals')
+            # Create attribute Table (similar to Global variables in Symbol Table)
+            class_directory.add_attributes_Table(p[2], 'Class_Globals', 'NC')
+            s_scopes.append('Class_Globals')
 
 def p_clases_02(p):
     '''clases_02 : atributos metodos LLAVE_D PUNTO_COMA pop_scope nueva_clase   
@@ -265,9 +272,22 @@ def p_declaracion_parametros(p):
 
 def p_param(p):
     '''param : tipo_simple ID '''    
-    # Add parameter (local variable) into function scope
-    symbol_table.add_item(s_scopes[-1], p[2], current_type)
-    print("----- Added parameter", p[2], "with type", current_type)
+    function_name = s_scopes.pop()
+
+    if(s_scopes[-1] == 'Global'): # Add parameter (local variable) from function scope into Symbol Table
+        symbol_table.add_item(function_name, p[2], current_type)
+        print("PARAMETER(SymTable):", function_name, p[2], current_type)
+
+        s_scopes.append(function_name) # Put back function scope in stack
+
+    else: # Add parameter from a method scope from a class into Class Directory
+        class_globals = s_scopes.pop() # Remove 'Class_Globals' from stack
+        class_name = s_scopes[-1] # Get class scope from stack
+        class_directory.add_variable(class_name, function_name, p[2], current_type)
+        print("PARAMETER(ClassDir):", class_name, function_name, p[2], current_type)
+
+        s_scopes.append(class_globals)
+        s_scopes.append(function_name)
 
 def p_param2(p):
     '''param2 : COMA param param2
