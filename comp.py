@@ -120,20 +120,13 @@ def p_clases(p):
 def p_clases_02(p):
     '''clases_02 : atributos metodos LLAVE_D PUNTO_COMA pop_scope nueva_clase   
 
-       atributos : add_scope_attributes declaracion_variables 
+       atributos : declaracion_variables 
 
-       metodos   : add_scope_methods declaracion_funciones pop_scope
+       metodos   : declaracion_funciones pop_scope
        
        nueva_clase : clases clases_02
                    | vacio'''
-
-def p_add_scope_attributes(p):
-    'add_scope_attributes :'
-    # s_scopes.append('Attributes')
-
-def p_add_scope_methods(p):
-    'add_scope_methods :'
-    # s_scopes.append('Methods')
+    # The 'pop_scope' in metodos is to take out 'Class_Globales'
 
 def p_declaracion_variables(p):
   '''declaracion_variables : variables PUNTO_COMA declaracion_variables
