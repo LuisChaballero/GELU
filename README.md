@@ -43,3 +43,7 @@ Se implemento el cuadruplo para el estatuto no lineal FOR.
 ###*Quinto avance* - 10/05/2021
 
 Se creó el directorio para clases. Se modificó parte de la gramatica para los puntos neuralgicos de la implemetación de clases. Queda pendiente el añadir los atributos y metodos de cada clase al directorio de clases.
+
+##11/05/2021
+
+Se implementarion funciones adicionales en ClassDirectory. Se implementó la añadidura de los metodos y atributos de una clase al directorio de clases. Falta la añadidura de los parametros de los metodos de las clases.

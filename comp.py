@@ -13,7 +13,7 @@ from ClassDirectory import ClassDirectory
 lexer = lex.lex()
 
 # Read text file (prueba1.txt / prueba2.txt)
-f = open('prueba1.txt','r')
+f = open('prueba2.txt','r')
 data = f.read()
 
 # Test lex with text file
@@ -84,7 +84,11 @@ def p_main(p):
     #   
     s_scopes.pop()
     print("Scope deleted from STACK: Global")
-    symbol_table.get_scope('Global').print()
+    print("---- SymbolTable")
+    symbol_table.print()
+    print("---- ClassDirectory")
+    class_directory.print()
+    class_directory.get_scope('mult').print()
     print("---------------- QUADRUPULES LIST -------------------")
     for index in range(len(l_quadrupules)):
         print(index, l_quadrupules[index])
@@ -100,19 +104,6 @@ def p_declaracion_clases(p):
     '''declaracion_clases : clases clases_02 
                           | vacio '''
 
-# def p_append_classes_scope(p):
-#     '''append_classes_scope : '''
-#     s_scopes.append('Clases:')
-
-# def p_clases(p):
-#     '''clases       : CLASS ID herencia LLAVE_I clases_02 LLAVE_D PUNTO_COMA nueva_clase   
-#                     | vacio
-                    
-#        herencia     : MENOR_QUE INHERITS MAYOR_QUE 
-#                     | vacio
-
-       
-#        nueva_clase  : clases'''
 def p_clases(p):
     '''clases       : CLASS ID herencia LLAVE_I 
                     
@@ -121,18 +112,28 @@ def p_clases(p):
     if(p[1] == 'class'):
         class_directory.add_class(p[2])
         s_scopes.append(p[2])
+
         # Create attribute Table (similar to Global variables in Symbol Table)
         class_directory.add_attributes_Table(p[2], 'Class_Globals', 'NC')
+        s_scopes.append('Class_Globals')
 
 def p_clases_02(p):
-    '''clases_02 :  atributos metodos LLAVE_D PUNTO_COMA pop_scope nueva_clase   
+    '''clases_02 : atributos metodos LLAVE_D PUNTO_COMA pop_scope nueva_clase   
 
-       atributos   : declaracion_variables 
+       atributos : add_scope_attributes declaracion_variables 
 
-       metodos     : declaracion_funciones
+       metodos   : add_scope_methods declaracion_funciones pop_scope
        
        nueva_clase : clases clases_02
                    | vacio'''
+
+def p_add_scope_attributes(p):
+    'add_scope_attributes :'
+    # s_scopes.append('Attributes')
+
+def p_add_scope_methods(p):
+    'add_scope_methods :'
+    # s_scopes.append('Methods')
 
 def p_declaracion_variables(p):
   '''declaracion_variables : variables PUNTO_COMA declaracion_variables
@@ -152,24 +153,60 @@ def p_variables(p):
         aux3 : COMA ID aux2 aux3
              | vacio'''
     # Add variables into symbol table
-    if (p[1] == 'var'):
-        s_var_declaration_ids.append(p[3])
-        # Put variables from stack into symbol table
-        while len(s_var_declaration_ids) > 0:
-            print("Variable added into symbolTable ->",s_var_declaration_ids[-1] )
-            symbol_table.add_item(s_scopes[-1] , s_var_declaration_ids.pop(), current_type)
+    if (p[1] == 'var'): 
+        # Add the left-most variable (last) into stack   
+        s_var_declaration_ids.append(p[3]) 
 
-            # if(s_scopes[-1] == 'Global' ): # Global variables: in symbolTable
-            #     # Variable global 
-            #     print("Variable added into symbolTable ->",s_var_declaration_ids[-1] )
-            #     symbol_table.add_item(s_scopes[-1] , s_var_declaration_ids.pop(), current_type)
-            # elif(len(s_scopes) == 3): # Local variables: in Function scope inside a class scope
-            #     print("Implementacion de variables locales dentro de un metodo de una clase")
+        # Get the current scope
+        current_scope = s_scopes.pop()  
+        # Put variables from stack into symbol table or class directory
+        while len(s_var_declaration_ids) > 0:
+            print(s_scopes)
+            # print("Variable added into symbolTable ->",s_var_declaration_ids[-1] )
+            # symbol_table.add_item(s_scopes[-1] , s_var_declaration_ids.pop(), current_type)
+          
+            if(current_scope == 'Global' ): # Global variables in SymbolTable  
+                variable_id = s_var_declaration_ids.pop()
+
+                # Add global variable into Symbol Table
+                symbol_table.add_item(current_scope , variable_id, current_type)
+                print("+Global variable added into symbolTable ->", variable_id )
+                
+            elif(current_scope == 'Class_Globals'): # Local variables in Class 
+                class_name = s_scopes[-1]
+                attribute_id = s_var_declaration_ids.pop()
+
+                # Add local variable in class scope 
+                class_directory.add_attribute(class_name, current_scope, attribute_id, current_type)
+                print("+Global attribute added into ClassDirectory ->", class_name, current_scope, attribute_id, current_type)
+            
+            elif(s_scopes[-1] == 'Class_Globals'): # Local variables in Methods in Class 
+                method_name = current_scope
+                s_scopes.pop() # Pop out 'Class_Globals' scope
+                class_name = s_scopes[-1]
+                variable_id = s_var_declaration_ids.pop()
+
+                # Add local variable in Method scope of a class 
+                class_directory.add_variable(class_name, method_name, variable_id, current_type)
+                print("+Local variable in a Method added into ClassDirectory ->", class_name, method_name, variable_id, current_type)
+
+                # Put 'Class_Globals' into stack
+                s_scopes.append('Class_Globals')
+
+            elif(s_scopes[-1] == 'Global'): # Local variables in functions in SymbolTable
+                function_name = current_scope
+                variable_id = s_var_declaration_ids.pop()
+
+                # Add local variable in function scope on SymbolTable
+                symbol_table.add_item(function_name, variable_id, current_type)
+                print("+Local variable in a Function added into symbolTable ->", function_name, variable_id, current_type )
+
+        s_scopes.append(current_scope) 
            
     elif (p[1] == ','):
         # Add variable into stack
         s_var_declaration_ids.append(p[2])
-        print("APPEND variable to var_declaration stack ->", p[2])
+        # print("APPEND variable to var_declaration stack ->", p[2])
 
 def p_tipo_simple(p):
     '''tipo_simple : INT 
@@ -186,26 +223,40 @@ def p_tipo_compuesto(p):
     current_type = p[1]
 
 def p_declaracion_funciones(p):
-  '''declaracion_funciones : funciones funciones2
+    '''declaracion_funciones : funciones funciones2
                            | vacio'''
 
 def p_funciones(p):
-  '''funciones    : FUNC funciones_tipo ID  
+    '''funciones    : FUNC funciones_tipo ID  
 
-    funciones_tipo : tipo_simple  
-                   | VOID'''
+        funciones_tipo : tipo_simple  
+                    | VOID'''
     
     # Add function scope into stack
-  if (p[1] == "func"):
-    s_scopes.append(p[3])
-    print("Scope added in stack: ", p[3])
+    if (p[1] == "func"):
+        function_name = p[3]
+        current_scope = s_scopes[-1]
+        if(current_scope == 'Global'): # Add function in Symbol Table
+            
+            # print("Scope added in stack: ", p[3])
 
-    # Add function into Symbol Table
-    symbol_table.add_scope(p[3], p[2])
-    print("Scope added in symbol table: ", p[3])
+            # Add function into Symbol Table
+            symbol_table.add_scope(function_name, current_type)
+            s_scopes.append(function_name)
+            print("FUNCTION added in Symbol Table: ", function_name, current_type)
 
+        else: # Add method in class directory
+            
+            s_scopes.pop() # Remove 'Class_Globals'
+            class_name = s_scopes[-1] # Class scope
+            s_scopes.append(current_scope) # Add 'Class_Globals'
 
-def p_funciones2(p): 
+            # Add method in class
+            class_directory.add_method(class_name, function_name, current_type)
+            s_scopes.append(function_name)
+            print("METHOD added in Class Directory: ", class_name, function_name, current_type)
+
+def p_funciones2(p):
     '''funciones2  : PARENTESIS_I declaracion_parametros PARENTESIS_D LLAVE_I declaracion_variables estatutos LLAVE_D pop_scope funciones_rep
     funciones_rep  : funciones funciones2
                    | vacio'''

@@ -34,11 +34,11 @@ class ClassDirectory:
       return self.dir[class_name].add_scope(method_name, data_type)
   
   # Add a
-  def add_attribute(self, class_name, var_id, data_type):
+  def add_attribute(self, class_name, vars_scope, var_id, data_type):
     if not self.scope_exists(class_name):
       return False
     else:
-      return self.dir[class_name].get
+      return self.dir[class_name].add_item(vars_scope, var_id, data_type)
 
   # Add variable in a method 
   def add_variable(self, class_name, method_name, var_id, data_type):
@@ -48,7 +48,6 @@ class ClassDirectory:
     #   return False
     else:
       return self.dir[class_name].add_item(method_name, var_id, data_type)
-
 
   # Delete object
   def remove(self):
