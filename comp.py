@@ -4,9 +4,9 @@ from lexer import *
 
 from collections import deque
 
-from SymbolTable import SymbolTable
-from SemanticTypeTable import SemanticTypeTable
-from ClassDirectory import ClassDirectory
+from Classes.FunctionDirectory import FunctionDirectory
+from Classes.SemanticTypeTable import SemanticTypeTable
+from Classes.ClassDirectory import ClassDirectory
 
 # --------------
 # Build lexer (lexer)
@@ -44,6 +44,30 @@ current_type = ''
 temporal_variable_base_name = "temp"
 temporal_variable_count = 0
 
+# Global Variable Address
+global_variable_INT_address = 1000      # Int global address (1,000 - 3,999)
+temporal_global_INT_address = 4000      # Temporal global INT (4,000 - 4,999)
+
+global_variable_FLOAT_address = 5000    # Float global address (5,000 - 7,999)
+temporal_global_FLOAT_address = 8000    # Temporal global Float (8,000 - 8,999)
+
+global_variable_CHAR_address = 9000     # Char global address (9,000 - 11,999)
+temporal_global_CHAR_address = 12000    # Temporal global Float (12,000 - 12,999)
+
+temporal_global_BOOL_address = 13000    # Temporal global Bool (13,000 - 13,999)
+
+# Local Variable Address
+local_variable_INT_address = 14000      # Int global address (14,000 - 16,999)
+temporal_local_INT_address = 17000      # Temporal global INT (17,000 - 17,999)
+
+local_variable_FLOAT_address = 18000    # Float global address (18,000 - 20,999)
+temporal_global_FLOAT_address = 21000    # Temporal global Float (21,000 - 21,999)
+
+local_variable_CHAR_address = 22000     # Char global address (22,000 - 24,999)
+temporal_local_CHAR_address = 25000    # Temporal global Float (25,000 - 25,999)
+
+temporal_local_BOOL_address = 26000    # Temporal global Bool (26,000 - 26,999)
+
 # Precedence
 precedence = (
     ('left', 'MAS', 'MENOS'),
@@ -58,39 +82,47 @@ def p_vacio(p):
      pass
 
 def p_programa(p):
-    'programa : PROGRAM init_global_env ID program_name PUNTO_COMA declaracion_clases declaracion_variables declaracion_funciones main'
+    'programa : PROGRAM init_global_env ID program_name PUNTO_COMA quad_GOTO_Main declaracion_clases declaracion_variables declaracion_funciones main'
 
 # Create an instance of ...
 def p_init_global_env(p):
     'init_global_env :'
-    global symbol_table
+    global function_directory
     global semantic_cube
     global class_directory
 
-    symbol_table = SymbolTable()
+    function_directory = FunctionDirectory()
     semantic_cube = SemanticTypeTable()
     class_directory = ClassDirectory()
 
-# Add row to SymbolTable for global
+# Add row to FunctionDirectory for global
 def p_program_name(p):
   'program_name :'
   s_scopes.append('Global')
 #   print("Scope added in STACK: Global")
-  symbol_table.add_scope('Global', 'NP')
-#   print("Scope added in SYMBOL TABLE: Global")
+  function_directory.add_scope('Global', 'NP')
+#   print("Scope added in FUNCTION DIRECTORY: Global")
+
+def p_quad_GOTO_Main(p):
+    'quad_GOTO_Main :'
+    pending_GOTO_Main = ('GOTO', None, None, None) #  
+    l_quadrupules.append(pending_GOTO_Main)
+
+    pending_GOTO_Main_index = len(l_quadrupules)-1
+    s_jumps(pending_GOTO_Main)
 
 def p_main(p):
-    'main : MAIN PARENTESIS_I PARENTESIS_D bloque'
+    'main : MAIN PARENTESIS_I PARENTESIS_D fill_pending_GOTO_Main bloque'
     #   
     s_scopes.pop()
     print("Scope deleted from STACK: Global")
-    print("---- SymbolTable")
-    symbol_table.print()
-    symbol_table.get_scope('suma').print()
+    print("---- FunctionDirectory")
+    function_directory.print()
+    function_directory.get_scope('suma').print()
     print("---- ClassDirectory")
     class_directory.print()
     print("---- Mult_Class Table")
-    mult = class_directory.get_scope('mult')
+    mult = class_directory.get_class('mult')
     mult.print()
     print("---- Multiplicacion_MEthod Table")
     mult.get_scope('multiplicacion').print()
@@ -98,6 +130,16 @@ def p_main(p):
     for index in range(len(l_quadrupules)):
         print(index, l_quadrupules[index])
     # print(*l_quadrupules,sep = "\n")
+
+def p_fill_pending_GOTO_Main(p):
+    'fill_pending_GOTO_Main :'
+    pending_GOTO_Main_index = s_jumps.pop()
+    pending_GOTO_Main = l_quadrupules[pending_GOTO_Main_index]
+
+    first_quadruple_of_Main = len(l_quadrupules)
+    new_GOTO_Main = (pending_GOTO_Main[0], None, None, first_quadruple_of_Main)
+
+    l_quadrupules[pending_GOTO_Main_index] = new_GOTO_Main
 
 def p_bloque(p):
     '''bloque     : LLAVE_I estatutos LLAVE_D
@@ -121,7 +163,7 @@ def p_clases(p):
         else:
             s_scopes.append(p[2])
 
-            # Create attribute Table (similar to Global variables in Symbol Table)
+            # Create attribute Table (similar to Global variables in Function Directory)
             class_directory.add_attributes_Table(p[2], 'Class_Globals', 'NC')
             s_scopes.append('Class_Globals')
 
@@ -153,25 +195,25 @@ def p_variables(p):
             
         aux3 : COMA ID aux2 aux3
              | vacio'''
-    # Add variables into symbol table
+    # Add variables into Function Directory
     if (p[1] == 'var'): 
         # Add the left-most variable (last) into stack   
         s_var_declaration_ids.append(p[3]) 
 
         # Get the current scope
         current_scope = s_scopes.pop()  
-        # Put variables from stack into symbol table or class directory
+        # Put variables from stack into function directory or class directory
         while len(s_var_declaration_ids) > 0:
             print(s_scopes)
-            # print("Variable added into symbolTable ->",s_var_declaration_ids[-1] )
-            # symbol_table.add_item(s_scopes[-1] , s_var_declaration_ids.pop(), current_type)
+            # print("Variable added into functionDirectory ->",s_var_declaration_ids[-1] )
+            # function_directory.add_item(s_scopes[-1] , s_var_declaration_ids.pop(), current_type)
           
-            if(current_scope == 'Global' ): # Global variables in SymbolTable  
+            if(current_scope == 'Global' ): # Global variables in FunctionDirectory  
                 variable_id = s_var_declaration_ids.pop()
 
-                # Add global variable into Symbol Table
-                symbol_table.add_item(current_scope , variable_id, current_type)
-                print("+Global variable added into symbolTable ->", variable_id )
+                # Add global variable into Function Directory
+                function_directory.add_item(current_scope , variable_id, current_type)
+                print("+Global variable added into functionDirectory ->", variable_id )
                 
             elif(current_scope == 'Class_Globals'): # Local variables in Class 
                 class_name = s_scopes[-1]
@@ -194,13 +236,13 @@ def p_variables(p):
                 # Put 'Class_Globals' into stack
                 s_scopes.append('Class_Globals')
 
-            elif(s_scopes[-1] == 'Global'): # Local variables in functions in SymbolTable
+            elif(s_scopes[-1] == 'Global'): # Local variables in functions in functionDirectory
                 function_name = current_scope
                 variable_id = s_var_declaration_ids.pop()
 
-                # Add local variable in function scope on SymbolTable
-                symbol_table.add_item(function_name, variable_id, current_type)
-                print("+Local variable in a Function added into symbolTable ->", function_name, variable_id, current_type )
+                # Add local variable in function scope on FunctionDirectory
+                function_directory.add_item(function_name, variable_id, current_type)
+                print("+Local variable in a Function added into functionDirectory ->", function_name, variable_id, current_type )
 
         s_scopes.append(current_scope) 
            
@@ -237,23 +279,33 @@ def p_funciones(p):
     if (p[1] == "func"):
         function_name = p[3]
         current_scope = s_scopes[-1]
-        if(current_scope == 'Global'): # Add function in Symbol Table
+        if(current_scope == 'Global'): # Add function in Function Directory
+
+            # Insert number of temporals before quadruples from Estatuos
+            function_directory.get_scope(function_name).set_number_of_temporals(temporal_variable_count)
             
             # print("Scope added in stack: ", p[3])
 
-            # Add function into Symbol Table
-            if (symbol_table.add_scope(function_name, current_type) == False):
-                print('ERROR: Function',function_name,'already declared in symbol table')
+            # Add function into Function Directory
+            if (function_directory.add_scope(function_name, current_type) == False):
+                print('ERROR: Function',function_name,'already declared in function directory')
                 exit()
             else:
+                inital_address = len(l_quadrupules)
+                function_directory.get_scope(function_name).set_inital_address(inital_address)
+
                 s_scopes.append(function_name)
-                print("FUNCTION added in Symbol Table: ", function_name, current_type)
+                print("FUNCTION added in Function Directory: ", function_name, current_type)
 
         else: # Add method in class directory
+            
             
             s_scopes.pop() # Remove 'Class_Globals'
             class_name = s_scopes[-1] # Class scope
             s_scopes.append(current_scope) # Add 'Class_Globals'
+
+            # Insert number of temporals before quadruples from Estatuos
+            class_directory.get_class(class_name).get_scope(function_name).set_number_of_temporals(temporal_variable_count)
 
             # Add method in class
             if (class_directory.add_method(class_name, function_name, current_type) == False):
@@ -264,9 +316,37 @@ def p_funciones(p):
                 print("METHOD added in Class Directory: ", class_name, function_name, current_type)
 
 def p_funciones2(p):
-    '''funciones2  : PARENTESIS_I declaracion_parametros PARENTESIS_D LLAVE_I declaracion_variables estatutos LLAVE_D pop_scope funciones_rep
+    '''funciones2  : PARENTESIS_I declaracion_parametros PARENTESIS_D LLAVE_I declaracion_variables estatutos LLAVE_D func_closure funciones_rep
     funciones_rep  : funciones funciones2
                    | vacio'''
+
+def p_func_closure(p):
+    'func_closure :'
+    func_name = s_scopes.pop()
+
+    if(s_scopes[-1] == 'Global'):
+        # Delete vars table from function
+        function_directory.get_scope(func_name).remove_vars_table()
+
+        # 
+        quadruple = ('ENDPROC', None, None, None)
+        l_quadrupules.append(quadruple)
+
+        # Set number of temporals in a global function
+        intial_number_of_temporals = function_directory.get_scope(func_name).get_number_of_temporals()
+        function_directory.get_scope(func_name).set_number_of_temporals(temporal_variable_count - intial_number_of_temporals)
+    else:
+        class_globals = s_scopes.pop() # Remove 'Class_Globals'
+        class_name = s_scopes[-1]
+
+        quadruple = ('ENDPROC', None, None, None)
+        l_quadrupules.append(quadruple)
+
+        # Set number of temporals in a method
+        intial_number_of_temporals = class_directory.get_class(class_name).get_scope(func_name).get_number_of_temporals()
+        class_directory.get_class(class_name).get_scope(func_name).set_number_of_temporals(temporal_variable_count - intial_number_of_temporals)
+
+        s_scopes.append(class_globals)
 
 # Remove  scope from stack
 def p_pop_scope(p):
@@ -281,8 +361,8 @@ def p_param(p):
     '''param : tipo_simple ID '''    
     function_name = s_scopes.pop()
 
-    if(s_scopes[-1] == 'Global'): # Add parameter (local variable) from function scope into Symbol Table
-        symbol_table.add_item(function_name, p[2], current_type)
+    if(s_scopes[-1] == 'Global'): # Add parameter (local variable) from function scope into Function Directory
+        function_directory.add_item(function_name, p[2], current_type)
         print("PARAMETER(SymTable):", function_name, p[2], current_type)
 
         s_scopes.append(function_name) # Put back function scope in stack
@@ -317,7 +397,7 @@ def p_variable(p):
                 | vacio '''
     if(len(p) == 3):
         s_operands.append(p[1])
-        variable_type = symbol_table.get_scope(s_scopes[-1]).search(p[1])
+        variable_type = function_directory.get_scope(s_scopes[-1]).search(p[1])
         if(not variable_type == False):
             s_types.append(variable_type)
         else:
@@ -582,7 +662,7 @@ def p_quadrupule_creation_relational(p):
 
             if(not res_type == 'ERROR'):
                 # Temporable variable simulation
-                global temporal_variable_count
+                # global temporal_variable_count
                 result = temporal_variable_base_name + str(temporal_variable_count)
                 temporal_variable_count += 1
                 print("temporal variable: ", result)
@@ -723,24 +803,53 @@ def p_quadrupule_creation_02(p):
 
 def p_factor(p):
     '''factor : varcte 
-              | ID factor2
-              | PARENTESIS_I parenthesis_left_append expresion PARENTESIS_D parenthesis_left_pop'''
+              | ID 
+              | ID CORCHETE_I exp CORCHETE_D 
+              | ID CORCHETE_I exp COMA exp CORCHETE_D 
+              | ID PARENTESIS_I exp multiple_exp PARENTESIS_D
+              | ID PUNTO ID 
+              | ID PUNTO ID PARENTESIS_I exp multiple_exp PARENTESIS_D
+              | PARENTESIS_I parenthesis_left_append exppresion PARENTESIS_D parenthesis_left_pop '''
 
-    # Add ID into operands stack. 
-    if(len(p) == 3):
-        operand_type = symbol_table.get_scope(s_scopes[-1]).search(p[1]) # Get variable´s type
-
-        if(operand_type):
-            s_operands.append(p[1])
-            print("$$$ Operand ", p[1], "added into s_operands $$$")
-
-            s_types.append(operand_type)
-            print("$$$ Operand_type added into stack: ", operand_type)
-        else:
-            print("Variable", p[1], "is not declared")
-            exit()
-    # Pendiente considerar las constantes alv. Ponte vergas
     
+    if(len(p) == 2):
+        # Add ID into operands stack. 
+        if( p[1] != t_CTEINT and p[1] != t_CTEFLOAT and p[1] != t_CTECHAR):
+
+            operand_type = function_directory.get_scope(s_scopes[-1]).search(p[1]) # Get variable´s type
+
+            if(operand_type):
+                s_operands.append(p[1])
+                print("$$$ Operand ", p[1], "added into s_operands $$$")
+
+                s_types.append(operand_type)
+                print("$$$ Operand_type added into stack: ", operand_type)
+            else:
+                print("Variable", p[1], "is not declared")
+                exit()
+        else:
+            print("Implementacion de constantes")
+            # Pendiente considerar las constantes alv. Ponte vergas
+    elif len(p) == 4:
+        print("Atributo de clase")
+
+    elif(len(p) == 6 and p[1] != '('): # LLamada a funcion non-void
+
+        print("Llamada función")
+
+    elif len(p) == 5:
+        print("Arreglo")
+
+    elif len(p) == 7:
+        print("Matriz")
+
+    elif len(p) == 8:
+        print("LLamada método")          
+
+def p_multiple_exp(p):
+    '''multiple_exp : COMA exp multiple_exp
+                    | vacio '''
+
 def p_parenthesis_left_append(p):
     'parenthesis_left_append :'
     s_operators.append('PARENTESIS_I')
@@ -750,24 +859,6 @@ def p_parenthesis_left_pop(p):
     'parenthesis_left_pop :'
     s_operators.pop()
     print("$$$ Parenteis izquierdo sacado del stack $$$")
-
-def p_factor2(p):
-    '''factor2 : CORCHETE_I expresion CORCHETE_D
-               | CORCHETE_I expresion COMA expresion CORCHETE_D
-               | PARENTESIS_I expresion multiple_expresion PARENTESIS_D
-               | PUNTO ID
-               | PUNTO ID PARENTESIS_I r PARENTESIS_D
-               | vacio
-
-       r      : varcte s
-              | vacio
-              
-       s      : COMA varcte  s
-              | vacio '''
-
-def p_multiple_expresion(p):
-    '''multiple_expresion : COMA expresion multiple_expresion
-                          | vacio '''
 
 def p_varcte(p):
     '''varcte : CTECHAR

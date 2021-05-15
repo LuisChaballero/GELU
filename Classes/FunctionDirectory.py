@@ -1,18 +1,11 @@
-# from Table import Table
-from Table import Table # Import Table class
 
-class SymbolTable:
+from Classes.Scope import Scope
+# from Scope import Scope
+
+class FunctionDirectory:
   def __init__(self):
     self.dir = {}
 
-  # Add a scope to the SymbolTable
-  def add_scope(self, scope, data_type):
-    if self.scope_exists(scope):
-      return False
-    else:
-      self.dir[scope] = Table(data_type)
-      return True
-  
   # Check if scope exists
   def scope_exists(self, scope):
     return self.dir.get(scope, False)
@@ -26,15 +19,20 @@ class SymbolTable:
     else:
       return False
 
-  # Add scope to table
-  # def add_scope(self, scope, var_id, data_type):
+  # Add a scope to the FunctionDirectory
+  def add_scope(self, scope, data_type):
+    if self.scope_exists(scope):
+      return False
+    else:
+      self.dir[scope] = Scope(data_type)
+      return True
 
   # Add item to scope
-  def add_item(self, scope, var_id, data_type):
+  def add_item(self, scope, var_id, var_data_type):
     if not self.scope_exists(scope):
       return False
     else:
-      return self.dir[scope].add_item(var_id, data_type)
+      return self.dir[scope].add_parameter(var_id, var_data_type)
 
   # Delete object
   def remove(self):

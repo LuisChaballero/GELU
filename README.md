@@ -51,3 +51,7 @@ Se implementarion funciones adicionales en ClassDirectory. Se implementó la añ
 ##12/05/2021
 
 Se implementó la añadidura de los parametros a los metodos de clases. 
+
+###*Sexto avance* - 10/05/2021
+
+Se modificaron las clases de la implementación del directorio de funciones para manejar el guardado de parametros, la dirección de inicialización. Se implementaron los cuadruplos en la delcaración de funciones y métodos. Se modificó parte de la gramatica en las expresiones (Algunos tenian que ser Exp en ves de Expresion). Queda pendiente los cuadruplos de las llamadas a función

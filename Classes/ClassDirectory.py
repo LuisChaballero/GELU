@@ -1,6 +1,6 @@
-# from Table import Table
-from SymbolTable import SymbolTable # Import Table class
-from Table import Table
+
+from Classes.FunctionDirectory import FunctionDirectory
+# from FunctionDirectory import FunctionDirectory  # Import Table class
 
 class ClassDirectory:
   def __init__(self):
@@ -11,7 +11,7 @@ class ClassDirectory:
     if self.scope_exists(class_name): # Class already exists
       return False
     else:
-      self.dir[class_name] = SymbolTable()
+      self.dir[class_name] = FunctionDirectory()
       return self.dir[class_name]
 
   # Check if a class or attributes_Table exists
@@ -54,8 +54,8 @@ class ClassDirectory:
     del self
 
   # Get scope's items
-  def get_scope(self, scope):
-    if not self.scope_exists(scope):
+  def get_class(self, class_name):
+    if not self.scope_exists(class_name):
       return False
     else:
       return self.dir[scope]
