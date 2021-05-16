@@ -1,44 +1,38 @@
 
 program test0 ;
 
-var int foo, A, B, C, D, E, i;
-var int z, cont;
+var int i, j, k;
+var float f;
 
-
-
-main() { 
-    print("HELLO WORLD UWU!", "LOL", foo);
-
-    if ( A < D) {
-        print("IF_01 STARTS!");
-        while( A + B > C * D) {
-            print("WHILE STARTS!");
-            A =  B + ( z + D / A);
-            print("WHILE ENDS!");
-        }
-        D = C / A - B;
-        print("IF_01 ENDS!");
+func void uno(int a, int b) {
+    if (a>b) {
+        i = a+b*j+i;
+        print ( i+j );
+        uno (a-i, i);
     }
     else {
-        print("ELSE!");
-        foo = A * B;
-        print(foo);
-    }   
-
-    B = B - A + z; 
-
-    for i = z until (A - E < B * C) {
-        print("FOR STARTS!");
-        if (z - B <> E) {
-            print("IF_02 STARTS!");
-            C = A + B * A;
-            print("IF_02 ENDS!");
-        }
-        
-        B = C - D;
-        print("FOR ENDS!");
+        print ( a + b );
     }
+}
 
-    z = A / E;
-    print(z);
+func int dos(int a, float g) {
+    var int i;
+    i=a;
+    while (a>j) {
+        a=a-k*j;
+        uno(a*a, a+k);
+        g=g*j-k;
+    }
+    return  (i+k*j);
+}
+
+main() { 
+    i=k; 
+    k=i+i;
+    f=f;
+
+    while (i > j) {
+        print( i ,j*i,f*k+f);
+    }
+   
 }

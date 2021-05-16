@@ -13,7 +13,7 @@ class Scope:
 
   # Returns the dictionary of elements
   def get_table(self):
-    return self.vars_table
+    return self.vars_table.get_vars_table()
 
   def get_data_type(self):
     return self.data_type
@@ -30,7 +30,7 @@ class Scope:
   def get_initial_address(self):
     return self.initial_address
 
-  def get_numbers_of_parameters(self):
+  def get_number_of_parameters(self):
     return len(self.params_table)
   
   def add_parameter(self, var_id, var_data_type):
@@ -46,4 +46,6 @@ class Scope:
 
   def print(self):
     print(self.vars_table)
+    # self.vars_table.print()
+    # print(self.vars_table)
     # print("VarTable:"+self.vars_table+", data_type:"+self.data_type+", parameters"+self.params_table)

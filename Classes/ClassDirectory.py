@@ -58,7 +58,7 @@ class ClassDirectory:
     if not self.scope_exists(class_name):
       return False
     else:
-      return self.dir[scope]
+      return self.dir[class_name]
 
   def print(self):
     print(self.dir)

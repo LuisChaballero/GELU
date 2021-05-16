@@ -13,7 +13,7 @@ from Classes.ClassDirectory import ClassDirectory
 lexer = lex.lex()
 
 # Read text file (prueba1.txt / prueba2.txt)
-f = open('prueba2.txt','r')
+f = open('prueba1.txt','r')
 data = f.read()
 
 # Test lex with text file
@@ -33,9 +33,12 @@ s_operands = deque() # To keep track of operands in expresions
 s_types = deque() # To keep track of the operands' types
 s_print_items = deque() # To keep track of all the strings and expresions used in a PRINT
 s_jumps = deque() # To keep track of all the conditional jumps for GOTO
+s_function_call_arguments = deque() # To verify the arguments in a function call with parameters table
+s_function_call_argument_types = deque() # Arguments' type in a function call
 
 # Declared lists
 l_quadrupules = [] # To save the code optimization in form of quadrupules. (op, op_izq, op_der, res)
+
 
 # current type for declared variable 
 current_type = ''
@@ -43,6 +46,9 @@ current_type = ''
 # Simulates the implementation of temporal variables 
 temporal_variable_base_name = "temp"
 temporal_variable_count = 0
+
+# Counter to verify the arguments in a function call with the parameters table
+argument_counter = 0
 
 # Global Variable Address
 global_variable_INT_address = 1000      # Int global address (1,000 - 3,999)
@@ -109,23 +115,24 @@ def p_quad_GOTO_Main(p):
     l_quadrupules.append(pending_GOTO_Main)
 
     pending_GOTO_Main_index = len(l_quadrupules)-1
-    s_jumps(pending_GOTO_Main)
+    s_jumps.append(pending_GOTO_Main_index)
 
 def p_main(p):
-    'main : MAIN PARENTESIS_I PARENTESIS_D fill_pending_GOTO_Main bloque'
+    'main : MAIN PARENTESIS_I PARENTESIS_D fill_pending_GOTO_Main bloque append_END_quad'
     #   
     s_scopes.pop()
     print("Scope deleted from STACK: Global")
     print("---- FunctionDirectory")
     function_directory.print()
-    function_directory.get_scope('suma').print()
-    print("---- ClassDirectory")
-    class_directory.print()
-    print("---- Mult_Class Table")
-    mult = class_directory.get_class('mult')
-    mult.print()
-    print("---- Multiplicacion_MEthod Table")
-    mult.get_scope('multiplicacion').print()
+    # print("function_directory.get_scope('suma'):",function_directory.get_scope('suma').get_table())
+    # function_directory.get_scope('suma').print()
+    # print("---- ClassDirectory")
+    # class_directory.print()
+    # print("---- Mult_Class Table")
+    # mult = class_directory.get_class('mult')
+    # mult.print()
+    # print("---- Multiplicacion_MEthod Table")
+    # mult.get_scope('multiplicacion').print()
     print("---------------- QUADRUPULES LIST -------------------")
     for index in range(len(l_quadrupules)):
         print(index, l_quadrupules[index])
@@ -140,6 +147,11 @@ def p_fill_pending_GOTO_Main(p):
     new_GOTO_Main = (pending_GOTO_Main[0], None, None, first_quadruple_of_Main)
 
     l_quadrupules[pending_GOTO_Main_index] = new_GOTO_Main
+def p_append_END_quad(p):
+    'append_END_quad :'
+    quadruple_END = ('END', None, None, None)
+    l_quadrupules.append(quadruple_END)
+    print(quadruple_END)
 
 def p_bloque(p):
     '''bloque     : LLAVE_I estatutos LLAVE_D
@@ -269,21 +281,22 @@ def p_declaracion_funciones(p):
     '''declaracion_funciones : funciones funciones2
                            | vacio'''
 
+def p_current_type_void_function(p):
+    'current_type_void_function :'
+    global current_type
+    current_type = 'VOID'
+
 def p_funciones(p):
     '''funciones    : FUNC funciones_tipo ID  
 
-        funciones_tipo : tipo_simple  
-                    | VOID'''
+     funciones_tipo : tipo_simple  
+                    | VOID current_type_void_function'''
     
     # Add function scope into stack
     if (p[1] == "func"):
         function_name = p[3]
         current_scope = s_scopes[-1]
         if(current_scope == 'Global'): # Add function in Function Directory
-
-            # Insert number of temporals before quadruples from Estatuos
-            function_directory.get_scope(function_name).set_number_of_temporals(temporal_variable_count)
-            
             # print("Scope added in stack: ", p[3])
 
             # Add function into Function Directory
@@ -291,8 +304,12 @@ def p_funciones(p):
                 print('ERROR: Function',function_name,'already declared in function directory')
                 exit()
             else:
+                # Insert number of temporals before quadruples from Estatuos
+                function_directory.get_scope(function_name).set_number_of_temporals(temporal_variable_count)
+
+                # Insert reference of where to jump to execute the function's quadruples when called
                 inital_address = len(l_quadrupules)
-                function_directory.get_scope(function_name).set_inital_address(inital_address)
+                function_directory.get_scope(function_name).set_initial_address(inital_address)
 
                 s_scopes.append(function_name)
                 print("FUNCTION added in Function Directory: ", function_name, current_type)
@@ -304,14 +321,18 @@ def p_funciones(p):
             class_name = s_scopes[-1] # Class scope
             s_scopes.append(current_scope) # Add 'Class_Globals'
 
-            # Insert number of temporals before quadruples from Estatuos
-            class_directory.get_class(class_name).get_scope(function_name).set_number_of_temporals(temporal_variable_count)
-
             # Add method in class
             if (class_directory.add_method(class_name, function_name, current_type) == False):
                 print('ERROR: Method',function_name,' in class', class_name, 'already declared')
                 exit()
             else:
+                # Insert number of temporals before quadruples from Estatuos
+                class_directory.get_class(class_name).get_scope(function_name).set_number_of_temporals(temporal_variable_count)
+
+                # Insert reference of where to jump to execute the function's quadruples when called
+                inital_address = len(l_quadrupules)
+                class_directory.get_class(class_name).get_scope(function_name).set_initial_address(inital_address)
+
                 s_scopes.append(function_name)
                 print("METHOD added in Class Directory: ", class_name, function_name, current_type)
 
@@ -326,7 +347,7 @@ def p_func_closure(p):
 
     if(s_scopes[-1] == 'Global'):
         # Delete vars table from function
-        function_directory.get_scope(func_name).remove_vars_table()
+        # function_directory.get_scope(func_name).remove_vars_table()
 
         # 
         quadruple = ('ENDPROC', None, None, None)
@@ -392,12 +413,14 @@ def p_estatuto(p):
 
 def p_variable(p):
     '''variable : ID h
-       h        : CORCHETE_I expresion CORCHETE_D 
-                | CORCHETE_I expresion COMA expresion CORCHETE_D
+       h        : CORCHETE_I exp CORCHETE_D 
+                | CORCHETE_I exp COMA exp CORCHETE_D
                 | vacio '''
     if(len(p) == 3):
         s_operands.append(p[1])
-        variable_type = function_directory.get_scope(s_scopes[-1]).search(p[1])
+        print("######## Variable var_exists", function_directory.var_exists(s_scopes[-1], p[1]))
+        # variable_type = function_directory.get_scope(s_scopes[-1]).search(p[1])
+        variable_type = function_directory.var_exists(s_scopes[-1], p[1])
         if(not variable_type == False):
             s_types.append(variable_type)
         else:
@@ -428,16 +451,112 @@ def p_asignacion(p):
         exit()
 
 def p_llamada_void(p):
-    '''llamada_void : ID PARENTESIS_I expresion I PARENTESIS_D
+    '''llamada_void : ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D PUNTO_COMA
+                    | ID PUNTO ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D PUNTO_COMA
 
-       I            : COMA expresion I 
+       posible_exp  : exp append_argument I
+                    | vacio
+
+       I            : COMA exp append_argument I 
                     | vacio'''
+
+    if len(p) == 7: # Void function calls
+        global argument_counter
+        func_name = p[1]
+        if not function_directory.scope_exists(func_name):
+            print("ERROR: Function",func_name,"not declared")
+            exit()
+        # Verify number of arguments in function call
+        elif function_directory.get_scope(func_name).get_number_of_parameters() != argument_counter:
+            print("ERROR: Incoherence in number of arguments in function call", func_name)
+            exit()
+                
+        else:
+            quadruple_ERA = ('ERA', func_name, None, None)
+            l_quadrupules.append(quadruple_ERA)
+
+            argument_counter = 0
+            # Create PARAMETER quadruple for each argument
+            while(len(s_function_call_arguments) > 0):
+                # Remove the argument in order
+                argument = s_function_call_arguments.popleft()
+                argument_type = s_function_call_argument_types.popleft()
+
+                # Verify argument type
+                if argument_type != function_directory.get_scope(func_name).params_table[argument_counter]:
+                    print("ERROR: Argument type is incorrect in function call", func_name)
+                    exit()
+                else:
+                    quadruple_PARAMETER = ('PARAMETER', argument, None, argument_counter)
+                    l_quadrupules.append(quadruple_PARAMETER)
+                    argument_counter +=1
+
+            quadruple_GOSUB = ('GOSUB', func_name, None, None)
+            l_quadrupules.append(quadruple_GOSUB)
+
+    elif len(p) == 8: # void methods from a class
+        class_name = p[1]
+        method_name = p[3]
+        if not class_directory.scope_exists(class_name):
+            print("ERROR: Class",class_name,"not declared")
+            exit()
+        elif not class_directory.get_class(class_name).get_scope(method_name):
+            print("ERROR: Method",method_name,"not declared in class", class_name)
+            exit()
+        elif class_directory.get_class(class_name).get_scope(method_name).get_number_of_parameters() != argument_counter:
+            print("ERROR: Incoherence in number of arguments in method call", method_name)
+            exit()
+        else:
+            quadruple_ERA = ('ERA', method_name, None, None)
+            l_quadrupules.append(quadruple_ERA)
+
+            argument_counter = 0
+
+            # Create PARAMETER quadruple for each argument
+            while(len(s_function_call_arguments) > 0):
+                # Remove the argument in order
+                argument = s_function_call_arguments.popleft()
+                argument_type = s_function_call_argument_types.popleft()
+
+                # Verify argument type
+                if argument_type != class_directory.get_class(class_name).get_scope(method_name).params_table[argument_counter]:
+                    print("ERROR: Argument type is incorrect in function call", method_name)
+                    exit()
+
+                quadruple_PARAMETER = ('PARAMETER', argument, None, argument_counter)
+                l_quadrupules.append(quadruple_PARAMETER)
+                argument_counter +=1
+
+            quadruple_GOSUB = ('GOSUB', method_name, None, None)
+            l_quadrupules.append(quadruple_GOSUB)
+
+def p_reset_argument_counter(p):
+    'reset_argument_counter :'
+    global argument_counter
+    argument_counter = 0
+
+def p_append_argument(p):
+    'append_argument :'
+    argument = s_operands.pop()
+    argument_type = s_types.pop()
+
+    s_function_call_arguments.append(argument)
+    s_function_call_argument_types.append(argument_type)
+
+    global argument_counter
+    argument_counter+=1
 
 def p_lectura(p):
     'lectura : READ variable'
 
 def p_retorno(p):
     'retorno : RETURN expresion PUNTO_COMA'
+    expresion_result = s_operands.pop()
+    expresion_type = s_types.pop()
+
+    quadruple_RETURN = ('RETURN', None, None, expresion_result)
+    l_quadrupules.append(quadruple_RETURN)
+    print(quadruple_RETURN)
 
 def p_escritura(p):
     '''escritura : PRINT PARENTESIS_I escritura2 PARENTESIS_D quad_print PUNTO_COMA'''
@@ -662,7 +781,7 @@ def p_quadrupule_creation_relational(p):
 
             if(not res_type == 'ERROR'):
                 # Temporable variable simulation
-                # global temporal_variable_count
+                global temporal_variable_count
                 result = temporal_variable_base_name + str(temporal_variable_count)
                 temporal_variable_count += 1
                 print("temporal variable: ", result)
@@ -809,14 +928,16 @@ def p_factor(p):
               | ID PARENTESIS_I exp multiple_exp PARENTESIS_D
               | ID PUNTO ID 
               | ID PUNTO ID PARENTESIS_I exp multiple_exp PARENTESIS_D
-              | PARENTESIS_I parenthesis_left_append exppresion PARENTESIS_D parenthesis_left_pop '''
+              | PARENTESIS_I parenthesis_left_append expresion PARENTESIS_D parenthesis_left_pop '''
 
     
     if(len(p) == 2):
         # Add ID into operands stack. 
         if( p[1] != t_CTEINT and p[1] != t_CTEFLOAT and p[1] != t_CTECHAR):
 
-            operand_type = function_directory.get_scope(s_scopes[-1]).search(p[1]) # Get variable´s type
+            # print("##########################var_exists: ", function_directory.var_exists(s_scopes[-1], p[1]),p[1])
+            # operand_type = function_directory.get_scope(s_scopes[-1]).search(p[1]) # Get variable´s type
+            operand_type = function_directory.var_exists(s_scopes[-1], p[1]) # Search in current_scope then in 'Global'
 
             if(operand_type):
                 s_operands.append(p[1])

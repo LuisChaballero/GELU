@@ -16,7 +16,11 @@ class VarsTable:
     return len(self.table)
 
   def search(self, id):
-    return self.table.get(id, False)
+    if not id in self.table: 
+      return False
+    else:
+      return self.table[id].get_data_type()
+    # return self.table.get(id, False)
 
   def add_item(self, id, data_type):
     if not id in self.table:

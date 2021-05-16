@@ -12,12 +12,18 @@ class FunctionDirectory:
 
   # Check if var is in global or specific scope
   def var_exists(self, scope, var_id):
-    if var_id in self.dir[scope]:
-      return True
-    elif var_id in self.dir['global']:
-      return True
+    if self.dir[scope].search(var_id):
+      return self.dir[scope].search(var_id)
+    elif self.dir['Global'].search(var_id):
+      return self.dir['Global'].search(var_id)
     else:
       return False
+    # if var_id in self.dir[scope]:
+    #   return True
+    # elif var_id in self.dir['global']:
+    #   return True
+    # else:
+    #   return False
 
   # Add a scope to the FunctionDirectory
   def add_scope(self, scope, data_type):
