@@ -14,8 +14,6 @@ class FunctionDirectory:
   def var_exists(self, scope, var_id):
     if self.dir[scope].search(var_id):
       return self.dir[scope].search(var_id)
-    elif self.dir['Global'].search(var_id):
-      return self.dir['Global'].search(var_id)
     else:
       return False
     # if var_id in self.dir[scope]:

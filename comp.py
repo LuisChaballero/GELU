@@ -418,11 +418,46 @@ def p_variable(p):
                 | vacio '''
     if(len(p) == 3):
         s_operands.append(p[1])
-        print("######## Variable var_exists", function_directory.var_exists(s_scopes[-1], p[1]))
-        # variable_type = function_directory.get_scope(s_scopes[-1]).search(p[1])
-        variable_type = function_directory.var_exists(s_scopes[-1], p[1])
+
+        current_scope = s_scopes.pop() # Check current scope
+
+        # Inside a function
+        if len(s_scopes) == 1:
+            function_name = current_scope
+
+            # Check for local variable
+            print("######## Variable var_exists", function_directory.var_exists(function_name, p[1]))
+            variable_type = function_directory.var_exists(function_name, p[1])
+
+            if variable_type == False:
+                variable_type = function_directory.var_exists(s_scopes[-1], p[1])
+
+        # Check in Main
+        elif len(s_scopes) == 0:
+            # Check if ID is a global variable in Main
+            print("######## Variable var_exists", function_directory.var_exists(current_scope, p[1]))       
+            variable_type = function_directory.var_exists(current_scope, p[1])
+
+        # Check inside a method 
+        elif len(s_scopes) == 3:
+            method_name = current_scope
+            class_globals = s_scopes.pop() # Remove 'Class_Globals'
+            class_name = s_scopes[-1]
+
+            # Check if ID is a local variable 
+            variable_type = class_directory.get_class(class_name).var_exists(method_name, p[1])
+
+            # Check if ID is an attribute 
+            if variable_type == False:
+                variable_type = class_directory.get_class(class_name).var_exists(class_globals, p[1])
+
+            s_scopes.append(class_globals) # Put back name of class n scope
+
+        s_scopes.append(current_scope) # Put back current scope in stack
+
         if(not variable_type == False):
-            s_types.append(variable_type)
+            
+            s_types.append(variable_type) # Put variable type in stack
         else:
             print("Variable", p[1], "is not declared")
             exit()
@@ -452,13 +487,7 @@ def p_asignacion(p):
 
 def p_llamada_void(p):
     '''llamada_void : ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D PUNTO_COMA
-                    | ID PUNTO ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D PUNTO_COMA
-
-       posible_exp  : exp append_argument I
-                    | vacio
-
-       I            : COMA exp append_argument I 
-                    | vacio'''
+                    | ID PUNTO ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D PUNTO_COMA'''
 
     if len(p) == 7: # Void function calls
         global argument_counter
@@ -530,6 +559,14 @@ def p_llamada_void(p):
             quadruple_GOSUB = ('GOSUB', method_name, None, None)
             l_quadrupules.append(quadruple_GOSUB)
 
+def p_posible_exp(p):
+    '''posible_exp : exp append_argument I
+                   | vacio
+
+      I            : COMA exp append_argument I 
+                   | vacio'''
+
+       
 def p_reset_argument_counter(p):
     'reset_argument_counter :'
     global argument_counter
@@ -550,7 +587,7 @@ def p_lectura(p):
     'lectura : READ variable'
 
 def p_retorno(p):
-    'retorno : RETURN expresion PUNTO_COMA'
+    'retorno : RETURN exp PUNTO_COMA'
     expresion_result = s_operands.pop()
     expresion_type = s_types.pop()
 
@@ -925,36 +962,106 @@ def p_factor(p):
               | ID 
               | ID CORCHETE_I exp CORCHETE_D 
               | ID CORCHETE_I exp COMA exp CORCHETE_D 
-              | ID PARENTESIS_I exp multiple_exp PARENTESIS_D
+              | ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D
               | ID PUNTO ID 
-              | ID PUNTO ID PARENTESIS_I exp multiple_exp PARENTESIS_D
+              | ID PUNTO ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D
               | PARENTESIS_I parenthesis_left_append expresion PARENTESIS_D parenthesis_left_pop '''
 
-    
+    # factor : ID
     if(len(p) == 2):
         # Add ID into operands stack. 
         if( p[1] != t_CTEINT and p[1] != t_CTEFLOAT and p[1] != t_CTECHAR):
-
-            # print("##########################var_exists: ", function_directory.var_exists(s_scopes[-1], p[1]),p[1])
             # operand_type = function_directory.get_scope(s_scopes[-1]).search(p[1]) # Get variable´s type
-            operand_type = function_directory.var_exists(s_scopes[-1], p[1]) # Search in current_scope then in 'Global'
+            current_scope = s_scopes.pop()
 
-            if(operand_type):
+            # Inside a function
+            if len(s_scopes) == 1:
+                function_name = current_scope
+
+                # Check for local variable
+                print("######## Variable var_exists", function_directory.var_exists(function_name, p[1]))
+                variable_type = function_directory.var_exists(function_name, p[1])
+
+                 # Check for global variable
+                if variable_type == False:
+                    variable_type = function_directory.var_exists(s_scopes[-1], p[1])
+
+            # Check in Main
+            elif len(s_scopes) == 0:
+                # Check if ID is a global variable in Main
+                print("######## Variable var_exists", function_directory.var_exists(current_scope, p[1]))       
+                variable_type = function_directory.var_exists(current_scope, p[1])
+
+            # Check inside a method 
+            elif len(s_scopes) == 3:
+                method_name = current_scope
+                class_globals = s_scopes.pop() # Remove 'Class_Globals'
+                class_name = s_scopes[-1]
+
+                # Check if ID is a local variable 
+                variable_type = class_directory.get_class(class_name).var_exists(method_name, p[1])
+
+                # Check if ID is an attribute 
+                if variable_type == False:
+                    variable_type = class_directory.get_class(class_name).var_exists(class_globals, p[1])
+
+                s_scopes.append(class_globals) # Put back name of class n scope
+
+            s_scopes.append(current_scope) # Put back current scope
+
+            if(variable_type):
                 s_operands.append(p[1])
                 print("$$$ Operand ", p[1], "added into s_operands $$$")
 
-                s_types.append(operand_type)
-                print("$$$ Operand_type added into stack: ", operand_type)
+                s_types.append(variable_type)
+                print("$$$ Operand_type added into stack: ", variable_type)
             else:
                 print("Variable", p[1], "is not declared")
                 exit()
         else:
+            # factor : varcte
             print("Implementacion de constantes")
             # Pendiente considerar las constantes alv. Ponte vergas
+    
+    # factor : ID PUNTO ID 
     elif len(p) == 4:
         print("Atributo de clase")
 
+    # factor : ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D
     elif(len(p) == 6 and p[1] != '('): # LLamada a funcion non-void
+        func_name = p[1]
+
+        if not function_directory.scope_exists(func_name):
+            print("ERROR: Function",func_name,"not declared")
+            exit()
+
+        # Verify number of arguments in function call
+        elif function_directory.get_scope(func_name).get_number_of_parameters() != argument_counter:
+            print("ERROR: Incoherence in number of arguments in function call", func_name)
+            exit()
+                
+        else:
+            quadruple_ERA = ('ERA', func_name, None, None)
+            l_quadrupules.append(quadruple_ERA)
+
+            argument_index = 0
+            # Create PARAMETER quadruple for each argument
+            while(len(s_function_call_arguments) > 0):
+                # Remove the argument in order
+                argument = s_function_call_arguments.popleft()
+                argument_type = s_function_call_argument_types.popleft()
+
+                # Verify argument type
+                if argument_type != function_directory.get_scope(func_name).params_table[argument_index]:
+                    print("ERROR: Argument type is incorrect in function call", func_name)
+                    exit()
+                else:
+                    quadruple_PARAMETER = ('PARAMETER', argument, None, argument_index)
+                    l_quadrupules.append(quadruple_PARAMETER)
+                    argument_index +=1
+
+            quadruple_GOSUB = ('GOSUB', func_name, None, None)
+            l_quadrupules.append(quadruple_GOSUB)
 
         print("Llamada función")
 
@@ -964,8 +1071,50 @@ def p_factor(p):
     elif len(p) == 7:
         print("Matriz")
 
+    # ID PUNTO ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D
+    # non-void method call
     elif len(p) == 8:
-        print("LLamada método")          
+        
+
+        class_name = p[1]
+        method_name = p[3]
+
+        if not class_directory.scope_exists(class_name):
+            print("ERROR: Class",class_name,"not declared")
+            exit()
+        
+        elif not class_directory.get_class(class_name).get_scope(method_name):
+            print("ERROR: Method",method_name,"not declared")
+            exit()
+
+        # Verify number of arguments in function call
+        elif class_directory.get_class(class_name).get_scope(method_name).get_number_of_parameters() != argument_counter:
+            print("ERROR: Incoherence in number of arguments in method call", method_name)
+            exit()            
+                
+        else:
+            quadruple_ERA = ('ERA', method_name, None, None)
+            l_quadrupules.append(quadruple_ERA)
+
+            argument_index = 0
+            # Create PARAMETER quadruple for each argument
+            while(len(s_function_call_arguments) > 0):
+                # Remove the argument in order
+                argument = s_function_call_arguments.popleft()
+                argument_type = s_function_call_argument_types.popleft()
+
+                # Verify argument type
+                if argument_type != class_directory.get_class(class_name).get_scope(method_name).params_table[argument_index]:
+                    print("ERROR: Argument type is incorrect in function call", method_name)
+                    exit()
+                else:
+                    quadruple_PARAMETER = ('PARAMETER', argument, None, argument_index)
+                    l_quadrupules.append(quadruple_PARAMETER)
+                    argument_index +=1
+
+            quadruple_GOSUB = ('GOSUB', method_name, None, None)
+            l_quadrupules.append(quadruple_GOSUB)
+         
 
 def p_multiple_exp(p):
     '''multiple_exp : COMA exp multiple_exp
