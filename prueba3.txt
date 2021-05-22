@@ -1,0 +1,24 @@
+
+program test0 ;
+
+var int i, j, k;
+var float f;
+
+func void uno(int a, int b) {
+    i = b + b + b
+    i = a+b*j+i;
+    print ( i+j );
+    uno (a-i, i);
+}
+
+
+main() { 
+    i=k; 
+    k=i+i;
+    f=f;
+
+    while (i > j) {
+        print( i ,j*i,f*k+f);
+    }
+   
+}

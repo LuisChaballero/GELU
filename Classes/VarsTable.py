@@ -19,22 +19,16 @@ class VarsTable:
     if not id in self.table: 
       return False
     else:
-      return self.table[id].get_data_type()
+      return self.table[id]
+      # return self.table[id].get_data_type()
     # return self.table.get(id, False)
 
-  def add_item(self, id, data_type):
+  def add_item(self, id, data_type, address):
     if not id in self.table:
-      self.table[id] = Variable(data_type)
+      self.table[id] = Variable(data_type, address)
       return True
     else:
       return False
-  
-  # def add_item(self, id, data_type, address):
-  #   if not id in self.table:
-  #     self.table[id] = Variable(data_type, address)
-  #     return True
-  #   else:
-  #     return False
 
   def print(self):
     print(self.table)

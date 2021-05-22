@@ -7,6 +7,9 @@ from collections import deque
 from Classes.FunctionDirectory import FunctionDirectory
 from Classes.SemanticTypeTable import SemanticTypeTable
 from Classes.ClassDirectory import ClassDirectory
+import Classes.MemoryHandler as mh
+
+
 
 # --------------
 # Build lexer (lexer)
@@ -50,30 +53,6 @@ temporal_variable_count = 0
 # Counter to verify the arguments in a function call with the parameters table
 argument_counter = 0
 
-# Global Variable Address
-global_variable_INT_address = 1000      # Int global address (1,000 - 3,999)
-temporal_global_INT_address = 4000      # Temporal global INT (4,000 - 4,999)
-
-global_variable_FLOAT_address = 5000    # Float global address (5,000 - 7,999)
-temporal_global_FLOAT_address = 8000    # Temporal global Float (8,000 - 8,999)
-
-global_variable_CHAR_address = 9000     # Char global address (9,000 - 11,999)
-temporal_global_CHAR_address = 12000    # Temporal global Float (12,000 - 12,999)
-
-temporal_global_BOOL_address = 13000    # Temporal global Bool (13,000 - 13,999)
-
-# Local Variable Address
-local_variable_INT_address = 14000      # Int global address (14,000 - 16,999)
-temporal_local_INT_address = 17000      # Temporal global INT (17,000 - 17,999)
-
-local_variable_FLOAT_address = 18000    # Float global address (18,000 - 20,999)
-temporal_global_FLOAT_address = 21000    # Temporal global Float (21,000 - 21,999)
-
-local_variable_CHAR_address = 22000     # Char global address (22,000 - 24,999)
-temporal_local_CHAR_address = 25000    # Temporal global Float (25,000 - 25,999)
-
-temporal_local_BOOL_address = 26000    # Temporal global Bool (26,000 - 26,999)
-
 # Precedence
 precedence = (
     ('left', 'MAS', 'MENOS'),
@@ -96,10 +75,12 @@ def p_init_global_env(p):
     global function_directory
     global semantic_cube
     global class_directory
-
+    global memory_directory
+    
     function_directory = FunctionDirectory()
     semantic_cube = SemanticTypeTable()
     class_directory = ClassDirectory()
+    memory_directory = mh.memoryHandler()
 
 # Add row to FunctionDirectory for global
 def p_program_name(p):
@@ -124,15 +105,8 @@ def p_main(p):
     print("Scope deleted from STACK: Global")
     print("---- FunctionDirectory")
     function_directory.print()
-    # print("function_directory.get_scope('suma'):",function_directory.get_scope('suma').get_table())
-    # function_directory.get_scope('suma').print()
-    # print("---- ClassDirectory")
-    # class_directory.print()
-    # print("---- Mult_Class Table")
-    # mult = class_directory.get_class('mult')
-    # mult.print()
-    # print("---- Multiplicacion_MEthod Table")
-    # mult.get_scope('multiplicacion').print()
+
+    # print(memory_directory.global_variable_counters[0])
     print("---------------- QUADRUPULES LIST -------------------")
     for index in range(len(l_quadrupules)):
         print(index, l_quadrupules[index])
@@ -169,7 +143,7 @@ def p_clases(p):
        herencia     : MENOR_QUE INHERITS MAYOR_QUE 
                     | vacio'''
     if(p[1] == 'class'):
-        if (class_directory.add_class(p[2]) == False):
+        if class_directory.add_class(p[2]) == False:
             print("Error: Class",p[2],"already exists")
             exit()
         else:
@@ -208,7 +182,7 @@ def p_variables(p):
         aux3 : COMA ID aux2 aux3
              | vacio'''
     # Add variables into Function Directory
-    if (p[1] == 'var'): 
+    if p[1] == 'var': 
         # Add the left-most variable (last) into stack   
         s_var_declaration_ids.append(p[3]) 
 
@@ -216,23 +190,32 @@ def p_variables(p):
         current_scope = s_scopes.pop()  
         # Put variables from stack into function directory or class directory
         while len(s_var_declaration_ids) > 0:
-            print(s_scopes)
-            # print("Variable added into functionDirectory ->",s_var_declaration_ids[-1] )
-            # function_directory.add_item(s_scopes[-1] , s_var_declaration_ids.pop(), current_type)
           
             if(current_scope == 'Global' ): # Global variables in FunctionDirectory  
                 variable_id = s_var_declaration_ids.pop()
 
+                virtual_address = memory_directory.get_address(current_type, "global", "variable")
+                print()
+                memory_directory.add_item(current_type, "global", "variable")
+
                 # Add global variable into Function Directory
-                function_directory.add_item(current_scope , variable_id, current_type)
-                print("+Global variable added into functionDirectory ->", variable_id )
+                if not function_directory.add_item(current_scope , variable_id, current_type, virtual_address):
+                  print("ERROR: Failed at declaring global variable", variable_id)
+                  exit()
                 
-            elif(current_scope == 'Class_Globals'): # Local variables in Class 
+                print("+++++Global variable added into functionDirectory ->", variable_id, current_type, virtual_address )
+                
+            elif(current_scope == 'Class_Globals'): # Global variables (attributes) in Class 
                 class_name = s_scopes[-1]
                 attribute_id = s_var_declaration_ids.pop()
 
-                # Add local variable in class scope 
-                class_directory.add_attribute(class_name, current_scope, attribute_id, current_type)
+                virtual_address = memory_directory.get_class_address(current_type, "global", "variable")
+                memory_directory.add_class_item(current_type, "global", "variable", virtual_address)
+
+                # Add attributes in class scope 
+                if not class_directory.add_attribute(class_name, current_scope, attribute_id, current_type):
+                  print("ERROR: Failed at declaring attributes in class", class_name)
+                  exit()
                 print("+Global attribute added into ClassDirectory ->", class_name, current_scope, attribute_id, current_type)
             
             elif(s_scopes[-1] == 'Class_Globals'): # Local variables in Methods in Class 
@@ -241,8 +224,13 @@ def p_variables(p):
                 class_name = s_scopes[-1]
                 variable_id = s_var_declaration_ids.pop()
 
+                virtual_address = memory_directory.get_class_address(current_type, "local", "variable")
+                memory_directory.add_class_item(current_type, "local", "variable", virtual_address)
+
                 # Add local variable in Method scope of a class 
-                class_directory.add_variable(class_name, method_name, variable_id, current_type)
+                if not class_directory.add_variable(class_name, method_name, variable_id, current_type, virtual_address):
+                  print("ERROR: Failed at declaring local vairbale", variable_id, "on method", method_name, "on class", class_name)
+                  exit()
                 print("+Local variable in a Method added into ClassDirectory ->", class_name, method_name, variable_id, current_type)
 
                 # Put 'Class_Globals' into stack
@@ -252,13 +240,19 @@ def p_variables(p):
                 function_name = current_scope
                 variable_id = s_var_declaration_ids.pop()
 
+                virtual_address = memory_directory.get_address(current_type, "local", "variable")
+                memory_directory.add_item(current_type, "local", "variable")
+
                 # Add local variable in function scope on FunctionDirectory
-                function_directory.add_item(function_name, variable_id, current_type)
-                print("+Local variable in a Function added into functionDirectory ->", function_name, variable_id, current_type )
+                if not function_directory.add_item(function_name, variable_id, current_type, virtual_address):
+                  print("ERROR: Failed at declaring local variable", variable_id,"in", function_name)
+                  exit()
+
+                print("++Local variable in a Function added into functionDirectory ->", function_name, variable_id, current_type ,virtual_address)
 
         s_scopes.append(current_scope) 
            
-    elif (p[1] == ','):
+    elif p[1] == ',':
         # Add variable into stack
         s_var_declaration_ids.append(p[2])
         # print("APPEND variable to var_declaration stack ->", p[2])
@@ -293,14 +287,14 @@ def p_funciones(p):
                     | VOID current_type_void_function'''
     
     # Add function scope into stack
-    if (p[1] == "func"):
+    if p[1] == "func":
         function_name = p[3]
         current_scope = s_scopes[-1]
         if(current_scope == 'Global'): # Add function in Function Directory
             # print("Scope added in stack: ", p[3])
 
             # Add function into Function Directory
-            if (function_directory.add_scope(function_name, current_type) == False):
+            if function_directory.add_scope(function_name, current_type) == False:
                 print('ERROR: Function',function_name,'already declared in function directory')
                 exit()
             else:
@@ -322,7 +316,7 @@ def p_funciones(p):
             s_scopes.append(current_scope) # Add 'Class_Globals'
 
             # Add method in class
-            if (class_directory.add_method(class_name, function_name, current_type) == False):
+            if class_directory.add_method(class_name, function_name, current_type) == False:
                 print('ERROR: Method',function_name,' in class', class_name, 'already declared')
                 exit()
             else:
@@ -381,18 +375,28 @@ def p_declaracion_parametros(p):
 def p_param(p):
     '''param : tipo_simple ID '''    
     function_name = s_scopes.pop()
+    # Is function parameter
+    if(s_scopes[-1] == 'Global'):
+      
+      # Add parameter to memory
+      virtual_address = memory_directory.get_address(current_type, "local", "variable")
+      memory_directory.add_item(current_type, "local", "variable")
+      
+      # Add parameter into variables table
+      function_directory.add_parameter(function_name, p[2], current_type, virtual_address)
+      print("PARAMETER(SymTable):", function_name, p[2], current_type, virtual_address)
 
-    if(s_scopes[-1] == 'Global'): # Add parameter (local variable) from function scope into Function Directory
-        function_directory.add_item(function_name, p[2], current_type)
-        print("PARAMETER(SymTable):", function_name, p[2], current_type)
-
-        s_scopes.append(function_name) # Put back function scope in stack
+      s_scopes.append(function_name) # Put back function scope in stack
 
     else: # Add parameter from a method scope from a class into Class Directory
         class_globals = s_scopes.pop() # Remove 'Class_Globals' from stack
         class_name = s_scopes[-1] # Get class scope from stack
-        class_directory.add_variable(class_name, function_name, p[2], current_type)
-        print("PARAMETER(ClassDir):", class_name, function_name, p[2], current_type)
+
+        virtual_address = memory_directory.get_class_address(current_type, "local", "variable")
+        memory_directory.add_class_item(current_type, "local", "variable")
+
+        class_directory.add_parameter(class_name, function_name, p[2], current_type, virtual_address)
+        print("PARAMETER(ClassDir):", class_name, function_name, p[2], current_type, virtual_address)
 
         s_scopes.append(class_globals)
         s_scopes.append(function_name)
@@ -417,46 +421,71 @@ def p_variable(p):
                 | CORCHETE_I exp COMA exp CORCHETE_D
                 | vacio '''
     if(len(p) == 3):
-        s_operands.append(p[1])
-
+        # s_operands.append(p[1])
         current_scope = s_scopes.pop() # Check current scope
 
-        # Inside a function
-        if len(s_scopes) == 1:
+        # ID is inside Main
+        if len(s_scopes) == 0:
+          
+            # Check if ID is a global variable in Main
+            # print("######## Variable var_exists", function_directory.var_exists(current_scope, p[1]))
+            variable = function_directory.var_exists(current_scope, p[1])   
+            
+            if variable:
+              variable_type = variable.get_data_type()
+              variable_address = variable.get_address()    
+
+        # ID is inside a function
+        elif len(s_scopes) == 1:
             function_name = current_scope
 
-            # Check for local variable
-            print("######## Variable var_exists", function_directory.var_exists(function_name, p[1]))
-            variable_type = function_directory.var_exists(function_name, p[1])
+            # Check if ID is a local variable in function
+            # print("######## Variable var_exists", function_directory.var_exists(function_name, p[1]))
+            variable = function_directory.var_exists(function_name, p[1])
 
-            if variable_type == False:
-                variable_type = function_directory.var_exists(s_scopes[-1], p[1])
+            if variable:
+              variable_type = variable.get_data_type()
+              variable_address = variable.get_address()
+            
+            else: # ID is not local variable in function
+              
+              # Check if ID is a global variable
+              variable = function_directory.var_exists(s_scopes[-1], p[1])
 
-        # Check in Main
-        elif len(s_scopes) == 0:
-            # Check if ID is a global variable in Main
-            print("######## Variable var_exists", function_directory.var_exists(current_scope, p[1]))       
-            variable_type = function_directory.var_exists(current_scope, p[1])
+              if variable:
+                variable_type = variable.get_data_type()
+                variable_address = variable.get_address()
 
-        # Check inside a method 
+        # ID is inside a method
         elif len(s_scopes) == 3:
             method_name = current_scope
             class_globals = s_scopes.pop() # Remove 'Class_Globals'
             class_name = s_scopes[-1]
 
-            # Check if ID is a local variable 
-            variable_type = class_directory.get_class(class_name).var_exists(method_name, p[1])
+            # Check if ID is a local variable in method
+            class_object = class_directory.get_class(class_name)
+            variable = class_object.var_exists(method_name, p[1])
+        
+            if variable:
+              variable_type = variable.get_data_type()
+              variable_address = variable.get_address()
 
-            # Check if ID is an attribute 
-            if variable_type == False:
-                variable_type = class_directory.get_class(class_name).var_exists(class_globals, p[1])
+            else: # ID is not a local variable in method
+
+              # Check if ID is an attribute in class
+              class_object = class_directory.get_class(class_name)
+              variable = class_object.var_exists(class_globals, p[1])
+              
+              if variable:
+                  variable_type = variable.get_data_type()
+                  variable_address = variable.get_address()
 
             s_scopes.append(class_globals) # Put back name of class n scope
 
         s_scopes.append(current_scope) # Put back current scope in stack
 
-        if(not variable_type == False):
-            
+        if variable:
+            s_operands.append(variable_address) 
             s_types.append(variable_type) # Put variable type in stack
         else:
             print("Variable", p[1], "is not declared")
@@ -733,12 +762,12 @@ def p_quad_for_01(p):
     'quad_for_01 :'
     exp_type = s_types.pop()
     exp_result = s_operands.pop()  
-    print("exp_type", exp_type)
+    # print("exp_type", exp_type)
 
     var_type = s_types.pop()
     variable = s_operands.pop()
 
-    if (exp_type != var_type):
+    if exp_type != var_type:
         print("Error: ", exp_type, "not assignable to", var_type)
         exit()
     elif(var_type != 'int'):
@@ -748,8 +777,6 @@ def p_quad_for_01(p):
         quadruple_EQUAL = ('EQUAL', exp_result, None, variable)
         l_quadrupules.append(quadruple_EQUAL)
 
-        # s_operands.append(variable)
-        # s_types.append(var_type)
 
 def p_quad_for_02(p):
     'quad_for_02 :'
@@ -761,7 +788,7 @@ def p_quad_for_03(p):
     'quad_for_03 :'
     expresion_type = s_types.pop()
     expresion_result = s_operands.pop()  
-    print("expresion_type:", expresion_type )
+    # print("expresion_type:", expresion_type )
 
     if(expresion_type != 'bool'):
         print("Error: Expression result from FOR must be boolean ")
@@ -803,51 +830,71 @@ def p_expresion(p):
 
 def p_quadrupule_creation_relational(p):
     'quadrupule_creation_relational :'
-    print("#################Quadrupul_creation_relation")
     if(len(s_operators) != 0):
         if(s_operators[-1] == 'MAYOR_QUE' or s_operators[-1] == 'MENOR_QUE' or s_operators[-1] == 'NO_IGUAL' ):
-            right_operand = s_operands.pop() # Get right operand from stack
-            right_type = s_types.pop() # Get right operand's type from stack
+            # Get right operand
+            right_operand = s_operands.pop()
+            right_type = s_types.pop()
 
-            left_operand = s_operands.pop() # Get left operand from stack
-            left_type = s_types.pop() # Get left operand's type from stack
+            # Get left operand
+            left_operand = s_operands.pop() 
+            left_type = s_types.pop()
 
-            operator = s_operators.pop() # Get operand from stack
+            # Get operator
+            operator = s_operators.pop()
 
+            # Validate result data type with semantic cube
             res_type = semantic_cube.result_type(left_type, right_type, operator)
 
-            if(not res_type == 'ERROR'):
-                # Temporable variable simulation
-                global temporal_variable_count
-                result = temporal_variable_base_name + str(temporal_variable_count)
-                temporal_variable_count += 1
-                print("temporal variable: ", result)
+            print("RES_TYPE BEFORE VIRTUAL_ADDRESS:",res_type)
 
-                quadruple = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space
-                l_quadrupules.append(quadruple) # add quadrupule to list
-                print(quadruple) 
+            # Check if result data type is valid
+            if not res_type == 'ERROR':
+              
+              # Expresion is inside main
+              if s_scopes[-1] == 'Global':
+                temporal_virtual_address = memory_directory.get_address(res_type, "global", "temporal")
+                memory_directory.add_item(res_type, "global", "temporal")
+                print("TEMPORAL GLOBAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
 
-                s_operands.append(result) # Add the result into the operands stack
-                s_types.append(res_type) # Add result's type into the types stack
-            else:
-                print("Error: Type mismatch")
-                exit()
+              # Expresion is inside a function
+              elif len(s_scopes) == 2:
+                temporal_virtual_address = memory_directory.get_address(res_type, "local", "temporal")
+                memory_directory.add_item(res_type, "local","temporal")
+                print("TEMPORAL LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
+
+              # Expresion is inside a method
+              elif len(s_scopes) == 4:
+                temporal_virtual_address = memory_directory.get_class_address(res_type, "local", "temporal")
+                memory_directory.add_class_item(res_type,"local","temporal")
+                print("TEMPORAL CLASS LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
+
+              quadruple = (operator, left_operand, right_operand, temporal_virtual_address)
+              l_quadrupules.append(quadruple) # add quadrupule to list
+              print(quadruple) 
+
+              s_operands.append(temporal_virtual_address) # Add the result into the operands stack
+              s_types.append(res_type) # Add result's type into the types stack
+            
+            else: # Invalid result type
+              print("Error: Type mismatch")
+              exit()
 
 
 def p_greater_than_append(p):
     'greater_than_append :'
     s_operators.append('MAYOR_QUE')
-    print("$$$ Addition operator MAYOR_QUE appended in stack $$$")
+    # print("$$$ Addition operator MAYOR_QUE appended in stack $$$")
 
 def p_less_than_append(p):
     'less_than_append :'
     s_operators.append('MENOR_QUE')
-    print("$$$ Addition operator MENOR_QUE appended in stack $$$")
+    # print("$$$ Addition operator MENOR_QUE appended in stack $$$")
 
 def p_different_append(p):
     'different_append :'
     s_operators.append('NO_IGUAL')
-    print("$$$ Different operator NO_IGUAL appended in stack $$$")
+    # print("$$$ Different operator NO_IGUAL appended in stack $$$")
 
 def p_exp(p):
     '''exp : termino quadrupule_creation_01 n
@@ -860,17 +907,16 @@ def p_addition_append(p):
     'addition_append :'
     # Push addition operator into operator stack
     s_operators.append('MAS')
-    print("$$$ Addition operator MAS appended in stack $$$")
+    # print("$$$ Addition operator MAS appended in stack $$$")
 
 def p_substraction_append(p):
     'substraction_append :'
     # Push substraction operator into operator stack
     s_operators.append('MENOS')
-    print("$$$ Substraction operator MENOS appended in stack $$$")
+    # print("$$$ Substraction operator MENOS appended in stack $$$")
 
 def p_quadrupule_creation_01(p):
     'quadrupule_creation_01 :'
-    print("quadrupule_creation_01 start")
     if(len(s_operators) != 0): 
         if(s_operators[-1] == 'MAS' or s_operators[-1] == 'MENOS'):
             right_operand = s_operands.pop() # Get right operand from stack
@@ -882,24 +928,39 @@ def p_quadrupule_creation_01(p):
             operator = s_operators.pop() # Get operand from stack
 
             res_type = semantic_cube.result_type(left_type, right_type, operator)
-            print("res_type : ", res_type)
+            # print("res_type : ", res_type)
 
             if(not res_type == 'ERROR'):
-                # Temporable variable simulation
-                global temporal_variable_count
-                result = temporal_variable_base_name + str(temporal_variable_count)
-                temporal_variable_count += 1
-                print("temporal variable: ", result)
 
-                quadruple = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space
-                l_quadrupules.append(quadruple) # Add quadrupule to list
-                print(quadruple) 
+              if s_scopes[-1] == 'Global': # Global temporal
+                temporal_virtual_address = memory_directory.get_address(res_type, "global", "temporal")
+                memory_directory.add_item(res_type, "global", "temporal")
+                print("TEMPORAL GLOBAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
 
-                s_operands.append(result) # Add the result into the operands stack
-                s_types.append(res_type) # Add result's type into the types stack
+              elif len(s_scopes) == 2: # Local temporal in a function
+                temporal_virtual_address = memory_directory.get_address(res_type, "local", "temporal")
+                memory_directory.add_item(res_type, "local","temporal")
+                print("TEMPORAL LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
+
+              elif len(s_scopes) == 4: # Class local temporal_variable_base_name
+                temporal_virtual_address = memory_directory.get_class_address(res_type, "local", "temporal")
+                memory_directory.add_class_item(res_type,"local","temporal")
+                print("TEMPORAL CLASS LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
+
+              # # Temporable variable simulation
+              # global temporal_variable_count
+              # result = temporal_variable_base_name + str(temporal_variable_count)
+              # temporal_variable_count += 1
+
+              quadruple = (operator, left_operand, right_operand, temporal_virtual_address) 
+              l_quadrupules.append(quadruple) # Add quadrupule to list
+              print(quadruple) 
+
+              s_operands.append(temporal_virtual_address) # Add the result into the operands stack
+              s_types.append(res_type) # Add result's type into the types stack
             else:
-                print("Error: Type mismatch")
-                exit()
+              print("Error: Type mismatch")
+              exit()
 
 def p_termino(p):
     '''termino : factor quadrupule_creation_02 o
@@ -911,16 +972,15 @@ def p_termino(p):
 def p_multiplication_append(p):
     'multiplication_append :'
     s_operators.append('POR')
-    print("$$$ Multiplication POR appended in stack$$$")
+    # print("$$$ Multiplication POR appended in stack$$$")
 
 def p_divition_append(p):
     'divition_append :'
     s_operators.append('ENTRE')
-    print("$$$ Divition operator ENTRE in stack $$$")
+    # print("$$$ Divition operator ENTRE in stack $$$")
 
 def p_quadrupule_creation_02(p): 
     'quadrupule_creation_02 :'
-    print("quadrupule_creation_02 start")
     if(len(s_operators) != 0):
         if(s_operators[-1] == 'POR' or s_operators[-1] == 'ENTRE'):
             right_operand = s_operands.pop() # Get right operand from stack
@@ -934,21 +994,36 @@ def p_quadrupule_creation_02(p):
             res_type = semantic_cube.result_type(left_type, right_type, operator)
 
             if(not res_type == 'ERROR'):
-                # Temporable variable simulation
-                global temporal_variable_count
-                result = temporal_variable_base_name + str(temporal_variable_count)
-                temporal_variable_count += 1
-                print("temporal variable: ", result)
 
-                quadruple = (operator, left_operand, right_operand, result) # 'result' is supposed to be temporal space
-                l_quadrupules.append(quadruple) # add quadrupule to list
-                print(quadruple) 
+              if s_scopes[-1] == 'Global': # Global temporal
+                temporal_virtual_address = memory_directory.get_address(res_type, "global", "temporal")
+                memory_directory.add_item(res_type, "global", "temporal")
+                print("TEMPORAL GLOBAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
 
-                s_operands.append(result) # Add the result into the operands stack
-                s_types.append(res_type) # Add result's type into the types stack
+              elif len(s_scopes) == 2: # Local temporal in a function
+                temporal_virtual_address = memory_directory.get_address(res_type, "local", "temporal")
+                memory_directory.add_item(res_type, "local","temporal")
+                print("TEMPORAL LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
+
+              elif len(s_scopes) == 4: # Class local temporal_variable_base_name
+                temporal_virtual_address = memory_directory.get_class_address(res_type, "local", "temporal")
+                memory_directory.add_class_item(res_type,"local","temporal")
+                print("TEMPORAL CLASS LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
+
+              # # Temporable variable simulation
+              # global temporal_variable_count
+              # result = temporal_variable_base_name + str(temporal_variable_count)
+              # temporal_variable_count += 1
+
+              quadruple = (operator, left_operand, right_operand, temporal_virtual_address) # 'result' is supposed to be temporal space
+              l_quadrupules.append(quadruple) # add quadrupule to list
+              print(quadruple) 
+
+              s_operands.append(temporal_virtual_address) # Add the result into the operands stack
+              s_types.append(res_type) # Add result's type into the types stack
             else:
-                print("Error: Type mismatch")
-                exit()
+              print("Error: Type mismatch")
+              exit()
 
 # def p_factor(p):
 #     '''factor : varcte 
@@ -969,52 +1044,81 @@ def p_factor(p):
 
     # factor : ID
     if(len(p) == 2):
-        # Add ID into operands stack. 
+      
+        # ID is not a constant
         if( p[1] != t_CTEINT and p[1] != t_CTEFLOAT and p[1] != t_CTECHAR):
             # operand_type = function_directory.get_scope(s_scopes[-1]).search(p[1]) # Get variable´s type
             current_scope = s_scopes.pop()
 
-            # Inside a function
-            if len(s_scopes) == 1:
+            # ID is inside Main
+            if len(s_scopes) == 0:
+
+                # Check if ID is a global variable in Main
+                # print("######## Variable var_exists", function_directory.var_exists(current_scope, p[1]))       
+                variable = function_directory.var_exists(current_scope, p[1])   
+            
+                if variable:
+                  
+                  variable_type = variable.get_data_type()
+                  
+                  variable_address = variable.get_address() 
+                  # print("-------------GLOBAL", p[1], variable_address)   
+
+            # ID is inside a function
+            elif len(s_scopes) == 1:
                 function_name = current_scope
 
-                # Check for local variable
-                print("######## Variable var_exists", function_directory.var_exists(function_name, p[1]))
-                variable_type = function_directory.var_exists(function_name, p[1])
+                # Check if ID is a local variable in function
+                # print("######## Variable var_exists", function_directory.var_exists(function_name, p[1]))
+                variable = function_directory.var_exists(function_name, p[1])
 
-                 # Check for global variable
-                if variable_type == False:
-                    variable_type = function_directory.var_exists(s_scopes[-1], p[1])
+                if variable:
+                  variable_type = variable.get_data_type()
+                  variable_address = variable.get_address()
+                
+                else: # ID is not local variable in function
+                  
+                  # Check if ID is a global variable
+                  variable = function_directory.var_exists(s_scopes[-1], p[1])
 
-            # Check in Main
-            elif len(s_scopes) == 0:
-                # Check if ID is a global variable in Main
-                print("######## Variable var_exists", function_directory.var_exists(current_scope, p[1]))       
-                variable_type = function_directory.var_exists(current_scope, p[1])
+                  if variable:
+                    variable_type = variable.get_data_type()
+                    variable_address = variable.get_address()
 
-            # Check inside a method 
+            # ID is inside a method
             elif len(s_scopes) == 3:
                 method_name = current_scope
                 class_globals = s_scopes.pop() # Remove 'Class_Globals'
                 class_name = s_scopes[-1]
+                
+                # Check if ID is a local variable in method
+                class_object = class_directory.get_class(class_name)
+                variable = class_object.var_exists(method_name, p[1])
+            
+                if variable:
+                  variable_type = variable.get_data_type()
+                  variable_address = variable.get_address()
 
-                # Check if ID is a local variable 
-                variable_type = class_directory.get_class(class_name).var_exists(method_name, p[1])
+                else: # ID is not a local variable in method
 
-                # Check if ID is an attribute 
-                if variable_type == False:
-                    variable_type = class_directory.get_class(class_name).var_exists(class_globals, p[1])
+                  # Check if ID is an attribute in class
+                  variable = class_object.var_exists(class_globals, p[1])
+                  
+                  if variable:
+                      variable_type = variable.get_data_type()
+                      variable_address = variable.get_address()
 
-                s_scopes.append(class_globals) # Put back name of class n scope
+                s_scopes.append(class_globals) # Put back the name of class in stack scopes
+
 
             s_scopes.append(current_scope) # Put back current scope
 
             if(variable_type):
-                s_operands.append(p[1])
-                print("$$$ Operand ", p[1], "added into s_operands $$$")
+                s_operands.append(variable_address)
+                # print("$$$ Operand ", variable_address, "added into s_operands $$$")
 
                 s_types.append(variable_type)
-                print("$$$ Operand_type added into stack: ", variable_type)
+                # print("$$$ Operand_type added into stack: ", variable_type)
             else:
                 print("Variable", p[1], "is not declared")
                 exit()
@@ -1123,12 +1227,10 @@ def p_multiple_exp(p):
 def p_parenthesis_left_append(p):
     'parenthesis_left_append :'
     s_operators.append('PARENTESIS_I')
-    print("$$$ Parenteis Izquierdo en stack")
 
 def p_parenthesis_left_pop(p):
     'parenthesis_left_pop :'
     s_operators.pop()
-    print("$$$ Parenteis izquierdo sacado del stack $$$")
 
 def p_varcte(p):
     '''varcte : CTECHAR
@@ -1151,6 +1253,3 @@ parser.parse(data)
 
 ## Cerrar archivo
 f.close()
-
-
-

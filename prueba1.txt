@@ -5,6 +5,7 @@ var int i, j, k;
 var float f;
 
 func void uno(int a, int b) {
+  var int i, j;
     if (a>b) {
         i = a+b*j+i;
         print ( i+j );
@@ -16,11 +17,12 @@ func void uno(int a, int b) {
 }
 
 func int dos(int a, float g) {
-    var int i;
-    i=a;
+    var float i;
+    var int j, k;
+    i=g;
     while (a>j) {
         a=a-k*j;
-        uno(a*a, a+k);
+        uno(a*a, k+k);
         g=g*j-k;
     }
     return  (i+k*j);
