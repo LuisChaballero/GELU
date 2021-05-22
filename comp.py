@@ -8,6 +8,7 @@ from Classes.FunctionDirectory import FunctionDirectory
 from Classes.SemanticTypeTable import SemanticTypeTable
 from Classes.ClassDirectory import ClassDirectory
 import Classes.MemoryHandler as mh
+from Classes.VirtualMachine import VirtualMachine
 
 
 
@@ -16,7 +17,7 @@ import Classes.MemoryHandler as mh
 lexer = lex.lex()
 
 # Read text file (prueba1.txt / prueba2.txt)
-f = open('prueba1.txt','r')
+f = open('prueba3.txt','r')
 data = f.read()
 
 # Test lex with text file
@@ -45,6 +46,10 @@ l_quadrupules = [] # To save the code optimization in form of quadrupules. (op, 
 
 # current type for declared variable 
 current_type = ''
+
+# Catches the constant
+current_constant = None
+current_constant_type = ''
 
 # Simulates the implementation of temporal variables 
 temporal_variable_base_name = "temp"
@@ -80,7 +85,7 @@ def p_init_global_env(p):
     function_directory = FunctionDirectory()
     semantic_cube = SemanticTypeTable()
     class_directory = ClassDirectory()
-    memory_directory = mh.memoryHandler()
+    memory_directory = mh.MemoryHandler()
 
 # Add row to FunctionDirectory for global
 def p_program_name(p):
@@ -106,11 +111,13 @@ def p_main(p):
     print("---- FunctionDirectory")
     function_directory.print()
 
-    # print(memory_directory.global_variable_counters[0])
     print("---------------- QUADRUPULES LIST -------------------")
     for index in range(len(l_quadrupules)):
         print(index, l_quadrupules[index])
-    # print(*l_quadrupules,sep = "\n")
+    print("")
+    # virtual_machine = VirtualMachine(l_quadrupules)
+
+    
 
 def p_fill_pending_GOTO_Main(p):
     'fill_pending_GOTO_Main :'
@@ -831,7 +838,7 @@ def p_expresion(p):
 def p_quadrupule_creation_relational(p):
     'quadrupule_creation_relational :'
     if(len(s_operators) != 0):
-        if(s_operators[-1] == 'MAYOR_QUE' or s_operators[-1] == 'MENOR_QUE' or s_operators[-1] == 'NO_IGUAL' ):
+        if(s_operators[-1] == '>' or s_operators[-1] == '<' or s_operators[-1] == '<>' ):
             # Get right operand
             right_operand = s_operands.pop()
             right_type = s_types.pop()
@@ -883,17 +890,17 @@ def p_quadrupule_creation_relational(p):
 
 def p_greater_than_append(p):
     'greater_than_append :'
-    s_operators.append('MAYOR_QUE')
+    s_operators.append('>')
     # print("$$$ Addition operator MAYOR_QUE appended in stack $$$")
 
 def p_less_than_append(p):
     'less_than_append :'
-    s_operators.append('MENOR_QUE')
+    s_operators.append('<')
     # print("$$$ Addition operator MENOR_QUE appended in stack $$$")
 
 def p_different_append(p):
     'different_append :'
-    s_operators.append('NO_IGUAL')
+    s_operators.append('<>')
     # print("$$$ Different operator NO_IGUAL appended in stack $$$")
 
 def p_exp(p):
@@ -906,19 +913,19 @@ def p_exp(p):
 def p_addition_append(p):
     'addition_append :'
     # Push addition operator into operator stack
-    s_operators.append('MAS')
+    s_operators.append('+')
     # print("$$$ Addition operator MAS appended in stack $$$")
 
 def p_substraction_append(p):
     'substraction_append :'
     # Push substraction operator into operator stack
-    s_operators.append('MENOS')
+    s_operators.append('-')
     # print("$$$ Substraction operator MENOS appended in stack $$$")
 
 def p_quadrupule_creation_01(p):
     'quadrupule_creation_01 :'
     if(len(s_operators) != 0): 
-        if(s_operators[-1] == 'MAS' or s_operators[-1] == 'MENOS'):
+        if(s_operators[-1] == '+' or s_operators[-1] == '-'):
             right_operand = s_operands.pop() # Get right operand from stack
             right_type = s_types.pop() # Get right operand's type from stack
             
@@ -971,18 +978,18 @@ def p_termino(p):
 
 def p_multiplication_append(p):
     'multiplication_append :'
-    s_operators.append('POR')
+    s_operators.append('*')
     # print("$$$ Multiplication POR appended in stack$$$")
 
 def p_divition_append(p):
     'divition_append :'
-    s_operators.append('ENTRE')
+    s_operators.append('/')
     # print("$$$ Divition operator ENTRE in stack $$$")
 
 def p_quadrupule_creation_02(p): 
     'quadrupule_creation_02 :'
     if(len(s_operators) != 0):
-        if(s_operators[-1] == 'POR' or s_operators[-1] == 'ENTRE'):
+        if(s_operators[-1] == '*' or s_operators[-1] == '/'):
             right_operand = s_operands.pop() # Get right operand from stack
             right_type = s_types.pop() # Get right operand's type from stack
 
@@ -1042,11 +1049,16 @@ def p_factor(p):
               | ID PUNTO ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D
               | PARENTESIS_I parenthesis_left_append expresion PARENTESIS_D parenthesis_left_pop '''
 
-    # factor : ID
+    # factor : ID  or  factor : varcte
     if(len(p) == 2):
-      
+        global current_constant
+        global current_constant_type
+        # factor : ID
         # ID is not a constant
-        if( p[1] != t_CTEINT and p[1] != t_CTEFLOAT and p[1] != t_CTECHAR):
+        print("p[1]:",p[1])
+        print("current_constant",current_constant)
+        print("current_constant_type", current_constant_type)
+        if( p[1] != 'CTEINT' and p[1] != 'CTEFLOAT' and p[1] != 'CTECHAR' and current_constant == None):
             # operand_type = function_directory.get_scope(s_scopes[-1]).search(p[1]) # Get variable´s type
             current_scope = s_scopes.pop()
 
@@ -1113,7 +1125,7 @@ def p_factor(p):
 
             s_scopes.append(current_scope) # Put back current scope
 
-            if(variable_type):
+            if(variable):
                 s_operands.append(variable_address)
                 # print("$$$ Operand ", variable_address, "added into s_operands $$$")
 
@@ -1123,9 +1135,21 @@ def p_factor(p):
                 print("Variable", p[1], "is not declared")
                 exit()
         else:
-            # factor : varcte
-            print("Implementacion de constantes")
-            # Pendiente considerar las constantes alv. Ponte vergas
+          
+
+          # factor : varcte
+          print("Implementacion de constantes")
+
+          if current_constant_type == 'int':
+            virtual_address = memory_directory.get_constant_address(current_constant_type, current_constant)
+          elif current_constant_type == 'float':
+            virtual_address =  memory_directory.get_constant_address(current_constant_type, current_constant)
+          elif current_constant_type == 'char':
+            virtual_address = memory_directory.get_constant_address(current_constant_type, current_constant) 
+          
+          current_constant = None
+          s_operands.append(virtual_address)
+          s_types.append(current_constant_type)
     
     # factor : ID PUNTO ID 
     elif len(p) == 4:
@@ -1226,16 +1250,35 @@ def p_multiple_exp(p):
 
 def p_parenthesis_left_append(p):
     'parenthesis_left_append :'
-    s_operators.append('PARENTESIS_I')
+    s_operators.append('(')
 
 def p_parenthesis_left_pop(p):
     'parenthesis_left_pop :'
     s_operators.pop()
 
 def p_varcte(p):
-    '''varcte : CTECHAR
-              | CTEINT
-              | CTEFLOAT'''
+  '''varcte : CTEINT constant_int_assginment 
+            | CTEFLOAT constant_float_assginment
+            | CTECHAR constant_char_assginment'''
+
+  global current_constant
+  current_constant = p[1]
+
+def p_constant_int_assginment(p):
+  'constant_int_assginment :'
+  global current_constant_type
+  current_constant_type = 'int'
+
+def p_constant_float_assginment(p):
+  'constant_float_assginment :'
+  global current_constant_type
+  current_constant_type = 'float'
+
+def p_constant_char_assginment(p):
+  'constant_char_assginment :'
+  global current_constant_type
+  current_constant_type = 'char'
+
 
 def p_error(p):
     if p:

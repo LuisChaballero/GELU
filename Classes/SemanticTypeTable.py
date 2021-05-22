@@ -40,21 +40,21 @@ class SemanticTypeTable:
             return -1
 
     def transform_operator(self, operator):
-        if(operator == 'MAS'):
+        if(operator == '+'):
             return 0
-        elif(operator == 'MENOS'):
+        elif(operator == '-'):
             return 1
-        elif(operator == 'POR'):
+        elif(operator == '*'):
             return 2
-        elif(operator == 'ENTRE'):
+        elif(operator == '/'):
             return 3   
-        elif(operator == 'MENOR_QUE'):
+        elif(operator == '<'):
             return 4
-        elif(operator == 'MAYOR_QUE'):
+        elif(operator == '>'):
             return 5
-        elif(operator == 'IGUAL'):
+        elif(operator == '='):
             return 6
-        elif(operator == 'NO_IGUAL'): 
+        elif(operator == '<>'): 
             return 7
         elif(operator == 'AND'): # Operator not yet implemented 
             return 8

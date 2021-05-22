@@ -3,9 +3,10 @@ program test0 ;
 
 var int i, j, k;
 var float f;
+var char c, ch;
 
 func void uno(int a, int b) {
-    i = b + b + b
+    i = b + b + 12;
     i = a+b*j+i;
     print ( i+j );
     uno (a-i, i);
@@ -14,8 +15,10 @@ func void uno(int a, int b) {
 
 main() { 
     i=k; 
-    k=i+i;
+    k=i+12;
     f=f;
+    c = 'a';
+    ch = c;
 
     while (i > j) {
         print( i ,j*i,f*k+f);
