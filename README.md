@@ -59,3 +59,11 @@ Se modificaron las clases de la implementación del directorio de funciones para
 ##16/05/2021
 
 Se modificó la gramatica para considerar la llamada a métodos void de una clase. Se implementaron los cuadruplos de llamadas a funciones. Queda pendiente validar el tipo de retorno en las funciones
+
+##21/05/2021
+
+Se creo la clase de memoryHandler y se implementaron las direcciones virtuales para los operandos 
+
+##21/05/2021
+
+Se implementaron las direcciones virtuales para los temporales y se agrego la deteccion de errores cuando se inicializa una variable que ya existe. 
