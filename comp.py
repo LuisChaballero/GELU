@@ -115,7 +115,7 @@ def p_main(p):
     for index in range(len(l_quadrupules)):
         print(index, l_quadrupules[index])
     print("")
-    # virtual_machine = VirtualMachine(l_quadrupules)
+    virtual_machine = VirtualMachine(l_quadrupules, memory_directory, class_directory, function_directory)
 
     
 
@@ -354,9 +354,14 @@ def p_func_closure(p):
         quadruple = ('ENDPROC', None, None, None)
         l_quadrupules.append(quadruple)
 
-        # Set number of temporals in a global function
-        intial_number_of_temporals = function_directory.get_scope(func_name).get_number_of_temporals()
-        function_directory.get_scope(func_name).set_number_of_temporals(temporal_variable_count - intial_number_of_temporals)
+        # Set number of temporals in function
+        function_scope = function_directory.get_scope(func_name)
+        intial_number_of_temporals = function_scope.get_number_of_temporals()
+        function_scope.set_number_of_temporals(temporal_variable_count - intial_number_of_temporals)
+        
+        # Set number of local variables in function
+        number_of_local_variables = function_scope.get_number_of_local_variables()
+        function_scope.set_number_of_local_variables(number_of_local_variables)
     else:
         class_globals = s_scopes.pop() # Remove 'Class_Globals'
         class_name = s_scopes[-1]
@@ -364,9 +369,15 @@ def p_func_closure(p):
         quadruple = ('ENDPROC', None, None, None)
         l_quadrupules.append(quadruple)
 
-        # Set number of temporals in a method
-        intial_number_of_temporals = class_directory.get_class(class_name).get_scope(func_name).get_number_of_temporals()
-        class_directory.get_class(class_name).get_scope(func_name).set_number_of_temporals(temporal_variable_count - intial_number_of_temporals)
+        # Set number of temporals in method
+        class_scope = class_directory.get_class(class_name)
+        function_scope = class_scope.get_scope(func_name)
+        intial_number_of_temporals = function_scope.get_number_of_temporals()
+        function_scope.set_number_of_temporals(temporal_variable_count - intial_number_of_temporals)
+        
+        # Set number of local variables in method
+        number_of_local_variables = function_scope.get_number_of_local_variables()
+        function_scope.set_number_of_local_variables(number_of_local_variables)
 
         s_scopes.append(class_globals)
 
@@ -537,7 +548,10 @@ def p_llamada_void(p):
             exit()
                 
         else:
-            quadruple_ERA = ('ERA', func_name, None, None)
+            # ('ERA', func_name, scope, None) = 
+              # scope '0' = FunctionDirectory
+              # scope '1' = ClassDirectory
+            quadruple_ERA = ('ERA', func_name, 0, None)
             l_quadrupules.append(quadruple_ERA)
 
             argument_counter = 0
@@ -572,7 +586,10 @@ def p_llamada_void(p):
             print("ERROR: Incoherence in number of arguments in method call", method_name)
             exit()
         else:
-            quadruple_ERA = ('ERA', method_name, None, None)
+            # ('ERA', func_name, scope, None) = 
+              # scope '0' = FunctionDirectory
+              # scope '1' = ClassDirectory
+            quadruple_ERA = ('ERA', method_name, 1, None)
             l_quadrupules.append(quadruple_ERA)
 
             argument_counter = 0
@@ -649,6 +666,8 @@ def p_quad_print(p):
     'quad_print :'
     while(len(s_print_items) > 0):
         item = s_print_items.pop()
+
+
         quadruple = ('PRINT', None, None, item)
         l_quadrupules.append(quadruple)
         print(quadruple)
@@ -1140,12 +1159,10 @@ def p_factor(p):
           # factor : varcte
           print("Implementacion de constantes")
 
-          if current_constant_type == 'int':
+          if current_constant_type == 'int' or current_constant_type == 'float' or current_constant_type == 'char':
+            print("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+            print(type(current_constant))
             virtual_address = memory_directory.get_constant_address(current_constant_type, current_constant)
-          elif current_constant_type == 'float':
-            virtual_address =  memory_directory.get_constant_address(current_constant_type, current_constant)
-          elif current_constant_type == 'char':
-            virtual_address = memory_directory.get_constant_address(current_constant_type, current_constant) 
           
           current_constant = None
           s_operands.append(virtual_address)
@@ -1169,7 +1186,10 @@ def p_factor(p):
             exit()
                 
         else:
-            quadruple_ERA = ('ERA', func_name, None, None)
+            # ('ERA', func_name, scope, None) = 
+              # scope '0' = FunctionDirectory
+              # scope '1' = ClassDirectory
+            quadruple_ERA = ('ERA', func_name, 0, None)
             l_quadrupules.append(quadruple_ERA)
 
             argument_index = 0
@@ -1221,7 +1241,10 @@ def p_factor(p):
             exit()            
                 
         else:
-            quadruple_ERA = ('ERA', method_name, None, None)
+            # ('ERA', func_name, scope, None) = 
+              # scope '0' = FunctionDirectory
+              # scope '1' = ClassDirectory
+            quadruple_ERA = ('ERA', method_name, 1, None)
             l_quadrupules.append(quadruple_ERA)
 
             argument_index = 0

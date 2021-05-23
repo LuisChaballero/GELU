@@ -1,27 +1,13 @@
 
 program test0 ;
 
-var int i, j, k;
-var float f;
-var char c, ch;
-
-func void uno(int a, int b) {
-    i = b + b + 12;
-    i = a+b*j+i;
-    print ( i+j );
-    uno (a-i, i);
-}
-
+var int i, k;
+var float F;
 
 main() { 
-    i=k; 
-    k=i+12;
-    f=f;
-    c = 'a';
-    ch = c;
+    i = 10 + 2; 
+    F = 13.6 - 0.7;
 
-    while (i > j) {
-        print( i ,j*i,f*k+f);
-    }
-   
+    print(i);
+    print(F);
 }

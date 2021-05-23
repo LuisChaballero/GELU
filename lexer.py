@@ -51,12 +51,6 @@ reserved = {
 
 tokens +=  reserved.values()
 
-## Expresiones regulares para tipos de dato
-t_CTESTRING = r'\"([^\\\n]|(\\.))*?\"' # strings
-t_CTEINT = r'[0-9]+' # Numeros enteros no negativos
-t_CTEFLOAT = r'[0-9]+\.[0-9]+' # Numeros flotantes no negativos
-t_CTECHAR = r'\'.\'' # char
-
 ## Regular ex
 def t_ID(t):
     r'[a-zA-Z_][0-9a-z_A-Z]*'
@@ -83,9 +77,30 @@ t_MENOR_QUE = r'\<' # Simbolo de menor que
 t_MAYOR_QUE = r'\>' # Simbolo de mayor que
 t_PUNTO = r'\.' # Punto
 
+
 def t_NEWLINE(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
+
+def t_CTEFLOAT(t):  
+  r'[0-9]+\.[0-9]+'
+  t.value = float(t.value)
+  return t
+
+def t_CTEINT(t):
+  r'[0-9]+'
+  t.value = int(t.value)
+  return t
+
+def t_CTECHAR(t):   
+  r'\'.\''
+  t.value = str(t.value)
+  return t
+
+def t_CTESTRING(t):  
+  r'\"([^\\\n]|(\\.))*?\"'
+  t.value = str(t.value)
+  return t
 
 t_ignore = ' \t'
 

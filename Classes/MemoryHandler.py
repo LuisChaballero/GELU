@@ -25,27 +25,12 @@ LOCAL_TEMPORAL_CHAR_ADDRESS = 25000             # Temporal global Float (25,000 
 LOCAL_TEMPORAL_BOOL_ADDRESS = 26000             # Temporal global Bool (26,000 - 26,999)
 
 # Class Global Variable Address
-CLASS_GLOBAL_VARIABLE_INT_ADDRESS = 27000       # Int global address (27,000 - 28,999)
-CLASS_GLOBAL_VARIABLE_FLOAT_ADDRESS = 28000     # Float global address (28,000 - 28,999)
-CLASS_GLOBAL_VARIABLE_CHAR_ADDRESS = 29000      # Char global address (29,000 - 29,999)
+CONSTANT_INT_ADDRESS = 27000       # Int global address (27,000 - 28,999)
+CONSTANT_FLOAT_ADDRESS = 28000     # Float global address (28,000 - 28,999)
+CONSTANT_CHAR_ADDRESS = 29000      # Char global address (29,000 - 29,999)
 
-# Class Local Variable Address
-CLASS_LOCAL_VARIABLE_INT_ADDRESS = 30000        # Int global address (30,000 - 30,999)
-CLASS_LOCAL_TEMPORAL_INT_ADDRESS = 31000        # Temporal global INT (31,000 - 31,999)
-
-CLASS_LOCAL_VARIABLE_FLOAT_ADDRESS = 32000      # Float global address (32,000 - 32,999)
-CLASS_LOCAL_TEMPORAL_FLOAT_ADDRESS = 33000      # Temporal global Float (33,000 - 33,999)
-
-CLASS_LOCAL_VARIABLE_CHAR_ADDRESS = 34000       # Char global address (34,000 - 34,999)
-CLASS_LOCAL_TEMPORAL_CHAR_ADDRESS = 35000       # Temporal global Float (35,000 - 35,999)
-
-CLASS_LOCAL_TEMPORAL_BOOL_ADDRESS = 36000       # Temporal global Bool (36,000 - 36,999)
-
-# Constant Address
-CONSTANT_INT_ADDRESS = 37000                     # Constants INT (37,000 - 37,999)
-CONSTANT_FLOAT_ADDRESS = 38000                   # Constants FLOAT (38,000 - 28,999)
-CONSTANT_CHAR_ADDRESS = 39000                    # Constants CHAR (39,000 - 39,999)
-
+# Class Instance
+CLASS_INSTANCE_ADDRESS = 30000                   # Class instances (30,000 - 30,999)
 
 # Class definition for memoryHandler to...
 class MemoryHandler:
@@ -79,24 +64,24 @@ class MemoryHandler:
       'bool': LOCAL_TEMPORAL_BOOL_ADDRESS
     }
     
-    self.class_global_variable_counters = {
-      'int': CLASS_GLOBAL_VARIABLE_INT_ADDRESS, 
-      'float': CLASS_GLOBAL_VARIABLE_FLOAT_ADDRESS, 
-      'char': CLASS_GLOBAL_VARIABLE_CHAR_ADDRESS
-    }
+    # self.class_global_variable_counters = {
+    #   'int': CLASS_GLOBAL_VARIABLE_INT_ADDRESS, 
+    #   'float': CLASS_GLOBAL_VARIABLE_FLOAT_ADDRESS, 
+    #   'char': CLASS_GLOBAL_VARIABLE_CHAR_ADDRESS
+    # }
 
-    self.class_local_variable_counters = {
-      'int': CLASS_LOCAL_VARIABLE_INT_ADDRESS, 
-      'float': CLASS_LOCAL_VARIABLE_FLOAT_ADDRESS, 
-      'char': CLASS_LOCAL_VARIABLE_CHAR_ADDRESS
-    }
+    # self.class_local_variable_counters = {
+    #   'int': CLASS_LOCAL_VARIABLE_INT_ADDRESS, 
+    #   'float': CLASS_LOCAL_VARIABLE_FLOAT_ADDRESS, 
+    #   'char': CLASS_LOCAL_VARIABLE_CHAR_ADDRESS
+    # }
 
-    self.class_local_temporals = {
-      'int': CLASS_LOCAL_TEMPORAL_INT_ADDRESS, 
-      'float': CLASS_LOCAL_TEMPORAL_FLOAT_ADDRESS, 
-      'char': CLASS_LOCAL_TEMPORAL_CHAR_ADDRESS,
-      'bool': CLASS_LOCAL_TEMPORAL_BOOL_ADDRESS
-    }
+    # self.class_local_temporals = {
+    #   'int': CLASS_LOCAL_TEMPORAL_INT_ADDRESS, 
+    #   'float': CLASS_LOCAL_TEMPORAL_FLOAT_ADDRESS, 
+    #   'char': CLASS_LOCAL_TEMPORAL_CHAR_ADDRESS,
+    #   'bool': CLASS_LOCAL_TEMPORAL_BOOL_ADDRESS
+    # }
     
     self.constant_int_counters = CONSTANT_INT_ADDRESS
     self.constant_int_directory = {}
@@ -106,6 +91,9 @@ class MemoryHandler:
 
     self.constant_char_counters = CONSTANT_CHAR_ADDRESS
     self.constant_char_directory = {}
+
+
+# -------- VIRTUAL ADDRESS HANDLING ---------
 
   # Function to update NON-CLASS counters 
   # scope = 'global' or 'local'
@@ -183,22 +171,29 @@ class MemoryHandler:
   def add_constant_item(self, data_type, data_value):
     if data_type == "int":
       self.constant_int_directory[data_value] = self.constant_int_counters
+      self.push(self.constant_int_counters, data_value) # Add constant to real memory 
+      print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
+      print(type(data_value))
       self.constant_int_counters += 1
       return self.constant_int_directory[data_value]
 
     elif data_type == "float":
       self.constant_float_directory[data_value] = self.constant_float_counters
+      self.push(self.constant_float_counters, data_value) # Add constant to real memory 
       self.constant_float_counters += 1
-      return self.constant_int_directory[data_value]
+      return self.constant_float_directory[data_value]
 
     elif data_type == "char":
       self.constant_char_directory[data_value] = self.constant_char_counters
+      self.push(self.constant_char_counters, data_value) # Add constant to real memory 
       self.constant_char_counters += 1     
       return self.constant_char_directory[data_value]
 
-
   def get_constant_address(self, data_type, constant_value):
+
     if data_type == "int": 
+      print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
+      print(type(constant_value))
       # return self.constant_int_directory.get(data_value, False)
       constant_int_address = self.constant_int_directory.get(constant_value, False)
       if constant_int_address: # Constant is in directory
@@ -222,6 +217,7 @@ class MemoryHandler:
       else: # Put constant in directory
         return self.add_constant_item(data_type, constant_value)
 
+# -------- MEMORY HANDLING ---------
 
   # Method to add element into memory
   def push(self, virtual_address, value):

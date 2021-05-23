@@ -4,7 +4,7 @@ from Classes.Scope import Scope
 
 class FunctionDirectory:
   def __init__(self):
-    self.dir = {}
+    self.dir = {} # function_name : Scope()
 
   # Check if scope exists
   def scope_exists(self, scope):
