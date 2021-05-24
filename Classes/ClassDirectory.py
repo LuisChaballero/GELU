@@ -4,7 +4,7 @@ from Classes.FunctionDirectory import FunctionDirectory
 
 class ClassDirectory:
   def __init__(self):
-    self.dir = {}
+    self.dir = {} # class_name : FunctionDirectory()
 
   # Add a class to the ClassDirectory
   def add_class(self, class_name):
@@ -33,26 +33,28 @@ class ClassDirectory:
     else:
       return self.dir[class_name].add_scope(method_name, data_type)
   
+  ####### REMEMBER TO DO REFACTOR OF THIS FOLLOWING 2 METHODS ############
   # Add an attribute of a class
-  def add_attribute(self, class_name, vars_scope, var_id, data_type, address):
+  def add_attribute(self, class_name, vars_scope, var_id, data_type, address, isArray, m1):
     if not self.scope_exists(class_name):
       return False
     else:
-      return self.dir[class_name].add_item(vars_scope, var_id, data_type, address)
+      return self.dir[class_name].add_item(vars_scope, var_id, data_type, address, isArray, m1)
 
   # Add variable in a method 
-  def add_variable(self, class_name, method_name, var_id, data_type, address):
+  def add_variable(self, class_name, method_name, var_id, data_type, address, isArray, m1):
     if not self.scope_exists(class_name): # Class not found in directory
       return False
     else:
-      return self.dir[class_name].add_item(method_name, var_id, data_type, address)
+      return self.dir[class_name].add_item(method_name, var_id, data_type, address, isArray, m1)
+  #########################################################################
 
     # Add variable in a method 
-  def add_parameter(self, class_name, method_name, var_id, data_type, address):
+  def add_parameter(self, class_name, method_name, var_id, data_type, address, isArray, m1):
     if not self.scope_exists(class_name): # Class not found in directory
       return False
     else:
-      return self.dir[class_name].add_parameter(method_name, var_id, data_type, address)
+      return self.dir[class_name].add_parameter(method_name, var_id, data_type, address, isArray, m1)
 
   # Delete object
   def remove(self):

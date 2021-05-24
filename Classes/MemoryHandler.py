@@ -63,26 +63,7 @@ class MemoryHandler:
       'char': LOCAL_TEMPORAL_CHAR_ADDRESS,
       'bool': LOCAL_TEMPORAL_BOOL_ADDRESS
     }
-    
-    # self.class_global_variable_counters = {
-    #   'int': CLASS_GLOBAL_VARIABLE_INT_ADDRESS, 
-    #   'float': CLASS_GLOBAL_VARIABLE_FLOAT_ADDRESS, 
-    #   'char': CLASS_GLOBAL_VARIABLE_CHAR_ADDRESS
-    # }
 
-    # self.class_local_variable_counters = {
-    #   'int': CLASS_LOCAL_VARIABLE_INT_ADDRESS, 
-    #   'float': CLASS_LOCAL_VARIABLE_FLOAT_ADDRESS, 
-    #   'char': CLASS_LOCAL_VARIABLE_CHAR_ADDRESS
-    # }
-
-    # self.class_local_temporals = {
-    #   'int': CLASS_LOCAL_TEMPORAL_INT_ADDRESS, 
-    #   'float': CLASS_LOCAL_TEMPORAL_FLOAT_ADDRESS, 
-    #   'char': CLASS_LOCAL_TEMPORAL_CHAR_ADDRESS,
-    #   'bool': CLASS_LOCAL_TEMPORAL_BOOL_ADDRESS
-    # }
-    
     self.constant_int_counters = CONSTANT_INT_ADDRESS
     self.constant_int_directory = {}
 
@@ -172,8 +153,6 @@ class MemoryHandler:
     if data_type == "int":
       self.constant_int_directory[data_value] = self.constant_int_counters
       self.push(self.constant_int_counters, data_value) # Add constant to real memory 
-      print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
-      print(type(data_value))
       self.constant_int_counters += 1
       return self.constant_int_directory[data_value]
 
@@ -192,8 +171,6 @@ class MemoryHandler:
   def get_constant_address(self, data_type, constant_value):
 
     if data_type == "int": 
-      print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
-      print(type(constant_value))
       # return self.constant_int_directory.get(data_value, False)
       constant_int_address = self.constant_int_directory.get(constant_value, False)
       if constant_int_address: # Constant is in directory

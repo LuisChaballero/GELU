@@ -71,13 +71,13 @@ class Scope:
     return self.get_number_of_local_variables() + self.get_number_of_parameters() + self.get_number_of_temporals()
   
   # Method to add the parameter as a local variable 
-  def add_parameter(self, var_id, var_data_type, address):
+  def add_parameter(self, var_id, var_data_type, address, isArray, m1):
     self.params_table.append(var_data_type)
-    return self.vars_table.add_item(var_id, var_data_type, address)
+    return self.vars_table.add_item(var_id, var_data_type, address, isArray, m1)
 
   # Method to add a local variable to the variable table of the scope
-  def add_item(self, var_id, var_data_type, address):
-    return self.vars_table.add_item(var_id, var_data_type, address)
+  def add_item(self, var_id, var_data_type, address, isArray, m1):
+    return self.vars_table.add_item(var_id, var_data_type, address, isArray, m1)
 
   # Method to get a specific variable from the scope's variable table
   def search(self, var_id):

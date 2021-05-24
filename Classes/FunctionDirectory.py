@@ -31,18 +31,18 @@ class FunctionDirectory:
       self.dir[scope] = Scope(data_type)
       return True
 
-  def add_parameter(self,scope, var_id, var_data_type, address):
+  def add_parameter(self,scope, var_id, var_data_type, address, isArray, m1):
     if not self.scope_exists(scope):
       return False
     else:
-      return self.dir[scope].add_parameter(var_id, var_data_type, address)
+      return self.dir[scope].add_parameter(var_id, var_data_type, address, isArray, m1)
 
   # Add item to scope
-  def add_item(self, scope, var_id, var_data_type, address):
+  def add_item(self, scope, var_id, var_data_type, address, isArray, m1):
     if not self.scope_exists(scope):
       return False
     else:
-      return self.dir[scope].add_item(var_id, var_data_type, address)
+      return self.dir[scope].add_item(var_id, var_data_type, address, isArray, m1)
 
   # Delete object
   def remove(self):

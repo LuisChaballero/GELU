@@ -1,13 +1,15 @@
 
 program test0 ;
 
-var int i, k;
+var int i, k, a[1,2];
 var float F;
 
 main() { 
     i = 10 + 2; 
     F = 13.6 - 0.7;
+    k = (i*2) / 7 + 3;
 
     print(i);
     print(F);
+    print(k);
 }

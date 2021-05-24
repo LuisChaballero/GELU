@@ -58,11 +58,120 @@ temporal_variable_count = 0
 # Counter to verify the arguments in a function call with the parameters table
 argument_counter = 0
 
-# Precedence
-precedence = (
-    ('left', 'MAS', 'MENOS'),
-    ('left', 'POR', 'ENTRE'),
-)
+# Helper functions
+
+# Function to add variables to memory_directory depending on their scope
+def variable_declaration(class_directory, function_directory, memory_directory, current_scope, variable_dimension, variable_id, m1):
+  # Check variable scope
+  if(current_scope == 'Global' ): # Global variables in FunctionDirectory  
+
+    virtual_address = memory_directory.get_address(current_type, "global", "variable")
+    print()
+    memory_directory.add_item(current_type, "global", "variable")
+
+    # There's an error adding global variable into Function Directory
+    if variable_dimension == "simple" and function_directory.add_item(current_scope, variable_id, current_type, virtual_address, False, m1) == False:
+      print("ERROR: Failed at declaring global variable", variable_id)
+      exit()
+   
+    # There's an error adding global array or matrix into Function Directory
+    elif (variable_dimension == "array" or variable_dimension == "matrix") and function_directory.add_item(current_scope, variable_id, current_type, virtual_address, True, m1) == False:
+      print("ERROR: Failed at declaring global variable array", variable_id)
+      exit()
+    
+    print("+++++Global variable added into functionDirectory ->", variable_id, current_type, virtual_address, variable_dimension, m1)
+      
+  elif(current_scope == 'Class_Globals'): # Global variables (attributes) in Class 
+    class_name = s_scopes[-1]
+    attribute_id = s_var_declaration_ids.pop()
+
+    virtual_address = memory_directory.get_class_address(current_type, "global", "variable")
+    memory_directory.add_class_item(current_type, "global", "variable", virtual_address)
+
+    # There's an error adding global variable into Function Directory
+    if variable_dimension == "simple" and class_directory.add_attribute(current_scope, variable_id, current_type, virtual_address, False, m1) == False:
+      print("ERROR: Failed at declaring attribute", variable_id  ,"in class", class_name)
+      exit()
+   
+    # There's an error adding global array or matrix into Function Directory
+    elif (variable_dimension == "array" or variable_dimension == "matrix") and class_directory.add_attribute(current_scope, variable_id, current_type, virtual_address, True, m1) == False:
+      print("ERROR: Failed at declaring array or matrix attribute", variable_id  ,"in class", class_name)
+      exit()
+    
+
+    # # Add attribute into Class Directory
+    # if variable_dimension == "simple" and class_directory.add_attribute(current_scope , variable_id, current_type, virtual_address, False, m1) == False:
+    #     print("ERROR: Failed at declaring attribute", variable_id, "in class", class_name)
+    #     exit()
+   
+    # # Add attribute (array or matrix) into Class Directory
+    # else:
+    #   if class_directory.add_attribute(current_scope , variable_id, current_type, virtual_address, True, m1) == False:
+    #     print("ERROR: Failed at declaring attribute", variable_id, "in class", class_name)
+    #     exit()
+
+    # # Add attributes in class scope 
+    # if not class_directory.add_attribute(class_name, current_scope, attribute_id, current_type):
+    #   print("ERROR: Failed at declaring attributes in class", class_name)
+    #   exit()
+    print("+Global attribute added into ClassDirectory ->", class_name, current_scope, attribute_id, current_type)
+  
+  elif(s_scopes[-1] == 'Class_Globals'): # Local variables in Methods in Class 
+    method_name = current_scope
+    s_scopes.pop() # Pop out 'Class_Globals' scope
+    class_name = s_scopes[-1]
+
+    virtual_address = memory_directory.get_class_address(current_type, "local", "variable")
+    memory_directory.add_class_item(current_type, "local", "variable", virtual_address)
+
+    # There's an error adding global variable into Function Directory
+    if variable_dimension == "simple" and class_directory.add_variable(current_scope, variable_id, current_type, virtual_address, False, m1) == False:
+      print("ERROR: Failed at declaring local vairbale", variable_id, "on method", method_name, "on class", class_name)
+      exit()
+   
+    # There's an error adding global array or matrix into Function Directory
+    elif (variable_dimension == "array" or variable_dimension == "matrix") and class_directory.add_variable(current_scope, variable_id, current_type, virtual_address, True, m1) == False:
+      print("ERROR: Failed at declaring local vairbale", variable_id, "on method", method_name, "on class", class_name)
+      exit()
+
+      
+    print("+Local variable in a Method added into ClassDirectory ->", class_name, method_name, variable_id, current_type)
+
+    # Put 'Class_Globals' into stack
+    s_scopes.append('Class_Globals')
+
+  elif(s_scopes[-1] == 'Global'): # Local variables in functions in functionDirectory
+      function_name = current_scope
+
+      virtual_address = memory_directory.get_address(current_type, "local", "variable")
+      memory_directory.add_item(current_type, "local", "variable")
+
+      # There's an error adding global variable into Function Directory
+      if variable_dimension == "simple" and function_directory.add_item(current_scope, variable_id, current_type, virtual_address, False, m1) == False:
+        print("ERROR: Failed at declaring local variable", variable_id,"in", function_name)
+        exit()
+    
+      # There's an error adding global array or matrix into Function Directory
+      elif (variable_dimension == "array" or variable_dimension == "matrix") and function_directory.add_item(current_scope, variable_id, current_type, virtual_address, True, m1) == False:
+        print("ERROR: Failed at declaring local variable", variable_id,"in", function_name)
+        exit()
+
+      # if variable_dimension == "simple" and function_directory.add_item(current_scope , variable_id, current_type, virtual_address, False, m1) == False:
+      #   print("ERROR: Failed at declaring local variable", variable_id,"in", function_name)
+      #   exit()
+   
+      # # Add global array or matrix into Function Directory
+      # else:
+      #   if function_directory.add_item(current_scope , variable_id, current_type, virtual_address, True, m1) == False:
+      #     print("ERROR: Failed at declaring local variable", variable_id,"in", function_name)
+      #     exit()
+
+      # # Add local variable in function scope on FunctionDirectory
+      # if not function_directory.add_item(function_name, variable_id, current_type, virtual_address):
+      #   print("ERROR: Failed at declaring local variable", variable_id,"in", function_name)
+      #   exit()
+
+      print("++Local variable in a Function added into functionDirectory ->", function_name, variable_id, current_type ,virtual_address)
 
 # Start of grammar
 start = 'programa'
@@ -175,108 +284,105 @@ def p_declaracion_variables(p):
   '''declaracion_variables : variables PUNTO_COMA declaracion_variables
                            | vacio'''
 
+# def p_variables(p):
+#     '''variables : VAR ID ID aux1
+#                  | VAR tipo_simple ID aux2 aux3
+#                  | VAR tipo_simple ID CORCHETE_I CTEINT CORCHETE_D
+#                  | VAR tipo_simple ID CORCHETE_I CTEINT COMA CTEINT CORCHETE_D
+    
+#         aux1 : COMA ID aux1
+#              | vacio
+        
+#         aux2 : CORCHETE_I CTEINT CORCHETE_D
+#              | CORCHETE_I CTEINT COMA CTEINT CORCHETE_D
+#              | vacio
+            
+#         aux3 : COMA ID aux2 aux3
+#              | vacio'''
+
+
 def p_variables(p):
-    '''variables : VAR tipo_compuesto ID aux1
-                 | VAR tipo_simple ID aux2 aux3
+    '''variables : VAR ID ID aux1
+                 | VAR tipo_simple variables_02
     
         aux1 : COMA ID aux1
-             | vacio
-        
-        aux2 : CORCHETE_I CTEINT CORCHETE_D
-             | CORCHETE_I CTEINT COMA CTEINT CORCHETE_D
-             | vacio
-            
-        aux3 : COMA ID aux2 aux3
              | vacio'''
-    # Add variables into Function Directory
-    if p[1] == 'var': 
-        # Add the left-most variable (last) into stack   
-        s_var_declaration_ids.append(p[3]) 
-
-        # Get the current scope
-        current_scope = s_scopes.pop()  
-        # Put variables from stack into function directory or class directory
-        while len(s_var_declaration_ids) > 0:
-          
-            if(current_scope == 'Global' ): # Global variables in FunctionDirectory  
-                variable_id = s_var_declaration_ids.pop()
-
-                virtual_address = memory_directory.get_address(current_type, "global", "variable")
-                print()
-                memory_directory.add_item(current_type, "global", "variable")
-
-                # Add global variable into Function Directory
-                if not function_directory.add_item(current_scope , variable_id, current_type, virtual_address):
-                  print("ERROR: Failed at declaring global variable", variable_id)
-                  exit()
-                
-                print("+++++Global variable added into functionDirectory ->", variable_id, current_type, virtual_address )
-                
-            elif(current_scope == 'Class_Globals'): # Global variables (attributes) in Class 
-                class_name = s_scopes[-1]
-                attribute_id = s_var_declaration_ids.pop()
-
-                virtual_address = memory_directory.get_class_address(current_type, "global", "variable")
-                memory_directory.add_class_item(current_type, "global", "variable", virtual_address)
-
-                # Add attributes in class scope 
-                if not class_directory.add_attribute(class_name, current_scope, attribute_id, current_type):
-                  print("ERROR: Failed at declaring attributes in class", class_name)
-                  exit()
-                print("+Global attribute added into ClassDirectory ->", class_name, current_scope, attribute_id, current_type)
+    
+def p_variables_02(p):
+    '''variables_02 : ID aux3
+                    | ID CORCHETE_I CTEINT CORCHETE_D aux3
+                    | ID CORCHETE_I CTEINT COMA CTEINT CORCHETE_D aux3
             
-            elif(s_scopes[-1] == 'Class_Globals'): # Local variables in Methods in Class 
-                method_name = current_scope
-                s_scopes.pop() # Pop out 'Class_Globals' scope
-                class_name = s_scopes[-1]
-                variable_id = s_var_declaration_ids.pop()
+       aux3 : COMA ID aux3
+            | COMA ID CORCHETE_I CTEINT CORCHETE_D aux3
+            | COMA ID CORCHETE_I CTEINT COMA CTEINT CORCHETE_D aux3
+            | vacio '''
+    
+    # Get the ID's current scope
+    current_scope = s_scopes.pop() 
+    # var_id = None
+    # var_m1 = None
+    # variable_dimension = None
+    if p[1] == ',' : # First token is a comma
+      variable_dimension = None
+      var_m1 = None
+      # var_id = p[2]
+      if len(p) == 4: # ID is a simple variable
+        variable_dimension = "simple"
 
-                virtual_address = memory_directory.get_class_address(current_type, "local", "variable")
-                memory_directory.add_class_item(current_type, "local", "variable", virtual_address)
+      elif len(p) == 7: # ID is an array
+        variable_dimension = "array"
 
-                # Add local variable in Method scope of a class 
-                if not class_directory.add_variable(class_name, method_name, variable_id, current_type, virtual_address):
-                  print("ERROR: Failed at declaring local vairbale", variable_id, "on method", method_name, "on class", class_name)
-                  exit()
-                print("+Local variable in a Method added into ClassDirectory ->", class_name, method_name, variable_id, current_type)
+      elif len(p) == 9: # ID is a matrix
+        variable_dimension = "matrix"
+        var_m1 = p[6]
 
-                # Put 'Class_Globals' into stack
-                s_scopes.append('Class_Globals')
+      print("----------------------p[2]",p[2])
+      print("variable_dimension:", variable_dimension)
+      print("current_scope",current_scope)
 
-            elif(s_scopes[-1] == 'Global'): # Local variables in functions in functionDirectory
-                function_name = current_scope
-                variable_id = s_var_declaration_ids.pop()
+      # Add variable to memory_directory
+      variable_declaration(class_directory, function_directory, memory_directory, current_scope, variable_dimension, p[2], var_m1)
+     
 
-                virtual_address = memory_directory.get_address(current_type, "local", "variable")
-                memory_directory.add_item(current_type, "local", "variable")
+    elif len(p) != 2: # First token is an ID
+      variable_dimension = None
+      var_m1 = None
+      # var_id = p[1]
+      if len(p) == 3: # ID is a simple variable
+        variable_dimension = "simple"
 
-                # Add local variable in function scope on FunctionDirectory
-                if not function_directory.add_item(function_name, variable_id, current_type, virtual_address):
-                  print("ERROR: Failed at declaring local variable", variable_id,"in", function_name)
-                  exit()
+      elif len(p) == 6: # ID is an array
+        variable_dimension = "array"
 
-                print("++Local variable in a Function added into functionDirectory ->", function_name, variable_id, current_type ,virtual_address)
+      elif len(p) == 8:# ID iis a matix
+        variable_dimension = "matrix"
+        var_m1 = p[5]
 
-        s_scopes.append(current_scope) 
+      print("----------------------p[1]",p[1])
+      variable_declaration(class_directory, function_directory, memory_directory, current_scope, variable_dimension, p[1], var_m1)
+      
+    # variable_declaration(class_directory, function_directory, memory_directory, current_scope, variable_dimension, var_id, var_m1)
+
+    # Return current scope to the stack of scopes
+    s_scopes.append(current_scope) 
            
-    elif p[1] == ',':
-        # Add variable into stack
-        s_var_declaration_ids.append(p[2])
-        # print("APPEND variable to var_declaration stack ->", p[2])
+    
+
 
 def p_tipo_simple(p):
     '''tipo_simple : INT 
-                    | FLOAT 
-                    | CHAR'''
+                   | FLOAT 
+                   | CHAR'''
     global current_type
     current_type = p[1]
 
-def p_tipo_compuesto(p):
-    '''tipo_compuesto : ID 
-                    | DATAFRAME
-                    | FILE'''
-    global current_type
-    current_type = p[1]
+# def p_tipo_compuesto(p):
+#     '''tipo_compuesto : ID 
+#                     | DATAFRAME
+#                     | FILE'''
+#     global current_type
+#     current_type = p[1]
 
 def p_declaracion_funciones(p):
     '''declaracion_funciones : funciones funciones2
