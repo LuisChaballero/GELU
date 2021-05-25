@@ -22,6 +22,8 @@ tokens = [
     'NO_IGUAL',
     'MENOR_QUE',
     'MAYOR_QUE',
+    'AND',
+    'OR',
     'PUNTO'
 ]
 
@@ -62,20 +64,22 @@ t_NO_IGUAL = r'<>' # Simbolo de desigualdad
 ## Expresiones regulares par los literales (simbolos de un solo caracter)
 t_PARENTESIS_I = r'\(' # Parentesis izquierdo
 t_PARENTESIS_D = r'\)' # Parentesis derecho
-t_LLAVE_I = r'\{' # Llave izquierda
-t_LLAVE_D = r'\}' # Llave derecha
-t_CORCHETE_I = r'\[' # Corchete izquierdo
-t_CORCHETE_D = r'\]' # Corchete derecho
-t_COMA = r'\,' # coma
-t_PUNTO_COMA = r'\;' # Punto y coma
-t_MAS = r'\+' # Simbolo de suma
-t_MENOS = r'\-' # Simbolo de resta
-t_POR = r'\*' # Simbolo de multiplicación
-t_ENTRE = r'\/' # Simbolo de división
-t_IGUAL = r'\=' # Simbolo de iguak
-t_MENOR_QUE = r'\<' # Simbolo de menor que
-t_MAYOR_QUE = r'\>' # Simbolo de mayor que
-t_PUNTO = r'\.' # Punto
+t_LLAVE_I = r'\{'      # Llave izquierda
+t_LLAVE_D = r'\}'      # Llave derecha
+t_CORCHETE_I = r'\['   # Corchete izquierdo
+t_CORCHETE_D = r'\]'   # Corchete derecho
+t_COMA = r'\,'         # coma
+t_PUNTO_COMA = r'\;'   # Punto y coma
+t_MAS = r'\+'          # Simbolo de suma
+t_MENOS = r'\-'        # Simbolo de resta
+t_POR = r'\*'          # Simbolo de multiplicación
+t_ENTRE = r'\/'        # Simbolo de división
+t_IGUAL = r'\='        # Simbolo de iguak
+t_MENOR_QUE = r'\<'    # Simbolo de menor que
+t_MAYOR_QUE = r'\>'    # Simbolo de mayor que
+t_AND = r'\&'          # Simbolo de and
+t_OR = r'\|'           # Simbolo de or
+t_PUNTO = r'\.'        # Punto
 
 
 def t_NEWLINE(t):

@@ -98,22 +98,6 @@ def variable_declaration(class_directory, function_directory, memory_directory, 
       print("ERROR: Failed at declaring array or matrix attribute", variable_id  ,"in class", class_name)
       exit()
     
-
-    # # Add attribute into Class Directory
-    # if variable_dimension == "simple" and class_directory.add_attribute(current_scope , variable_id, current_type, virtual_address, False, m1) == False:
-    #     print("ERROR: Failed at declaring attribute", variable_id, "in class", class_name)
-    #     exit()
-   
-    # # Add attribute (array or matrix) into Class Directory
-    # else:
-    #   if class_directory.add_attribute(current_scope , variable_id, current_type, virtual_address, True, m1) == False:
-    #     print("ERROR: Failed at declaring attribute", variable_id, "in class", class_name)
-    #     exit()
-
-    # # Add attributes in class scope 
-    # if not class_directory.add_attribute(class_name, current_scope, attribute_id, current_type):
-    #   print("ERROR: Failed at declaring attributes in class", class_name)
-    #   exit()
     print("+Global attribute added into ClassDirectory ->", class_name, current_scope, attribute_id, current_type)
   
   elif(s_scopes[-1] == 'Class_Globals'): # Local variables in Methods in Class 
@@ -156,22 +140,57 @@ def variable_declaration(class_directory, function_directory, memory_directory, 
         print("ERROR: Failed at declaring local variable", variable_id,"in", function_name)
         exit()
 
-      # if variable_dimension == "simple" and function_directory.add_item(current_scope , variable_id, current_type, virtual_address, False, m1) == False:
-      #   print("ERROR: Failed at declaring local variable", variable_id,"in", function_name)
-      #   exit()
-   
-      # # Add global array or matrix into Function Directory
-      # else:
-      #   if function_directory.add_item(current_scope , variable_id, current_type, virtual_address, True, m1) == False:
-      #     print("ERROR: Failed at declaring local variable", variable_id,"in", function_name)
-      #     exit()
-
-      # # Add local variable in function scope on FunctionDirectory
-      # if not function_directory.add_item(function_name, variable_id, current_type, virtual_address):
-      #   print("ERROR: Failed at declaring local variable", variable_id,"in", function_name)
-      #   exit()
-
       print("++Local variable in a Function added into functionDirectory ->", function_name, variable_id, current_type ,virtual_address)
+
+def quadruple_generator_expressions(memory_directory, semantic_cube):
+    # Get right operand
+    right_operand = s_operands.pop()
+    right_type = s_types.pop()
+
+    # Get left operand
+    left_operand = s_operands.pop() 
+    left_type = s_types.pop()
+
+    # Get operator
+    operator = s_operators.pop()
+
+    # Validate result data type with semantic cube
+    res_type = semantic_cube.result_type(left_type, right_type, operator)
+
+    # print("RES_TYPE BEFORE VIRTUAL_ADDRESS:",res_type)
+
+    # Check if result data type is valid
+    if not res_type == 'ERROR':
+        
+        # Expresion is inside main
+        if s_scopes[-1] == 'Global':
+          temporal_virtual_address = memory_directory.get_address(res_type, "global", "temporal")
+          memory_directory.add_item(res_type, "global", "temporal")
+          print("TEMPORAL GLOBAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
+
+        # Expresion is inside a function
+        elif len(s_scopes) == 2:
+          temporal_virtual_address = memory_directory.get_address(res_type, "local", "temporal")
+          memory_directory.add_item(res_type, "local","temporal")
+          print("TEMPORAL LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
+
+        # Expresion is inside a method
+        elif len(s_scopes) == 4:
+          temporal_virtual_address = memory_directory.get_class_address(res_type, "local", "temporal")
+          memory_directory.add_class_item(res_type,"local","temporal")
+          print("TEMPORAL CLASS LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
+
+        quadruple = (operator, left_operand, right_operand, temporal_virtual_address)
+        l_quadrupules.append(quadruple) # add quadrupule to list
+        print(quadruple) 
+
+        s_operands.append(temporal_virtual_address) # Add the result into the operands stack
+        s_types.append(res_type) # Add result's type into the types stack
+    
+    else: # Invalid result type
+        print("Error: Type mismatch")
+        exit()
+
 
 # Start of grammar
 start = 'programa'
@@ -224,7 +243,7 @@ def p_main(p):
     for index in range(len(l_quadrupules)):
         print(index, l_quadrupules[index])
     print("")
-    virtual_machine = VirtualMachine(l_quadrupules, memory_directory, class_directory, function_directory)
+    # virtual_machine = VirtualMachine(l_quadrupules, memory_directory, class_directory, function_directory)
 
     
 
@@ -283,22 +302,6 @@ def p_clases_02(p):
 def p_declaracion_variables(p):
   '''declaracion_variables : variables PUNTO_COMA declaracion_variables
                            | vacio'''
-
-# def p_variables(p):
-#     '''variables : VAR ID ID aux1
-#                  | VAR tipo_simple ID aux2 aux3
-#                  | VAR tipo_simple ID CORCHETE_I CTEINT CORCHETE_D
-#                  | VAR tipo_simple ID CORCHETE_I CTEINT COMA CTEINT CORCHETE_D
-    
-#         aux1 : COMA ID aux1
-#              | vacio
-        
-#         aux2 : CORCHETE_I CTEINT CORCHETE_D
-#              | CORCHETE_I CTEINT COMA CTEINT CORCHETE_D
-#              | vacio
-            
-#         aux3 : COMA ID aux2 aux3
-#              | vacio'''
 
 
 def p_variables(p):
@@ -616,7 +619,7 @@ def p_variable(p):
             exit()
 
 def p_asignacion(p):
-    'asignacion : variable IGUAL expresion PUNTO_COMA'
+    'asignacion : variable IGUAL exp PUNTO_COMA'
 
 
     expresion_result = s_operands.pop() # Result of the expresion 
@@ -759,7 +762,7 @@ def p_escritura(p):
 
 def p_escritura2(p):
     '''escritura2 : CTESTRING k
-                  | expresion k append_expresion_print
+                  | hiper_expresion k append_expresion_print
 
        k         : COMA escritura2
                  | vacio '''
@@ -787,7 +790,7 @@ def p_append_expresion_print(p):
     # print("PRINT EXPRESION APPEND:", res_expresion)
                 
 def p_condicion(p):
-    '''condicion : IF PARENTESIS_I expresion PARENTESIS_D quad_IF_01 bloque l quad_IF_02
+    '''condicion : IF PARENTESIS_I hiper_expresion PARENTESIS_D quad_IF_01 bloque l quad_IF_02
 
        l         : ELSE quad_IF_03 bloque
                  | vacio'''
@@ -842,7 +845,7 @@ def p_quad_IF_03(p):
     l_quadrupules[false_quadrupule] = qudrupule_GOTOF 
 
 def p_ciclo_while(p):
-    'ciclo_while : WHILE PARENTESIS_I quad_while_01 expresion PARENTESIS_D quad_while_02 bloque quad_while_03'
+    'ciclo_while : WHILE PARENTESIS_I quad_while_01 hiper_expresion PARENTESIS_D quad_while_02 bloque quad_while_03'
     
 def p_quad_while_01(p):
     'quad_while_01 :'
@@ -888,7 +891,7 @@ def p_ciclo_for_01(p):
     'ciclo_for_01 : FOR variable IGUAL exp quad_for_01 ciclo_for_02'
 
 def p_ciclo_for_02(p):
-    'ciclo_for_02 : UNTIL quad_for_02 expresion quad_for_03 bloque quad_for_04'
+    'ciclo_for_02 : UNTIL quad_for_02 hiper_expresion quad_for_03 bloque quad_for_04'
 
 def p_quad_for_01(p):
     'quad_for_01 :'
@@ -952,6 +955,37 @@ def p_quad_for_04(p):
     pending_GOTF= (pending_GOTF[0], pending_GOTF[1], None, len(l_quadrupules))
     l_quadrupules[index_pending_GOTF] = pending_GOTF
 
+def p_hiper_expresion(p):
+    '''hiper_expresion : super_expresion hiper_expresion_02 quadruple_creation_AND
+
+    hiper_expresion_02 : AND and_append super_expresion
+                       | vacio'''
+def p_quadruple_creation_AND(p):
+    'quadruple_creation_AND :'
+    if(len(s_operators) != 0):
+        if(s_operators[-1] == '&'):
+          quadruple_generator_expressions(memory_directory, semantic_cube)
+
+def p_and_append(p):
+    'and_append :'
+    s_operators.append('&')
+
+def p_super_expresion(p):
+    '''super_expresion : expresion super_expresion_02 quadruple_creation_OR
+
+    super_expresion_02 : OR or_append expresion
+                       | vacio'''
+
+def p_quadruple_creation_OR(p):
+    'quadruple_creation_OR :'
+    if(len(s_operators) != 0):
+      if(s_operators[-1] == '|'):
+        quadruple_generator_expressions(memory_directory, semantic_cube)
+    
+def p_or_append(p):
+    'or_append :'
+    s_operators.append('|')
+
 def p_expresion(p):
     '''expresion : exp m quadrupule_creation_relational
 
@@ -963,70 +997,21 @@ def p_expresion(p):
 def p_quadrupule_creation_relational(p):
     'quadrupule_creation_relational :'
     if(len(s_operators) != 0):
-        if(s_operators[-1] == '>' or s_operators[-1] == '<' or s_operators[-1] == '<>' ):
-            # Get right operand
-            right_operand = s_operands.pop()
-            right_type = s_types.pop()
-
-            # Get left operand
-            left_operand = s_operands.pop() 
-            left_type = s_types.pop()
-
-            # Get operator
-            operator = s_operators.pop()
-
-            # Validate result data type with semantic cube
-            res_type = semantic_cube.result_type(left_type, right_type, operator)
-
-            print("RES_TYPE BEFORE VIRTUAL_ADDRESS:",res_type)
-
-            # Check if result data type is valid
-            if not res_type == 'ERROR':
-              
-              # Expresion is inside main
-              if s_scopes[-1] == 'Global':
-                temporal_virtual_address = memory_directory.get_address(res_type, "global", "temporal")
-                memory_directory.add_item(res_type, "global", "temporal")
-                print("TEMPORAL GLOBAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
-
-              # Expresion is inside a function
-              elif len(s_scopes) == 2:
-                temporal_virtual_address = memory_directory.get_address(res_type, "local", "temporal")
-                memory_directory.add_item(res_type, "local","temporal")
-                print("TEMPORAL LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
-
-              # Expresion is inside a method
-              elif len(s_scopes) == 4:
-                temporal_virtual_address = memory_directory.get_class_address(res_type, "local", "temporal")
-                memory_directory.add_class_item(res_type,"local","temporal")
-                print("TEMPORAL CLASS LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
-
-              quadruple = (operator, left_operand, right_operand, temporal_virtual_address)
-              l_quadrupules.append(quadruple) # add quadrupule to list
-              print(quadruple) 
-
-              s_operands.append(temporal_virtual_address) # Add the result into the operands stack
-              s_types.append(res_type) # Add result's type into the types stack
-            
-            else: # Invalid result type
-              print("Error: Type mismatch")
-              exit()
+      if(s_operators[-1] == '>' or s_operators[-1] == '<' or s_operators[-1] == '<>' ):
+        quadruple_generator_expressions(memory_directory, semantic_cube)
 
 
 def p_greater_than_append(p):
     'greater_than_append :'
     s_operators.append('>')
-    # print("$$$ Addition operator MAYOR_QUE appended in stack $$$")
 
 def p_less_than_append(p):
     'less_than_append :'
     s_operators.append('<')
-    # print("$$$ Addition operator MENOR_QUE appended in stack $$$")
 
 def p_different_append(p):
     'different_append :'
     s_operators.append('<>')
-    # print("$$$ Different operator NO_IGUAL appended in stack $$$")
 
 def p_exp(p):
     '''exp : termino quadrupule_creation_01 n
@@ -1050,49 +1035,8 @@ def p_substraction_append(p):
 def p_quadrupule_creation_01(p):
     'quadrupule_creation_01 :'
     if(len(s_operators) != 0): 
-        if(s_operators[-1] == '+' or s_operators[-1] == '-'):
-            right_operand = s_operands.pop() # Get right operand from stack
-            right_type = s_types.pop() # Get right operand's type from stack
-            
-            left_operand = s_operands.pop() # Get left operand from stack
-            left_type = s_types.pop() # Get left operand's type from stack
-
-            operator = s_operators.pop() # Get operand from stack
-
-            res_type = semantic_cube.result_type(left_type, right_type, operator)
-            # print("res_type : ", res_type)
-
-            if(not res_type == 'ERROR'):
-
-              if s_scopes[-1] == 'Global': # Global temporal
-                temporal_virtual_address = memory_directory.get_address(res_type, "global", "temporal")
-                memory_directory.add_item(res_type, "global", "temporal")
-                print("TEMPORAL GLOBAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
-
-              elif len(s_scopes) == 2: # Local temporal in a function
-                temporal_virtual_address = memory_directory.get_address(res_type, "local", "temporal")
-                memory_directory.add_item(res_type, "local","temporal")
-                print("TEMPORAL LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
-
-              elif len(s_scopes) == 4: # Class local temporal_variable_base_name
-                temporal_virtual_address = memory_directory.get_class_address(res_type, "local", "temporal")
-                memory_directory.add_class_item(res_type,"local","temporal")
-                print("TEMPORAL CLASS LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
-
-              # # Temporable variable simulation
-              # global temporal_variable_count
-              # result = temporal_variable_base_name + str(temporal_variable_count)
-              # temporal_variable_count += 1
-
-              quadruple = (operator, left_operand, right_operand, temporal_virtual_address) 
-              l_quadrupules.append(quadruple) # Add quadrupule to list
-              print(quadruple) 
-
-              s_operands.append(temporal_virtual_address) # Add the result into the operands stack
-              s_types.append(res_type) # Add result's type into the types stack
-            else:
-              print("Error: Type mismatch")
-              exit()
+      if(s_operators[-1] == '+' or s_operators[-1] == '-'):
+        quadruple_generator_expressions(memory_directory, semantic_cube)
 
 def p_termino(p):
     '''termino : factor quadrupule_creation_02 o
@@ -1114,48 +1058,8 @@ def p_divition_append(p):
 def p_quadrupule_creation_02(p): 
     'quadrupule_creation_02 :'
     if(len(s_operators) != 0):
-        if(s_operators[-1] == '*' or s_operators[-1] == '/'):
-            right_operand = s_operands.pop() # Get right operand from stack
-            right_type = s_types.pop() # Get right operand's type from stack
-
-            left_operand = s_operands.pop() # Get left operand from stack
-            left_type = s_types.pop() # Get left operand's type from stack
-
-            operator = s_operators.pop() # Get operand from stack
-
-            res_type = semantic_cube.result_type(left_type, right_type, operator)
-
-            if(not res_type == 'ERROR'):
-
-              if s_scopes[-1] == 'Global': # Global temporal
-                temporal_virtual_address = memory_directory.get_address(res_type, "global", "temporal")
-                memory_directory.add_item(res_type, "global", "temporal")
-                print("TEMPORAL GLOBAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
-
-              elif len(s_scopes) == 2: # Local temporal in a function
-                temporal_virtual_address = memory_directory.get_address(res_type, "local", "temporal")
-                memory_directory.add_item(res_type, "local","temporal")
-                print("TEMPORAL LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
-
-              elif len(s_scopes) == 4: # Class local temporal_variable_base_name
-                temporal_virtual_address = memory_directory.get_class_address(res_type, "local", "temporal")
-                memory_directory.add_class_item(res_type,"local","temporal")
-                print("TEMPORAL CLASS LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
-
-              # # Temporable variable simulation
-              # global temporal_variable_count
-              # result = temporal_variable_base_name + str(temporal_variable_count)
-              # temporal_variable_count += 1
-
-              quadruple = (operator, left_operand, right_operand, temporal_virtual_address) # 'result' is supposed to be temporal space
-              l_quadrupules.append(quadruple) # add quadrupule to list
-              print(quadruple) 
-
-              s_operands.append(temporal_virtual_address) # Add the result into the operands stack
-              s_types.append(res_type) # Add result's type into the types stack
-            else:
-              print("Error: Type mismatch")
-              exit()
+      if(s_operators[-1] == '*' or s_operators[-1] == '/'):
+        quadruple_generator_expressions(memory_directory, semantic_cube)
 
 # def p_factor(p):
 #     '''factor : varcte 
@@ -1172,7 +1076,7 @@ def p_factor(p):
               | ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D
               | ID PUNTO ID 
               | ID PUNTO ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D
-              | PARENTESIS_I parenthesis_left_append expresion PARENTESIS_D parenthesis_left_pop '''
+              | PARENTESIS_I parenthesis_left_append hiper_expresion PARENTESIS_D parenthesis_left_pop '''
 
     # factor : ID  or  factor : varcte
     if(len(p) == 2):
@@ -1260,14 +1164,11 @@ def p_factor(p):
                 print("Variable", p[1], "is not declared")
                 exit()
         else:
-          
-
           # factor : varcte
           print("Implementacion de constantes")
 
           if current_constant_type == 'int' or current_constant_type == 'float' or current_constant_type == 'char':
-            print("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
-            print(type(current_constant))
+            # print(type(current_constant))
             virtual_address = memory_directory.get_constant_address(current_constant_type, current_constant)
           
           current_constant = None
@@ -1316,8 +1217,6 @@ def p_factor(p):
 
             quadruple_GOSUB = ('GOSUB', func_name, None, None)
             l_quadrupules.append(quadruple_GOSUB)
-
-        print("Llamada función")
 
     elif len(p) == 5:
         print("Arreglo")

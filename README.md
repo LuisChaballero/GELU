@@ -68,7 +68,7 @@ Se creo la clase de memoryHandler y se implementaron las direcciones virtuales p
 
 Se implementaron las direcciones virtuales para los temporales y se agrego la deteccion de errores cuando se inicializa una variable que ya existe. 
 
-##23/05/2021
+##22/05/2021
 
 Se implemento el directorio de constantes y la ejecución de las operaciones aritmeticas en la maquina virtual.
 
