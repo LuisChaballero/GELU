@@ -75,3 +75,7 @@ Se implemento el directorio de constantes y la ejecución de las operaciones ari
 ##23/05/2021
 
 Se modificó la gramatica para aceptar declaracion de arreglos
+
+#24/05/2021
+
+Se implementaron las operaciones logicas en las expresiones y la maquina virtual. Se hizo refactor para simplificar la gramatica. Se implementaron las constantes negativas 

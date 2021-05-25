@@ -16,12 +16,6 @@ class FunctionDirectory:
       return self.dir[scope].search(var_id)
     else:
       return False
-    # if var_id in self.dir[scope]:
-    #   return True
-    # elif var_id in self.dir['global']:
-    #   return True
-    # else:
-    #   return False
 
   # Add a scope to the FunctionDirectory
   def add_scope(self, scope, data_type):
@@ -31,18 +25,18 @@ class FunctionDirectory:
       self.dir[scope] = Scope(data_type)
       return True
 
-  def add_parameter(self,scope, var_id, var_data_type, address, isArray, m1):
+  def add_parameter(self,scope, var_id, var_data_type, address, dimensions):
     if not self.scope_exists(scope):
       return False
     else:
-      return self.dir[scope].add_parameter(var_id, var_data_type, address, isArray, m1)
+      return self.dir[scope].add_parameter(var_id, var_data_type, address, dimensions)
 
   # Add item to scope
-  def add_item(self, scope, var_id, var_data_type, address, isArray, m1):
+  def add_item(self, scope, var_id, var_data_type, address, dimensions):
     if not self.scope_exists(scope):
       return False
     else:
-      return self.dir[scope].add_item(var_id, var_data_type, address, isArray, m1)
+      return self.dir[scope].add_item(var_id, var_data_type, address, dimensions)
 
   # Delete object
   def remove(self):

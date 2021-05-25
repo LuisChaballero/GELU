@@ -33,28 +33,28 @@ class ClassDirectory:
     else:
       return self.dir[class_name].add_scope(method_name, data_type)
   
-  ####### REMEMBER TO DO REFACTOR OF THIS FOLLOWING 2 METHODS ############
+  ####### REMEMBER TO DO REFACTOR OF THIS FOLLOWING 2 METHODS ############ porque hacen lo mismo
   # Add an attribute of a class
-  def add_attribute(self, class_name, vars_scope, var_id, data_type, address, isArray, m1):
+  def add_attribute(self, class_name, vars_scope, var_id, data_type, address, dimensions):
     if not self.scope_exists(class_name):
       return False
     else:
-      return self.dir[class_name].add_item(vars_scope, var_id, data_type, address, isArray, m1)
+      return self.dir[class_name].add_item(vars_scope, var_id, data_type, address, dimensions)
 
   # Add variable in a method 
-  def add_variable(self, class_name, method_name, var_id, data_type, address, isArray, m1):
+  def add_variable(self, class_name, method_name, var_id, data_type, address, dimensions):
     if not self.scope_exists(class_name): # Class not found in directory
       return False
     else:
-      return self.dir[class_name].add_item(method_name, var_id, data_type, address, isArray, m1)
+      return self.dir[class_name].add_item(method_name, var_id, data_type, address, dimensions)
   #########################################################################
 
     # Add variable in a method 
-  def add_parameter(self, class_name, method_name, var_id, data_type, address, isArray, m1):
+  def add_parameter(self, class_name, method_name, var_id, data_type, address, dimensions):
     if not self.scope_exists(class_name): # Class not found in directory
       return False
     else:
-      return self.dir[class_name].add_parameter(method_name, var_id, data_type, address, isArray, m1)
+      return self.dir[class_name].add_parameter(method_name, var_id, data_type, address, dimensions)
 
   # Delete object
   def remove(self):

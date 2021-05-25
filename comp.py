@@ -10,10 +10,8 @@ from Classes.ClassDirectory import ClassDirectory
 import Classes.MemoryHandler as mh
 from Classes.VirtualMachine import VirtualMachine
 
-
-
 # --------------
-# Build lexer (lexer)
+# Build lexer
 lexer = lex.lex()
 
 # Read text file (prueba1.txt / prueba2.txt)
@@ -45,11 +43,11 @@ l_quadrupules = [] # To save the code optimization in form of quadrupules. (op, 
 
 
 # current type for declared variable 
-current_type = ''
+current_type = None
 
 # Catches the constant
 current_constant = None
-current_constant_type = ''
+current_constant_type = None
 
 # Simulates the implementation of temporal variables 
 temporal_variable_base_name = "temp"
@@ -58,10 +56,10 @@ temporal_variable_count = 0
 # Counter to verify the arguments in a function call with the parameters table
 argument_counter = 0
 
-# Helper functions
+# --------------------------- HELPER FUNCTIONS ----------------------------
 
 # Function to add variables to memory_directory depending on their scope
-def variable_declaration(class_directory, function_directory, memory_directory, current_scope, variable_dimension, variable_id, m1):
+def variable_declaration(class_directory, function_directory, memory_directory, current_scope, variable_dimensions, variable_id):
   # Check variable scope
   if(current_scope == 'Global' ): # Global variables in FunctionDirectory  
 
@@ -70,16 +68,11 @@ def variable_declaration(class_directory, function_directory, memory_directory, 
     memory_directory.add_item(current_type, "global", "variable")
 
     # There's an error adding global variable into Function Directory
-    if variable_dimension == "simple" and function_directory.add_item(current_scope, variable_id, current_type, virtual_address, False, m1) == False:
+    if function_directory.add_item(current_scope, variable_id, current_type, virtual_address, variable_dimensions) == False:
       print("ERROR: Failed at declaring global variable", variable_id)
       exit()
-   
-    # There's an error adding global array or matrix into Function Directory
-    elif (variable_dimension == "array" or variable_dimension == "matrix") and function_directory.add_item(current_scope, variable_id, current_type, virtual_address, True, m1) == False:
-      print("ERROR: Failed at declaring global variable array", variable_id)
-      exit()
     
-    print("+++++Global variable added into functionDirectory ->", variable_id, current_type, virtual_address, variable_dimension, m1)
+    print("+++++Global variable added into functionDirectory ->", variable_id, current_type, virtual_address, variable_dimensions)
       
   elif(current_scope == 'Class_Globals'): # Global variables (attributes) in Class 
     class_name = s_scopes[-1]
@@ -89,13 +82,8 @@ def variable_declaration(class_directory, function_directory, memory_directory, 
     memory_directory.add_class_item(current_type, "global", "variable", virtual_address)
 
     # There's an error adding global variable into Function Directory
-    if variable_dimension == "simple" and class_directory.add_attribute(current_scope, variable_id, current_type, virtual_address, False, m1) == False:
+    if class_directory.add_attribute(current_scope, variable_id, current_type, virtual_address, variable_dimensions) == False:
       print("ERROR: Failed at declaring attribute", variable_id  ,"in class", class_name)
-      exit()
-   
-    # There's an error adding global array or matrix into Function Directory
-    elif (variable_dimension == "array" or variable_dimension == "matrix") and class_directory.add_attribute(current_scope, variable_id, current_type, virtual_address, True, m1) == False:
-      print("ERROR: Failed at declaring array or matrix attribute", variable_id  ,"in class", class_name)
       exit()
     
     print("+Global attribute added into ClassDirectory ->", class_name, current_scope, attribute_id, current_type)
@@ -109,16 +97,10 @@ def variable_declaration(class_directory, function_directory, memory_directory, 
     memory_directory.add_class_item(current_type, "local", "variable", virtual_address)
 
     # There's an error adding global variable into Function Directory
-    if variable_dimension == "simple" and class_directory.add_variable(current_scope, variable_id, current_type, virtual_address, False, m1) == False:
-      print("ERROR: Failed at declaring local vairbale", variable_id, "on method", method_name, "on class", class_name)
-      exit()
-   
-    # There's an error adding global array or matrix into Function Directory
-    elif (variable_dimension == "array" or variable_dimension == "matrix") and class_directory.add_variable(current_scope, variable_id, current_type, virtual_address, True, m1) == False:
+    if class_directory.add_variable(current_scope, variable_id, current_type, virtual_address, variable_dimensions) == False:
       print("ERROR: Failed at declaring local vairbale", variable_id, "on method", method_name, "on class", class_name)
       exit()
 
-      
     print("+Local variable in a Method added into ClassDirectory ->", class_name, method_name, variable_id, current_type)
 
     # Put 'Class_Globals' into stack
@@ -131,17 +113,13 @@ def variable_declaration(class_directory, function_directory, memory_directory, 
       memory_directory.add_item(current_type, "local", "variable")
 
       # There's an error adding global variable into Function Directory
-      if variable_dimension == "simple" and function_directory.add_item(current_scope, variable_id, current_type, virtual_address, False, m1) == False:
-        print("ERROR: Failed at declaring local variable", variable_id,"in", function_name)
-        exit()
-    
-      # There's an error adding global array or matrix into Function Directory
-      elif (variable_dimension == "array" or variable_dimension == "matrix") and function_directory.add_item(current_scope, variable_id, current_type, virtual_address, True, m1) == False:
+      if function_directory.add_item(current_scope, variable_id, current_type, virtual_address, variable_dimensions) == False:
         print("ERROR: Failed at declaring local variable", variable_id,"in", function_name)
         exit()
 
       print("++Local variable in a Function added into functionDirectory ->", function_name, variable_id, current_type ,virtual_address)
 
+# Function to generate quadruples from all expressions
 def quadruple_generator_expressions(memory_directory, semantic_cube):
     # Get right operand
     right_operand = s_operands.pop()
@@ -156,8 +134,6 @@ def quadruple_generator_expressions(memory_directory, semantic_cube):
 
     # Validate result data type with semantic cube
     res_type = semantic_cube.result_type(left_type, right_type, operator)
-
-    # print("RES_TYPE BEFORE VIRTUAL_ADDRESS:",res_type)
 
     # Check if result data type is valid
     if not res_type == 'ERROR':
@@ -191,8 +167,52 @@ def quadruple_generator_expressions(memory_directory, semantic_cube):
         print("Error: Type mismatch")
         exit()
 
+# Function to validate that a specific-dimension variable exists in any of the three possible scopes: global, function, method
+def variable_validation(class_directory, function_directory, memory_directory, variable_id, dimension_type):
+  current_scope = s_scopes.pop()
+  variable = None
+  # ID is inside Main
+  if len(s_scopes) == 0:
 
-# Start of grammar
+    # Check if ID is a global variable in Main
+    variable = function_directory.var_exists(current_scope, variable_id)   
+
+  # ID is inside a function
+  elif len(s_scopes) == 1:
+      function_name = current_scope
+
+      # Check if ID is a local variable in function
+      variable = function_directory.var_exists(function_name, variable_id)
+
+      if variable == False: # Not in local
+        # Check if ID is a global variable
+        variable = function_directory.var_exists(s_scopes[-1], variable_id)
+
+  # ID is inside a method
+  elif len(s_scopes) == 3:
+      method_name = current_scope
+      class_globals = s_scopes.pop() # Remove 'Class_Globals'
+      class_name = s_scopes[-1]
+      
+      # Check if ID is a local variable in method
+      class_object = class_directory.get_class(class_name)
+      variable = class_object.var_exists(method_name, variable_id)
+  
+      if variable == False: # Not in local
+        # Check if ID is an attribute in class
+        variable = class_object.var_exists(class_globals, variable_id)
+
+      s_scopes.append(class_globals) # Put back the name of class in stack scopes
+
+  s_scopes.append(current_scope) # Put back current scope
+  
+  if not variable or dimension_type != variable.get_dimensions()[0]:
+    return False
+  else:
+    return variable
+#  ------------------------------------------------------------------------
+
+# --------------------------- GRAMMAR -----------------------------
 start = 'programa'
 
 def p_vacio(p):
@@ -219,9 +239,7 @@ def p_init_global_env(p):
 def p_program_name(p):
   'program_name :'
   s_scopes.append('Global')
-#   print("Scope added in STACK: Global")
   function_directory.add_scope('Global', 'NP')
-#   print("Scope added in FUNCTION DIRECTORY: Global")
 
 def p_quad_GOTO_Main(p):
     'quad_GOTO_Main :'
@@ -243,7 +261,8 @@ def p_main(p):
     for index in range(len(l_quadrupules)):
         print(index, l_quadrupules[index])
     print("")
-    # virtual_machine = VirtualMachine(l_quadrupules, memory_directory, class_directory, function_directory)
+    
+    virtual_machine = VirtualMachine(l_quadrupules, memory_directory, class_directory, function_directory)
 
     
 
@@ -322,56 +341,46 @@ def p_variables_02(p):
             | vacio '''
     
     # Get the ID's current scope
-    current_scope = s_scopes.pop() 
-    # var_id = None
-    # var_m1 = None
-    # variable_dimension = None
+    current_scope = s_scopes.pop()
     if p[1] == ',' : # First token is a comma
-      variable_dimension = None
-      var_m1 = None
+      variable_dimensions = None
+  
       # var_id = p[2]
       if len(p) == 4: # ID is a simple variable
-        variable_dimension = "simple"
+        variable_dimensions = (0, 0, 0)
 
       elif len(p) == 7: # ID is an array
-        variable_dimension = "array"
+        variable_dimensions = (1, p[4], 0)
 
       elif len(p) == 9: # ID is a matrix
-        variable_dimension = "matrix"
-        var_m1 = p[6]
+        variable_dimensions = (2, p[4], p[6])
+        # variable_m1 = p[6]64
 
       print("----------------------p[2]",p[2])
-      print("variable_dimension:", variable_dimension)
+      print("variable_dimensions:", variable_dimensions)
       print("current_scope",current_scope)
 
       # Add variable to memory_directory
-      variable_declaration(class_directory, function_directory, memory_directory, current_scope, variable_dimension, p[2], var_m1)
+      variable_declaration(class_directory, function_directory, memory_directory, current_scope, variable_dimensions, p[2])
      
 
     elif len(p) != 2: # First token is an ID
-      variable_dimension = None
-      var_m1 = None
-      # var_id = p[1]
+      variable_dimensions = None
+
       if len(p) == 3: # ID is a simple variable
-        variable_dimension = "simple"
+        variable_dimensions = (0, 0, 0)
 
       elif len(p) == 6: # ID is an array
-        variable_dimension = "array"
+        variable_dimensions = (1, p[3], 0)
 
       elif len(p) == 8:# ID iis a matix
-        variable_dimension = "matrix"
-        var_m1 = p[5]
+        variable_dimensions = (2, p[3], p[5])
 
       print("----------------------p[1]",p[1])
-      variable_declaration(class_directory, function_directory, memory_directory, current_scope, variable_dimension, p[1], var_m1)
-      
-    # variable_declaration(class_directory, function_directory, memory_directory, current_scope, variable_dimension, var_id, var_m1)
+      variable_declaration(class_directory, function_directory, memory_directory, current_scope, variable_dimensions, p[1])
 
     # Return current scope to the stack of scopes
     s_scopes.append(current_scope) 
-           
-    
-
 
 def p_tipo_simple(p):
     '''tipo_simple : INT 
@@ -379,13 +388,13 @@ def p_tipo_simple(p):
                    | CHAR'''
     global current_type
     current_type = p[1]
+    if current_type == 'int':
+      current_type = 0
+    elif current_type == 'float':
+      current_type = 1
+    elif current_type == 'char':
+      current_type = 2
 
-# def p_tipo_compuesto(p):
-#     '''tipo_compuesto : ID 
-#                     | DATAFRAME
-#                     | FILE'''
-#     global current_type
-#     current_type = p[1]
 
 def p_declaracion_funciones(p):
     '''declaracion_funciones : funciones funciones2
@@ -627,11 +636,6 @@ def p_asignacion(p):
 
     variable_operand = s_operands.pop()
     variable_type = s_types.pop()
-
-    # print("&&& Asignacion expresion_result: ", expresion_result) 
-    # print("&&& Asignacion expresion_type: ", expresion_type) 
-    # print("&&& Asignacion variable_operand: ", variable_operand) 
-    # print("&&& Asignacion variable_type: ", variable_type) 
 
     if(variable_type == expresion_type):
         quadruple = (p[2], expresion_result, None, variable_operand) 
@@ -905,7 +909,7 @@ def p_quad_for_01(p):
     if exp_type != var_type:
         print("Error: ", exp_type, "not assignable to", var_type)
         exit()
-    elif(var_type != 'int'):
+    elif(var_type != 0): # Not int
         print("Error: ", variable, "is not of type INT")
         exit()
     else:
@@ -925,7 +929,7 @@ def p_quad_for_03(p):
     expresion_result = s_operands.pop()  
     # print("expresion_type:", expresion_type )
 
-    if(expresion_type != 'bool'):
+    if(expresion_type != 3):
         print("Error: Expression result from FOR must be boolean ")
         exit()
     else:
@@ -1024,13 +1028,11 @@ def p_addition_append(p):
     'addition_append :'
     # Push addition operator into operator stack
     s_operators.append('+')
-    # print("$$$ Addition operator MAS appended in stack $$$")
 
 def p_substraction_append(p):
     'substraction_append :'
     # Push substraction operator into operator stack
     s_operators.append('-')
-    # print("$$$ Substraction operator MENOS appended in stack $$$")
 
 def p_quadrupule_creation_01(p):
     'quadrupule_creation_01 :'
@@ -1048,12 +1050,10 @@ def p_termino(p):
 def p_multiplication_append(p):
     'multiplication_append :'
     s_operators.append('*')
-    # print("$$$ Multiplication POR appended in stack$$$")
 
 def p_divition_append(p):
     'divition_append :'
     s_operators.append('/')
-    # print("$$$ Divition operator ENTRE in stack $$$")
 
 def p_quadrupule_creation_02(p): 
     'quadrupule_creation_02 :'
@@ -1069,7 +1069,8 @@ def p_quadrupule_creation_02(p):
 #               | MENOS varcte'''
 
 def p_factor(p):
-    '''factor : varcte 
+    '''factor : varcte
+              | MENOS varcte 
               | ID 
               | ID CORCHETE_I exp CORCHETE_D 
               | ID CORCHETE_I exp COMA exp CORCHETE_D 
@@ -1082,98 +1083,48 @@ def p_factor(p):
     if(len(p) == 2):
         global current_constant
         global current_constant_type
-        # factor : ID
-        # ID is not a constant
+
         print("p[1]:",p[1])
         print("current_constant",current_constant)
-        print("current_constant_type", current_constant_type)
+        print("current_constant_type",current_constant_type)
+        # factor : ID
+        # ID is not a constant
         if( p[1] != 'CTEINT' and p[1] != 'CTEFLOAT' and p[1] != 'CTECHAR' and current_constant == None):
-            # operand_type = function_directory.get_scope(s_scopes[-1]).search(p[1]) # Get variable´s type
-            current_scope = s_scopes.pop()
 
-            # ID is inside Main
-            if len(s_scopes) == 0:
+            variable = variable_validation(class_directory, function_directory, memory_directory, p[1], 0)
 
-                # Check if ID is a global variable in Main
-                # print("######## Variable var_exists", function_directory.var_exists(current_scope, p[1]))       
-                variable = function_directory.var_exists(current_scope, p[1])   
-            
-                if variable:
-                  
-                  variable_type = variable.get_data_type()
-                  
-                  variable_address = variable.get_address() 
-                  # print("-------------GLOBAL", p[1], variable_address)   
-
-            # ID is inside a function
-            elif len(s_scopes) == 1:
-                function_name = current_scope
-
-                # Check if ID is a local variable in function
-                # print("######## Variable var_exists", function_directory.var_exists(function_name, p[1]))
-                variable = function_directory.var_exists(function_name, p[1])
-
-                if variable:
-                  variable_type = variable.get_data_type()
-                  variable_address = variable.get_address()
-                
-                else: # ID is not local variable in function
-                  
-                  # Check if ID is a global variable
-                  variable = function_directory.var_exists(s_scopes[-1], p[1])
-
-                  if variable:
-                    variable_type = variable.get_data_type()
-                    variable_address = variable.get_address()
-
-            # ID is inside a method
-            elif len(s_scopes) == 3:
-                method_name = current_scope
-                class_globals = s_scopes.pop() # Remove 'Class_Globals'
-                class_name = s_scopes[-1]
-                
-                # Check if ID is a local variable in method
-                class_object = class_directory.get_class(class_name)
-                variable = class_object.var_exists(method_name, p[1])
-            
-                if variable:
-                  variable_type = variable.get_data_type()
-                  variable_address = variable.get_address()
-
-                else: # ID is not a local variable in method
-
-                  # Check if ID is an attribute in class
-                  variable = class_object.var_exists(class_globals, p[1])
-                  
-                  if variable:
-                      variable_type = variable.get_data_type()
-                      variable_address = variable.get_address()
-
-                s_scopes.append(class_globals) # Put back the name of class in stack scopes
-
-
-            s_scopes.append(current_scope) # Put back current scope
-
-            if(variable):
-                s_operands.append(variable_address)
-                # print("$$$ Operand ", variable_address, "added into s_operands $$$")
-
-                s_types.append(variable_type)
-                # print("$$$ Operand_type added into stack: ", variable_type)
+            if not variable:
+              print("Variable", p[1], "is not declared")
+              exit()
+              
             else:
-                print("Variable", p[1], "is not declared")
-                exit()
+              s_operands.append(variable.get_address())
+              s_types.append(variable.get_data_type())
+              
         else:
           # factor : varcte
           print("Implementacion de constantes")
 
-          if current_constant_type == 'int' or current_constant_type == 'float' or current_constant_type == 'char':
+          if 0 <= current_constant_type <= 2 :
             # print(type(current_constant))
             virtual_address = memory_directory.get_constant_address(current_constant_type, current_constant)
           
           current_constant = None
           s_operands.append(virtual_address)
           s_types.append(current_constant_type)
+    
+    elif len(p) == 3:
+      # factor : MENOS varcte
+          print("Implementacion de constantes negativas")
+
+          if 0 <= current_constant_type <= 2 :
+            current_constant *= -1
+            virtual_address = memory_directory.get_constant_address(current_constant_type, current_constant)
+          
+          current_constant = None
+          s_operands.append(virtual_address)
+          s_types.append(current_constant_type)
+      
     
     # factor : ID PUNTO ID 
     elif len(p) == 4:
@@ -1220,6 +1171,8 @@ def p_factor(p):
 
     elif len(p) == 5:
         print("Arreglo")
+        # p[1] == ID, p[3] = exp
+        
 
     elif len(p) == 7:
         print("Matriz")
@@ -1295,17 +1248,17 @@ def p_varcte(p):
 def p_constant_int_assginment(p):
   'constant_int_assginment :'
   global current_constant_type
-  current_constant_type = 'int'
+  current_constant_type = 0
 
 def p_constant_float_assginment(p):
   'constant_float_assginment :'
   global current_constant_type
-  current_constant_type = 'float'
+  current_constant_type = 1
 
 def p_constant_char_assginment(p):
   'constant_char_assginment :'
   global current_constant_type
-  current_constant_type = 'char'
+  current_constant_type = 2
 
 
 def p_error(p):

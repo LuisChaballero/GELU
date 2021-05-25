@@ -40,17 +40,6 @@ class SemanticTypeTable:
                 (-1, -1, -1, -1, -1, -1,  3,   3,   3,   3)    # <- BOOL as Right Operand
             )
         )
-    def transform_operand_type(self, operand_type):
-        if(operand_type == 'int'):
-            return 0
-        elif(operand_type == 'float'):
-            return 1
-        elif(operand_type == 'char'):
-            return 2
-        elif(operand_type == 'bool'):
-            return 3
-        else:
-            return -1
 
     def transform_operator(self, operator):
         if(operator == '+'):
@@ -74,24 +63,10 @@ class SemanticTypeTable:
         elif(operator == '|'): 
             return 9
 
-    def transform_result_type(self, result):
-        if(result == 0):
-            return 'int'
-        elif(result == 1):
-            return 'float'   
-        elif(result == 2):
-            return 'char'
-        elif(result == 3):
-            return 'bool'
-        elif(result == -1):
-            return 'ERROR'  
-
     def result_type(self, left_operand_type, right_operand_type, operator):
-        left_op = self.transform_operand_type(left_operand_type)
-        right_op = self.transform_operand_type(right_operand_type)
         op = self.transform_operator(operator)
 
-        if(left_op == -1 | right_op == -1): # In case of type None
+        if(left_operand_type == -1 or right_operand_type == -1): # In case of type None
             return 'ERROR'
 
-        return self.transform_result_type(self.semantic_type_table[left_op][right_op][op]) 
+        return self.semantic_type_table[left_operand_type][right_operand_type][op]

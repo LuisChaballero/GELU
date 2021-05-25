@@ -1,4 +1,10 @@
-# What does this class do
+# Defines range of the different types of adresses 
+ranges = {
+  'variable': 3000,
+  'temporal': 1000,
+  'constant': 1000,
+  'class': 1000
+}
 
 # Global Variable Address
 GLOBAL_VARIABLE_INT_ADDRESS = 1000              # Int global address (1,000 - 3,999)
@@ -39,40 +45,34 @@ class MemoryHandler:
   def __init__(self):
     self.memory = {}
     self.global_variable_counters = {
-      'int': GLOBAL_VARIABLE_INT_ADDRESS, 
-      'float': GLOBAL_VARIABLE_FLOAT_ADDRESS, 
-      'char': GLOBAL_VARIABLE_CHAR_ADDRESS
+      0: GLOBAL_VARIABLE_INT_ADDRESS, 
+      1: GLOBAL_VARIABLE_FLOAT_ADDRESS, 
+      2: GLOBAL_VARIABLE_CHAR_ADDRESS
     }
 
     self.global_temporal_counters = {
-      'int': GLOBAL_TEMPORAL_INT_ADDRESS, 
-      'float': GLOBAL_TEMPORAL_FLOAT_ADDRESS, 
-      'char': GLOBAL_TEMPORAL_CHAR_ADDRESS,
-      'bool': GLOBAL_TEMPORAL_BOOL_ADDRESS
+      0: GLOBAL_TEMPORAL_INT_ADDRESS, 
+      1: GLOBAL_TEMPORAL_FLOAT_ADDRESS, 
+      2: GLOBAL_TEMPORAL_CHAR_ADDRESS,
+      3: GLOBAL_TEMPORAL_BOOL_ADDRESS
     }
     
     self.local_variable_counters = {
-      'int': LOCAL_VARIABLE_INT_ADDRESS, 
-      'float': LOCAL_VARIABLE_FLOAT_ADDRESS, 
-      'char': LOCAL_VARIABLE_CHAR_ADDRESS
+      0: LOCAL_VARIABLE_INT_ADDRESS, 
+      1: LOCAL_VARIABLE_FLOAT_ADDRESS, 
+      2: LOCAL_VARIABLE_CHAR_ADDRESS
     }
     
     self.local_temporal_counters = {
-      'int': LOCAL_TEMPORAL_INT_ADDRESS, 
-      'float': LOCAL_TEMPORAL_FLOAT_ADDRESS, 
-      'char': LOCAL_TEMPORAL_CHAR_ADDRESS,
-      'bool': LOCAL_TEMPORAL_BOOL_ADDRESS
+      0: LOCAL_TEMPORAL_INT_ADDRESS, 
+      1: LOCAL_TEMPORAL_FLOAT_ADDRESS, 
+      2: LOCAL_TEMPORAL_CHAR_ADDRESS,
+      3: LOCAL_TEMPORAL_BOOL_ADDRESS
     }
 
-    self.constant_int_counters = CONSTANT_INT_ADDRESS
-    self.constant_int_directory = {}
-
-    self.constant_float_counters = CONSTANT_FLOAT_ADDRESS
-    self.constant_float_directory = {}
-
-    self.constant_char_counters = CONSTANT_CHAR_ADDRESS
-    self.constant_char_directory = {}
-
+    # Directory to store constants of all types 
+    self.constants_directory = [{}, {}, {}] # [int{}, float{}, char{}]
+    self.constants_counters = [CONSTANT_INT_ADDRESS, CONSTANT_FLOAT_ADDRESS, CONSTANT_CHAR_ADDRESS]
 
 # -------- VIRTUAL ADDRESS HANDLING ---------
 
@@ -80,7 +80,7 @@ class MemoryHandler:
   # scope = 'global' or 'local'
   # item_type = 'variable' or 'temporal'
   def add_item(self, data_type, scope, item_type):
-    if data_type == "int" or data_type == "float" or data_type == "char":
+    if 0 <= data_type <= 2:
       if scope == "global":
         if item_type == "variable":
           self.global_variable_counters[data_type] += 1
@@ -91,14 +91,15 @@ class MemoryHandler:
           self.local_variable_counters[data_type] += 1
         else: # temporal
           self.local_temporal_counters[data_type] += 1
-    elif data_type == "bool":
+    elif data_type == 3:
       if scope == "global":
         self.global_temporal_counters[data_type] += 1
       else: # local
         self.local_temporal_counters[data_type] += 1
 
+  # Function to get the next available address depending on the data_type, scope, and item_type
   def get_address(self, data_type, scope, item_type):
-    if data_type == "int" or data_type == "float" or data_type == "char":
+    if 0 <= data_type <= 2:
       if scope == "global":
         if item_type == "variable":
           return self.global_variable_counters[data_type]
@@ -109,90 +110,36 @@ class MemoryHandler:
           return self.local_variable_counters[data_type]
         else: # temporal
           return self.local_temporal_counters[data_type]
-    elif data_type == "bool":
+    elif data_type == 3:
       if scope == "global":
         return self.global_temporal_counters[data_type]
       else: # local
         return self.local_temporal_counters[data_type]
 
-  # Function to update CLASS counters 
-  # scope = 'global' or 'local'
-  # item_type = 'variable' or 'temporal'
-  def add_class_item(self, data_type, scope, item_type):
-    if data_type == "int" or data_type == "float" or data_type == "char":
-      if scope == "global":
-        self.class_global_variable_counters[data_type] += 1
-      else: # local
-        if item_type == "variable":
-          self.class_local_variable_counters[data_type] += 1
-        else: # temporal
-          self.class_local_temporal_counters[data_type] += 1
-    elif data_type == "bool":
-      self.class_local_temporal_counters[data_type] += 1
-
-  def get_class_address(self, data_type, scope, item_type):
-    if data_type == "int" or data_type == "float" or data_type == "char":
-      if scope == "global":
-        if item_type == "variable":
-          return self.class_global_variable_counters[data_type]
-        else: # temporal
-          return self.class_global_temporal_counters[data_type]
-      else: # local
-        if item_type == "variable":
-          return self.class_local_variable_counters[data_type]
-        else: # temporal
-          return self.class_local_temporal_counters[data_type]
-    elif data_type == "bool":
-      if scope == "global":
-        return self.class_global_temporal_counters[data_type]
-      else: # local
-        return self.class_local_temporal_counters[data_type]
- 
-
+  # 
   def add_constant_item(self, data_type, data_value):
-    if data_type == "int":
-      self.constant_int_directory[data_value] = self.constant_int_counters
-      self.push(self.constant_int_counters, data_value) # Add constant to real memory 
-      self.constant_int_counters += 1
-      return self.constant_int_directory[data_value]
+    # Check if there is an available address for data_type constants
+    if self.constants_counters[data_type] < self.constants_counters[data_type] + ranges['constant']:
+      # Add data_value: virtual_address to directory
+      self.constants_directory[data_type][data_value] = self.constants_counters[data_type]
+      self.push(self.constants_counters[data_type], data_value)
+      # Update address count
+      self.constants_counters[data_type] += 1
 
-    elif data_type == "float":
-      self.constant_float_directory[data_value] = self.constant_float_counters
-      self.push(self.constant_float_counters, data_value) # Add constant to real memory 
-      self.constant_float_counters += 1
-      return self.constant_float_directory[data_value]
+      return self.constants_directory[data_type][data_value]
 
-    elif data_type == "char":
-      self.constant_char_directory[data_value] = self.constant_char_counters
-      self.push(self.constant_char_counters, data_value) # Add constant to real memory 
-      self.constant_char_counters += 1     
-      return self.constant_char_directory[data_value]
+    else: # 
+      print("Too many constants of type")
+      exit()
 
   def get_constant_address(self, data_type, constant_value):
-
-    if data_type == "int": 
-      # return self.constant_int_directory.get(data_value, False)
-      constant_int_address = self.constant_int_directory.get(constant_value, False)
-      if constant_int_address: # Constant is in directory
-        return constant_int_address
-      else: # Put constant in directory
-        return self.add_constant_item(data_type, constant_value)
-      
-    elif data_type == "float":
-      # return self.constant_float_directory.get(data_value, False)
-      constant_float_address = self.constant_float_directory.get(constant_value, False)
-      if constant_float_address:  # Constant is in directory
-        return constant_float_address
-      else: # Put constant in directory
-        return self.add_constant_item(data_type, constant_value)
-
-    elif data_type == "char":
-      # return self.constant_char_directory.get(data_value, False)
-      constant_char_address = self.constant_char_directory.get(constant_value, False)
-      if constant_char_address: # Constant is in directory
-        return constant_char_address
-      else: # Put constant in directory
-        return self.add_constant_item(data_type, constant_value)
+    constant_address = self.constants_directory[data_type].get(constant_value, False)
+    
+    # Does not exist
+    if constant_address == False:
+      return self.add_constant_item(data_type, constant_value)
+    else:
+      return constant_address
 
 # -------- MEMORY HANDLING ---------
 

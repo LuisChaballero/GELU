@@ -40,27 +40,36 @@ class VirtualMachine:
         print("execute GOTOF: ", quadruple[3])
         if quadruple[1]:
           iterator = quadruple[3]
-      
-      # elif operator == 'ERA':
-      #   print("execute ERA: ", quadruple[1])
-      #   # s_jumps.append(iterator)
-      #   # iterator = 
-      #   if quadruple[2] == 0: # In functionDirectory
-      #     memory_handler = mh.MemoryHandler()
-      #     self.s_contexts.append(memory_handler)
-      #   else:
-          
 
       elif operator == 'PRINT':
         print("execute PRINT")
         value = self.memory_handler.value(quadruple[3])
-        print(value)
+        if value == 0:
+          print(int(value))
+        else:
+          print(value)
 
       elif operator == '=':
         print("execute EQUAL")
         value = self.memory_handler.value(quadruple[1])
         virtual_address = quadruple[3]
         self.memory_handler.push(virtual_address, value)
+      
+      elif operator == '&':
+        print("execute AND")
+        left_operand = self.memory_handler.value(quadruple[1])
+        right_operand = self.memory_handler.value(quadruple[2])
+        virtual_address = quadruple[3]
+        res = left_operand and right_operand
+        self.memory_handler.push(virtual_address, res)
+      
+      elif operator == '|':
+        print("execute OR")
+        left_operand = self.memory_handler.value(quadruple[1])
+        right_operand = self.memory_handler.value(quadruple[2])
+        virtual_address = quadruple[3]
+        res = left_operand or right_operand
+        self.memory_handler.push(virtual_address, res)
 
       elif operator == '+':
         print("execute MAS")
@@ -92,14 +101,11 @@ class VirtualMachine:
 
         # Res must be of type int
         if (
-              quadruple[3] in range(mh.GLOBAL_VARIABLE_INT_ADDRESS, mh.GLOBAL_VARIABLE_INT_ADDRESS+3000) or 
-              quadruple[3] in range(mh.GLOBAL_TEMPORAL_INT_ADDRESS, mh.GLOBAL_TEMPORAL_INT_ADDRESS+1000) or 
-              quadruple[3] in range(mh.LOCAL_VARIABLE_INT_ADDRESS, mh.LOCAL_VARIABLE_INT_ADDRESS+3000) or 
-              quadruple[3] in range(mh.LOCAL_TEMPORAL_INT_ADDRESS, mh.LOCAL_TEMPORAL_INT_ADDRESS+1000) or 
-              quadruple[3] in range(mh.CLASS_GLOBAL_VARIABLE_INT_ADDRESS, mh.CLASS_GLOBAL_VARIABLE_INT_ADDRESS+1000) or 
-              quadruple[3] in range(mh.CLASS_LOCAL_VARIABLE_INT_ADDRESS, mh.CLASS_LOCAL_VARIABLE_INT_ADDRESS+1000) or 
-              quadruple[3] in range(mh.CLASS_LOCAL_TEMPORAL_INT_ADDRESS, mh.CLASS_LOCAL_TEMPORAL_INT_ADDRESS+1000) or 
-              quadruple[3] in range(mh.CONSTANT_INT_ADDRESS, mh.CONSTANT_INT_ADDRESS+1000)
+              quadruple[3] in range(mh.GLOBAL_VARIABLE_INT_ADDRESS, mh.GLOBAL_VARIABLE_INT_ADDRESS+mh.ranges['variable']) or 
+              quadruple[3] in range(mh.GLOBAL_TEMPORAL_INT_ADDRESS, mh.GLOBAL_TEMPORAL_INT_ADDRESS+mh.ranges['temporal']) or 
+              quadruple[3] in range(mh.LOCAL_VARIABLE_INT_ADDRESS, mh.LOCAL_VARIABLE_INT_ADDRESS+mh.ranges['variable']) or 
+              quadruple[3] in range(mh.LOCAL_TEMPORAL_INT_ADDRESS, mh.LOCAL_TEMPORAL_INT_ADDRESS+mh.ranges['temporal']) or 
+              quadruple[3] in range(mh.CONSTANT_INT_ADDRESS, mh.CONSTANT_INT_ADDRESS+mh.ranges['constant'])
             ):
           self.memory_handler.push(quadruple[3], int(res))
         else:

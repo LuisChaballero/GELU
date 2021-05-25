@@ -20,12 +20,10 @@ class VarsTable:
       return False
     else:
       return self.table[id]
-      # return self.table[id].get_data_type()
-    # return self.table.get(id, False)
 
-  def add_item(self, id, data_type, address, isArray, m1):
+  def add_item(self, id, data_type, address, dimensions):
     if not id in self.table:
-      self.table[id] = Variable(data_type, address, isArray, m1)
+      self.table[id] = Variable(data_type, address, dimensions)
       return True
     else:
       return False
