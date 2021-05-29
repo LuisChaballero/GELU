@@ -1,15 +1,8 @@
-
-program test0 ;
-
-var int i, k, a[1,2];
-var float F;
-
-main() { 
-    i = 10 + 2; 
-    F = 13.6 - 0.7;
-    k = (i*2) / 7 + 3;
-
-    if ( ( i > k | i * 5 < k + 3 & i <> 1 ) & F < i / k - 1 | i < 2){
-        print(i,k);
-    }
+program test;
+var int i, k, arr[10], mat[8,9], j;
+main() {
+  i = 2;
+  k = 5;
+  i = arr[k+10] ;
+  j = mat[i+10, 12 ];
 }

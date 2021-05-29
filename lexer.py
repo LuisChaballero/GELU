@@ -74,7 +74,7 @@ t_MAS = r'\+'          # Simbolo de suma
 t_MENOS = r'\-'        # Simbolo de resta
 t_POR = r'\*'          # Simbolo de multiplicación
 t_ENTRE = r'\/'        # Simbolo de división
-t_IGUAL = r'\='        # Simbolo de iguak
+t_IGUAL = r'\='        # Simbolo de igual
 t_MENOR_QUE = r'\<'    # Simbolo de menor que
 t_MAYOR_QUE = r'\>'    # Simbolo de mayor que
 t_AND = r'\&'          # Simbolo de and
@@ -108,7 +108,12 @@ def t_CTESTRING(t):
 
 t_ignore = ' \t'
 
+# Define a rule to ignore lines starting with #
+def t_COMMENT(t):
+    r'\#.*'
+    pass
+
 def t_error(t):
-    print('Illegal character %s' % t.value[0])
-    t.lexer.skip(1)
+  print('Illegal character %s' % t.value[0])
+  t.lexer.skip(1)
 
