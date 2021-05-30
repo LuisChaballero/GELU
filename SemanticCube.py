@@ -67,6 +67,6 @@ def result_type(left_operand_type, right_operand_type, operator):
   op = transform_operator(operator)
 
   if(left_operand_type == -1 or right_operand_type == -1): # In case of type None
-      return 'ERROR'
+      return -1
 
   return semantic_cube[left_operand_type][right_operand_type][op]

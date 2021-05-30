@@ -19,6 +19,7 @@ tokens = [
     'POR',
     'ENTRE',
     'IGUAL',
+    'ASIGNA',
     'NO_IGUAL',
     'MENOR_QUE',
     'MAYOR_QUE',
@@ -59,7 +60,8 @@ def t_ID(t):
     t.type = reserved.get(t.value,'ID')  # Check for keywords 
     return t
 
-t_NO_IGUAL = r'<>' # Simbolo de desigualdad
+t_NO_IGUAL = r'\<\>' # Simbolo de desigualdad
+t_IGUAL = r'\=\='    # Simbolo de igual
 
 ## Expresiones regulares par los literales (simbolos de un solo caracter)
 t_PARENTESIS_I = r'\(' # Parentesis izquierdo
@@ -74,7 +76,7 @@ t_MAS = r'\+'          # Simbolo de suma
 t_MENOS = r'\-'        # Simbolo de resta
 t_POR = r'\*'          # Simbolo de multiplicación
 t_ENTRE = r'\/'        # Simbolo de división
-t_IGUAL = r'\='        # Simbolo de igual
+t_ASIGNA = r'\='        # Simbolo de igual
 t_MENOR_QUE = r'\<'    # Simbolo de menor que
 t_MAYOR_QUE = r'\>'    # Simbolo de mayor que
 t_AND = r'\&'          # Simbolo de and

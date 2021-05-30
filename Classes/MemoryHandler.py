@@ -12,7 +12,8 @@ class MemoryHandler():
                                         0: GLOBALS_BASE_ADDRESS['temporal'][0], 
                                         1: GLOBALS_BASE_ADDRESS['temporal'][1], 
                                         2: GLOBALS_BASE_ADDRESS['temporal'][2],
-                                        3: GLOBALS_BASE_ADDRESS['temporal'][3]
+                                        3: GLOBALS_BASE_ADDRESS['temporal'][3],
+                                        5: GLOBALS_BASE_ADDRESS['temporal'][5]
                                       }
     
     self.__local_variable_counters =  {
@@ -25,7 +26,8 @@ class MemoryHandler():
                                         0: LOCALS_BASE_ADDRESS['temporal'][0], 
                                         1: LOCALS_BASE_ADDRESS['temporal'][1], 
                                         2: LOCALS_BASE_ADDRESS['temporal'][2],
-                                        3: LOCALS_BASE_ADDRESS['temporal'][3]
+                                        3: LOCALS_BASE_ADDRESS['temporal'][3],
+                                        5: LOCALS_BASE_ADDRESS['temporal'][5]
                                       }
 
     self.__constants_directory =  {
@@ -51,31 +53,23 @@ class MemoryHandler():
 
     else: # is variable or temporal
       # Is an int, float, char
-      if 0 <= data_type <= 2:
+      if data_type in [0,1,2]:
         if scope == "global":
-          if item_type == "variable":
-            if not GLOBALS_BASE_ADDRESS[item_type][data_type] <= virtual_address < (GLOBALS_BASE_ADDRESS[item_type][data_type] + ranges['variable']):
-              error("Too many '"+types[data_type]+"' global variables")
+          if item_type in ["variable", "temporal"]:
+            if not GLOBALS_BASE_ADDRESS[item_type][data_type] <= virtual_address < (GLOBALS_BASE_ADDRESS[item_type][data_type] + ranges[item_type]):
+              error("Too many %s %s %ss" % (types[data_type], scope, item_type))
 
-          else: # temporal
-            if not GLOBALS_BASE_ADDRESS[item_type][data_type] <= virtual_address < (GLOBALS_BASE_ADDRESS[item_type][data_type] + ranges['temporal']):
-              error("Too many '"+types[data_type]+"' global temporal variables")
-
-        else: # local
-          if item_type == "variable":
-            if not LOCALS_BASE_ADDRESS[item_type][data_type] <= virtual_address < (LOCALS_BASE_ADDRESS[item_type][data_type] + ranges['variable']):
-              error("Too many '"+types[data_type]+"' local variables")
-
-          else: # temporal
-            if not LOCALS_BASE_ADDRESS[item_type][data_type] <= virtual_address < (LOCALS_BASE_ADDRESS[item_type][data_type] + ranges['temporal']):
-              error("Too many '"+types[data_type]+"' local temporal variables")
+        if scope == "local":
+          if item_type in ["variable", "temporal"]:
+            if not LOCALS_BASE_ADDRESS[item_type][data_type] <= virtual_address < (LOCALS_BASE_ADDRESS[item_type][data_type] + ranges[item_type]):
+              error("Too many %s %s %ss" % (types[data_type], scope, item_type))
         
-      elif data_type == 3: # bool
+      elif data_type in [3,5]: # bool or pointer
         if scope == "global":
-          if not GLOBALS_BASE_ADDRESS[item_type][data_type] <= virtual_address < (GLOBALS_BASE_ADDRESS[item_type][data_type] + ranges['temporal']):
+          if not GLOBALS_BASE_ADDRESS[item_type][data_type] <= virtual_address < (GLOBALS_BASE_ADDRESS[item_type][data_type] + ranges[item_type]):
               error("Too many '"+types[data_type]+"' global temporal variables")
-        else: # local
-          if not LOCALS_BASE_ADDRESS[item_type][data_type] <= virtual_address < (LOCALS_BASE_ADDRESS[item_type][data_type] + ranges['temporal']):
+        elif scope == "local": # local
+          if not LOCALS_BASE_ADDRESS[item_type][data_type] <= virtual_address < (LOCALS_BASE_ADDRESS[item_type][data_type] + ranges[item_type]):
               error("Too many '"+types[data_type]+"' local temporal variables")
 
     return virtual_address
@@ -87,40 +81,40 @@ class MemoryHandler():
     if is_constant:
       self.__constants_counters[data_type] += size_allocation
     else:
-      if 0 <= data_type <= 2:
+      if data_type in [0,1,2]:
         if scope == "global":
           if item_type == "variable":
             self.__global_variable_counters[data_type] += size_allocation
           else: # temporal
             self.__global_temporal_counters[data_type] += size_allocation
-        else: # local
+        elif scope == "local": # local
           if item_type == "variable":
             self.__local_variable_counters[data_type] += size_allocation
           else: # temporal
             self.__local_temporal_counters[data_type] += size_allocation
-      elif data_type == 3:
+      elif data_type in [3,5]:
         if scope == "global":
           self.__global_temporal_counters[data_type] += size_allocation
-        else: # local
+        elif scope == "local": # local
           self.__local_temporal_counters[data_type] += size_allocation
 
   # Function to get the next available address depending on the data_type, scope, and item_type
   def next_address(self, data_type, scope, item_type):
-    if 0 <= data_type <= 2: # int, float, char
+    if data_type in [0,1,2]: # int, float, char
       if scope == "global":
         if item_type == "variable":
           available_address = self.__global_variable_counters[data_type] 
         else: # temporal
           available_address = self.__global_temporal_counters[data_type] 
-      else: # local
+      elif scope == "local": # local
         if item_type == "variable":
           available_address = self.__local_variable_counters[data_type]
         else: # temporal
           available_address = self.__local_temporal_counters[data_type]
-    elif data_type == 3: # bool
+    elif data_type in [3, 5]: # bool or pointer
       if scope == "global":
         available_address = self.__global_temporal_counters[data_type] 
-      else: # local
+      elif scope == "local": # local
         available_address = self.__local_temporal_counters[data_type]
 
     # Return available address when valid
@@ -133,8 +127,8 @@ class MemoryHandler():
     # Returns address when valid
     return self.is_address_valid(available_address, data_type, None, None, True)
     
-  # Method to handle the variable or temporal declaration
   def new_variable(self, data_type, scope, item_type, size_allocation=1):
+    '''Handles variable declaration for 'variable' and 'temporal\''''
     # Get next address if available
     available_address = self.next_address(data_type, scope, item_type)
     # Update corresponding counter
@@ -169,7 +163,8 @@ class MemoryHandler():
       0: LOCALS_BASE_ADDRESS['temporal'][0],
       1: LOCALS_BASE_ADDRESS['temporal'][1],
       2: LOCALS_BASE_ADDRESS['temporal'][2],
-      3: LOCALS_BASE_ADDRESS['temporal'][3]
+      3: LOCALS_BASE_ADDRESS['temporal'][3],
+      5: LOCALS_BASE_ADDRESS['temporal'][5]
     }
 
   # Method to get the constants directory
@@ -178,11 +173,9 @@ class MemoryHandler():
 
 # Function to get scope of range for an address
 def get_scope_from_address(virtual_address):
-  if ( virtual_address in range(GLOBALS_BASE_ADDRESS['variable'][0], GLOBALS_BASE_ADDRESS['temporal'][0]) or
-       virtual_address in range(GLOBALS_BASE_ADDRESS['temporal'][0], LOCALS_BASE_ADDRESS['variable'][0]) ):
+  if virtual_address in range(GLOBALS_BASE_ADDRESS['variable'][0], LOCALS_BASE_ADDRESS['variable'][0]):
     return 'global'
-  elif ( virtual_address in range(LOCALS_BASE_ADDRESS['variable'][0], LOCALS_BASE_ADDRESS['temporal'][0]) or
-         virtual_address in range(LOCALS_BASE_ADDRESS['temporal'][0], CONSTANTS_BASE_ADDRESS[0]) ):
+  elif virtual_address in range(LOCALS_BASE_ADDRESS['variable'][0], CONSTANTS_BASE_ADDRESS[0]):
     return 'local'
   elif virtual_address in range(CONSTANTS_BASE_ADDRESS[0], OBJECTS_BASE_ADDRESS):
     return 'constant'
@@ -191,30 +184,31 @@ def get_scope_from_address(virtual_address):
   else:
     error("Invalid address")
 
-  # Function to get data type from address
-  def get_type_from_address(virtual_address):
-    if (virtual_address in range(GLOBALS_BASE_ADDRESS['variable'][0], GLOBALS_BASE_ADDRESS['variable'][1]) or
-        virtual_address in range(GLOBALS_BASE_ADDRESS['temporal'][0], GLOBALS_BASE_ADDRESS['temporal'][1]) or
-        virtual_address in range(LOCALS_BASE_ADDRESS['variable'][0], LOCALS_BASE_ADDRESS['variable'][1]) or
-        virtual_address in range(LOCALS_BASE_ADDRESS['temporal'][0], LOCALS_BASE_ADDRESS['temporal'][1]) or
-        virtual_address in range(CONSTANTS_BASE_ADDRESS[0], CONSTANTS_BASE_ADDRESS[1])):
-      return 0
-    elif (virtual_address in range(GLOBALS_BASE_ADDRESS['variable'][1], GLOBALS_BASE_ADDRESS['variable'][2]) or
-          virtual_address in range(GLOBALS_BASE_ADDRESS['temporal'][1], GLOBALS_BASE_ADDRESS['temporal'][2]) or
-          virtual_address in range(LOCALS_BASE_ADDRESS['variable'][1], LOCALS_BASE_ADDRESS['variable'][2]) or
-          virtual_address in range(LOCALS_BASE_ADDRESS['temporal'][1], LOCALS_BASE_ADDRESS['temporal'][2]) or
-          virtual_address in range(CONSTANTS_BASE_ADDRESS[1], CONSTANTS_BASE_ADDRESS[2])):
-      return 1
-    elif (virtual_address in range(GLOBALS_BASE_ADDRESS['variable'][2], GLOBALS_BASE_ADDRESS['temporal'][3]) or
-          virtual_address in range(GLOBALS_BASE_ADDRESS['temporal'][2], GLOBALS_BASE_ADDRESS['temporal'][3]) or
-          virtual_address in range(LOCALS_BASE_ADDRESS['variable'][2], LOCALS_BASE_ADDRESS['variable'][3]) or
-          virtual_address in range(LOCALS_BASE_ADDRESS['temporal'][2], LOCALS_BASE_ADDRESS['temporal'][3]) or
-          virtual_address in range(CONSTANTS_BASE_ADDRESS[2], CONSTANTS_BASE_ADDRESS[4])):
-      return 2
-    elif (virtual_address in range(GLOBALS_BASE_ADDRESS['temporal'][3], LOCALS_BASE_ADDRESS['variable'][0]) or 
-          virtual_address in range(LOCALS_BASE_ADDRESS['temporal'][3], CONSTANTS_BASE_ADDRESS[0])):
-      return 3
-    elif virtual_address in range(CONSTANTS_BASE_ADDRESS[4], OBJECTS_BASE_ADDRESS):
-      return 4
-    elif virtual_address in range(OBJECTS_BASE_ADDRESS, OBJECTS_BASE_ADDRESS+ranges['instance']):
-      return 5
+# Function to get data type from address
+def get_type_from_address(virtual_address):
+  if (virtual_address in range(GLOBALS_BASE_ADDRESS['variable'][0], GLOBALS_BASE_ADDRESS['variable'][1]) or
+      virtual_address in range(GLOBALS_BASE_ADDRESS['temporal'][0], GLOBALS_BASE_ADDRESS['temporal'][1]) or
+      virtual_address in range(LOCALS_BASE_ADDRESS['variable'][0], LOCALS_BASE_ADDRESS['variable'][1]) or
+      virtual_address in range(LOCALS_BASE_ADDRESS['temporal'][0], LOCALS_BASE_ADDRESS['temporal'][1]) or
+      virtual_address in range(CONSTANTS_BASE_ADDRESS[0], CONSTANTS_BASE_ADDRESS[1])):
+    return 0
+  elif (virtual_address in range(GLOBALS_BASE_ADDRESS['variable'][1], GLOBALS_BASE_ADDRESS['variable'][2]) or
+        virtual_address in range(GLOBALS_BASE_ADDRESS['temporal'][1], GLOBALS_BASE_ADDRESS['temporal'][2]) or
+        virtual_address in range(LOCALS_BASE_ADDRESS['variable'][1], LOCALS_BASE_ADDRESS['variable'][2]) or
+        virtual_address in range(LOCALS_BASE_ADDRESS['temporal'][1], LOCALS_BASE_ADDRESS['temporal'][2]) or
+        virtual_address in range(CONSTANTS_BASE_ADDRESS[1], CONSTANTS_BASE_ADDRESS[2])):
+    return 1
+  elif (virtual_address in range(GLOBALS_BASE_ADDRESS['variable'][2], GLOBALS_BASE_ADDRESS['temporal'][0]) or
+        virtual_address in range(GLOBALS_BASE_ADDRESS['temporal'][2], GLOBALS_BASE_ADDRESS['temporal'][3]) or
+        virtual_address in range(LOCALS_BASE_ADDRESS['variable'][2], LOCALS_BASE_ADDRESS['temporal'][0]) or
+        virtual_address in range(LOCALS_BASE_ADDRESS['temporal'][2], LOCALS_BASE_ADDRESS['temporal'][3]) or
+        virtual_address in range(CONSTANTS_BASE_ADDRESS[2], CONSTANTS_BASE_ADDRESS[4])):
+    return 2
+  elif (virtual_address in range(GLOBALS_BASE_ADDRESS['temporal'][3], GLOBALS_BASE_ADDRESS['temporal'][5]) or 
+        virtual_address in range(LOCALS_BASE_ADDRESS['temporal'][3], LOCALS_BASE_ADDRESS['temporal'][5])):
+    return 3
+  elif virtual_address in range(CONSTANTS_BASE_ADDRESS[4], OBJECTS_BASE_ADDRESS):
+    return 4
+  elif (virtual_address in range(GLOBALS_BASE_ADDRESS['temporal'][5], LOCALS_BASE_ADDRESS['variable'][0]) or
+        virtual_address in range(LOCALS_BASE_ADDRESS['temporal'][5], CONSTANTS_BASE_ADDRESS[0])):
+    return 5

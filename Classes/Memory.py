@@ -1,3 +1,4 @@
+from Utilities import error
 # Class definition for memoryHandler to...
 class Memory:
   
@@ -11,7 +12,7 @@ class Memory:
 
   # Method to retreive element value from address in memory
   def value(self, virtual_address):
-    return self.__memory.get(virtual_address, False)
+    return self.__memory.get(virtual_address, None)
   
   # Methosd to validate if an address exists
   def address_exists(self, virtual_addres):

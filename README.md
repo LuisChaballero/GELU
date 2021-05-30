@@ -162,3 +162,7 @@ Se hizo modificación de la clase MemoryHelper para hacer validaciones de stack 
 #### 28/05/2021
 
 Se corrigió la generación de cuádruplos para arreglos y matrices, así como la asignación de direcciones en memoria virtual. Se cambiaron los cuádruplos para no llevar los límites de dimensiones sino sus direcciones en memoria.
+
+#### 29/05/2021
+
+Se implementó el manejo de apuntadores para la indexación de arreglos y matrices. Se implementó el operador relacional de == en semántica. Se desarrolló la funcionalidad en máquina virtual para la escritura de múltples elementos en una misma línea. Se implementó el estatuto de asignación en máquina virtual.
