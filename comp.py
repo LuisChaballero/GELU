@@ -34,10 +34,10 @@ memory_handler = None
 
 # Declared stacks
 s_scopes = deque()                        # To keep track of scopes
-s_operators = deque()                     # To keep track of operators in expresions
-s_operands = deque()                      # To keep track of operands in expresions
+s_operators = deque()                     # To keep track of operators in expressions
+s_operands = deque()                      # To keep track of operands in expressions
 s_types = deque()                         # To keep track of the operands' types
-s_print_items = deque()                   # To keep track of all the strings and expresions used in a PRINT
+s_print_items = deque()                   # To keep track of all the strings and expressions used in a PRINT
 s_jumps = deque()                         # To keep track of all the conditional jumps for GOTO
 s_function_call_arguments = deque()       # To verify the arguments in a function call with parameters table
 s_function_call_argument_types = deque()  # Arguments' type in a function call
@@ -110,7 +110,7 @@ def variable_declaration(variable):
 
     # There's an error adding global variable into Function Directory
     if not function_directory.add_item(current_scope, variable_id, current_type, virtual_address, variable_dimensions):
-       error("Failed at declaring global variable"+variable_id)
+       error("Failed at declaring global variable %s" % variable_id)
     
     print("+++++Global variable added into functionDirectory ->", variable_id, current_type, virtual_address, variable_dimensions)
       
@@ -122,7 +122,7 @@ def variable_declaration(variable):
 
     # There's an error adding global variable into Function Directory
     if not class_directory.add_attribute(class_name, current_scope, variable_id, current_type, virtual_address, variable_dimensions):
-      error("Failed at declaring attribute "+variable_id+" in class "+class_name)
+      error("Failed at declaring attribute %s in class %s" % (variable_id, class_name))
     
     print("+Global attribute added into ClassDirectory ->", class_name, current_scope, variable_id, current_type)
   
@@ -136,7 +136,7 @@ def variable_declaration(variable):
 
     # There's an error adding local variable into Function Directory
     if not class_directory.add_variable(class_name, method_name, variable_id, current_type, virtual_address, variable_dimensions):
-      error("Failed at declaring local vairbale "+variable_id+" on method "+method_name+" on class "+class_name)
+      error("Failed at declaring local vairbale %s in method %s on class %s" % (variable_id, method_name, class_name))
 
     # Update the number of local variables used in method 
     class_directory.get_class(class_name).get_scope(method_name).add_to_count(current_type, "variable")
@@ -154,7 +154,7 @@ def variable_declaration(variable):
 
       # There's an error adding global variable into Function Directory
       if not function_directory.add_item(function_name, variable_id, current_type, virtual_address, variable_dimensions):
-        error("Failed at declaring local variable "+variable_id+" in "+function_name)
+        error("Failed at declaring local variable %s in %s" %(variable_id, function_name))
 
       # Update the number of local variables used in method 
       variable_scope = function_directory.get_scope(function_name)
@@ -190,7 +190,7 @@ def generate_expression_quadruple():
       error("Type mismatch")
   
   else: # Valid result type
-      # Expresion is inside main
+      # expression is inside main
       if s_scopes[-1] == 'global':
         variable_dimensions = (0,0,0) # Normal variable
         temporal_virtual_address = variable_allocation(variable_dimensions, "global", "temporal")
@@ -198,7 +198,7 @@ def generate_expression_quadruple():
         
         print("TEMPORAL GLOBAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
 
-      # Expresion is inside a function
+      # expression is inside a function
       elif len(s_scopes) == 2:
         function_name = s_scopes[-1]
 
@@ -211,7 +211,7 @@ def generate_expression_quadruple():
         function_directory.get_scope(function_name).add_to_count(current_type, "variable")
 
 
-      # Expresion is inside a method
+      # expression is inside a method
       elif len(s_scopes) == 4:
         variable_dimensions = (0,0,0) # Normal variable
         temporal_virtual_address = variable_allocation(variable_dimensions, "local", "temporal")
@@ -373,7 +373,7 @@ def p_clases(p):
                   | vacio'''
   if(p[1] == 'class'):
     if not class_directory.add_class(p[2]):
-      error("Class "+p[2]+" already exists")
+      error("Class %s already exists" %  p[2])
         
     else:
       s_scopes.append(p[2])
@@ -519,7 +519,7 @@ def p_funciones(p):
 
           # Add function into Function Directory
           if not function_directory.add_scope(function_name, current_type):
-            error('Function '+function_name+' already declared in function directory')
+            error("Function %s already declared in function directory" % function_name)
 
           else:
             # Insert reference of where to jump to execute the function's quadruples when called
@@ -536,7 +536,7 @@ def p_funciones(p):
 
         # Add method in class
         if not class_directory.add_method(class_name, function_name, current_type):
-          error('Method '+function_name+' in class '+class_name+' already declared')
+          error("Method %s in class %s already declared" % (function_name, class_name))
 
         else:
           # Insert reference of where to jump to execute the function's quadruples when called
@@ -652,7 +652,7 @@ def p_variable_02(p):
     variable = variable_validation(var_id, 0)
 
     if not variable:
-      error("Variable "+var_id+" is not declared")
+      error("Variable %s is not declared" % var_id)
         
     else:
       s_operands.append(variable.get_address())
@@ -678,7 +678,7 @@ def p_variable_02(p):
       variable = variable_validation(elem2, 1)
 
       if not variable:
-        error("Array "+elem2+" not declared")
+        error("Array %s not declared" % elem2)
 
       array_name = elem2
 
@@ -694,7 +694,7 @@ def p_variable_02(p):
       
       # Generate quadruple (S1 + BaseAddress)
       scope = 'global' if s_scopes[-1] == 'global' else 'local'
-      index_address = memory_handler.new_variable(5, 'global', 'temporal')
+      index_address = memory_handler.new_variable(5, scope, 'temporal')
       quadruple_PLUS_BaseAddress = ('+', dimension_1, (base_address,), index_address)
       l_quadruples.append(quadruple_PLUS_BaseAddress)
 
@@ -716,7 +716,7 @@ def p_variable_02(p):
       variable = variable_validation(matrix_id, 2)
 
       if not variable:
-        error("Matrix "+ matrix_id +" not declared")
+        error("Matrix %s not declared" % matrix_id)
 
       # Get matrix information from varsTable
       matrix_dimension = variable.get_dimensions()
@@ -734,7 +734,7 @@ def p_variable_02(p):
 
       # Gnerate quadruple (s1 * m1)
       scope = 'global' if s_scopes[-1] == 'global' else 'local'
-      m1_virtual_address = memory_handler.new_variable(dimension_1_type,scope,"temporal")
+      m1_virtual_address = memory_handler.new_variable(dimension_1_type, scope, "temporal")
       quadruple_s1_times_m1 = ('*', dimension_1, second_upper_limit_address, m1_virtual_address) # s1 * m1
       l_quadruples.append(quadruple_s1_times_m1)
       print(quadruple_s1_times_m1)
@@ -760,72 +760,72 @@ def p_variable_02(p):
 def p_asignacion(p):
   'asignacion : variable ASIGNA exp PUNTO_COMA'
   
-  expresion_result = s_operands.pop() # Result of the expresion 
-  expresion_type = s_types.pop() # Result's type
+  expression_result = s_operands.pop() # Result of the expression 
+  expression_type = s_types.pop() # Result's type
 
   variable_operand = s_operands.pop()
   variable_type = s_types.pop()
 
-  if(variable_type == expresion_type):
-    quadruple = ('=', expresion_result, None, variable_operand) 
+  if(variable_type == expression_type):
+    quadruple = ('=', expression_result, None, variable_operand) 
     l_quadruples.append(quadruple) # add quadruple to list
     print(quadruple) 
   else:
-    error("Type mismatch: %s not assignable to %s" % (types[expresion_type], types[variable_type]))
+    error("Type mismatch: %s not assignable to %s" % (types[expression_type], types[variable_type]))
 
 def p_llamada_void(p):
   '''llamada_void : ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D PUNTO_COMA
                   | ID PUNTO ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D PUNTO_COMA'''
 
   if len(p) == 7: # Void function calls
-      global argument_counter
-      func_name = p[1]
-      if not function_directory.scope_exists(func_name):
-          error("Function "+func_name+" not declared")
+    global argument_counter
+    func_name = p[1]
+    if not function_directory.scope_exists(func_name):
+      error("Function %s not declared" % func_name)
 
-      # Verify number of arguments in function call
-      elif function_directory.get_scope(func_name).get_number_of_parameters() != argument_counter:
-          error("Incoherence in number of arguments in function call "+func_name)
-              
-      else:
-          # ('ERA', func_name, scope, None) = 
-            # scope '0' = FunctionDirectory
-            # scope '1' = ClassDirectory
-          quadruple_ERA = ('ERA', func_name, 0, None)
-          l_quadruples.append(quadruple_ERA)
+    # Verify number of arguments in function call
+    elif function_directory.get_scope(func_name).get_number_of_parameters() != argument_counter:
+      error("Incoherence in number of arguments in function call %s" % func_name)
+            
+    else:
+      # ('ERA', func_name, scope, None) = 
+        # scope '0' = FunctionDirectory
+        # scope '1' = ClassDirectory
+      quadruple_ERA = ('ERA', func_name, 0, None)
+      l_quadruples.append(quadruple_ERA)
 
-          argument_counter = 0
-          # Create PARAMETER quadruple for each argument
-          while(len(s_function_call_arguments) > 0):
-              # Remove the argument in order
-              argument = s_function_call_arguments.popleft()
-              argument_type = s_function_call_argument_types.popleft()
+      argument_counter = 0
+      # Create PARAMETER quadruple for each argument
+      while(len(s_function_call_arguments) > 0):
+        # Remove the argument in order
+        argument = s_function_call_arguments.popleft()
+        argument_type = s_function_call_argument_types.popleft()
 
-              function_scope = function_directory.get_scope(func_name)
-              
-              # Verify argument type
-              if argument_type != function_scope.get_params_table()[argument_counter]:
-                  error("Argument type is incorrect in function call "+func_name)
-                
-              else:
-                  quadruple_PARAMETER = ('PARAMETER', argument, None, argument_counter)
-                  l_quadruples.append(quadruple_PARAMETER)
-                  argument_counter +=1
+        function_scope = function_directory.get_scope(func_name)
+        
+        # Verify argument type
+        if argument_type != function_scope.get_params_table()[argument_counter]:
+          error("Argument type is incorrect in function call %s" % func_name)
+          
+        else:
+          quadruple_PARAMETER = ('PARAMETER', argument, None, argument_counter)
+          l_quadruples.append(quadruple_PARAMETER)
+          argument_counter +=1
 
-          quadruple_GOSUB = ('GOSUB', func_name, None, None)
-          l_quadruples.append(quadruple_GOSUB)
+        quadruple_GOSUB = ('GOSUB', func_name, None, None)
+        l_quadruples.append(quadruple_GOSUB)
 
   elif len(p) == 8: # void methods from a class
     class_name = p[1]
     method_name = p[3]
     if not class_directory.scope_exists(class_name):
-      print("Class "+class_name+" not declared")
+      print("Class %s not declared" % class_name)
 
     elif not class_directory.get_class(class_name).get_scope(method_name):
-      print("Method "+method_name+" not declared in class "+class_name)
+      print("Method %s not declared in class %s" % (method_name,class_name))
 
     elif class_directory.get_class(class_name).get_scope(method_name).get_number_of_parameters() != argument_counter:
-      error("Incoherence in number of arguments in method call"+method_name)
+      error("Incoherence in number of arguments in method call %s" % method_name)
 
     else:
       # ('ERA', func_name, scope, None) = 
@@ -844,7 +844,7 @@ def p_llamada_void(p):
 
         # Verify argument type
         if argument_type != class_directory.get_class(class_name).get_scope(method_name).params_table[argument_counter]:
-          error("Argument type is incorrect in function call "+method_name)
+          error("Argument type is incorrect in function call %s" % method_name)
 
         quadruple_PARAMETER = ('PARAMETER', argument, None, argument_counter)
         l_quadruples.append(quadruple_PARAMETER)
@@ -881,10 +881,10 @@ def p_lectura(p):
 
 def p_retorno(p):
   'retorno : RETURN exp PUNTO_COMA'
-  expresion_result = s_operands.pop()
-  expresion_type = s_types.pop()
+  expression_result = s_operands.pop()
+  expression_type = s_types.pop()
 
-  quadruple_RETURN = ('RETURN', None, None, expresion_result)
+  quadruple_RETURN = ('RETURN', None, None, expression_result)
   l_quadruples.append(quadruple_RETURN)
   print(quadruple_RETURN)
 
@@ -893,7 +893,7 @@ def p_escritura(p):
 
 def p_escritura2(p):
   '''escritura2 : CTESTRING k
-                | hiper_expresion k append_expresion_print
+                | hiper_expression k append_expression_print
 
               k : COMA escritura2
                 | vacio '''
@@ -914,17 +914,17 @@ def p_quad_print(p):
     l_quadruples.append(quadruple_PRINT)
     print(quadruple_PRINT)
 
-def p_append_expresion_print(p):
-  'append_expresion_print : '
+def p_append_expression_print(p):
+  'append_expression_print : '
   print(s_operands)
-  res_expresion_address = s_operands.pop() # Result of the expresion
-  s_types.pop() # Take out the expresion's result type
+  res_expression_address = s_operands.pop() # Result of the expression
+  s_types.pop() # Take out the expression's result type
 
-  s_print_items.append(res_expresion_address)
-  # print("PRINT EXPRESION APPEND:", res_expresion)
+  s_print_items.append(res_expression_address)
+  # print("PRINT expression APPEND:", res_expression)
                 
 def p_condicion(p):
-  '''condicion : IF PARENTESIS_I hiper_expresion PARENTESIS_D quad_IF_01 bloque l quad_IF_02
+  '''condicion : IF PARENTESIS_I hiper_expression PARENTESIS_D quad_IF_01 bloque l quad_IF_02
 
      l         : ELSE quad_IF_03 bloque
                | vacio'''
@@ -935,10 +935,10 @@ def p_quad_IF_01(p):
   res_type = s_types.pop() # Obtain expression's type
 
   if(not res_type == -1):
-    res_expresion = s_operands.pop() # Obtain result of the expression
+    res_expression = s_operands.pop() # Obtain result of the expression
 
     # Generate "incomplete" qudrupule
-    false_quadruple = ('GOTOF', res_expresion, None, None)
+    false_quadruple = ('GOTOF', res_expression, None, None)
     l_quadruples.append(false_quadruple )
 
     index_GOTOF = len(l_quadruples)-1 # Obtain the current/last index of the quadruple´s list
@@ -955,7 +955,7 @@ def p_quad_IF_02(p):
   next_index = len(l_quadruples) # index to skip over the else statement
 
   # Replace GOTO quadruple with the one that knows where to jump
-  new_GOTO_quadruple = (old_GOTO_quadruple[0], old_GOTO_quadruple[1], None, next_index) # Complete quadruple: (GOTOF, res_expresion, None, index)
+  new_GOTO_quadruple = (old_GOTO_quadruple[0], old_GOTO_quadruple[1], None, next_index) # Complete quadruple: (GOTOF, res_expression, None, index)
   l_quadruples[pending_GOTO_index] = new_GOTO_quadruple 
 
 def p_quad_IF_03(p):
@@ -975,23 +975,23 @@ def p_quad_IF_03(p):
   l_quadruples[false_quadruple] = qudrupule_GOTOF 
 
 def p_ciclo_while(p):
-  'ciclo_while : WHILE PARENTESIS_I quad_while_01 hiper_expresion PARENTESIS_D quad_while_02 bloque quad_while_03'
+  'ciclo_while : WHILE PARENTESIS_I quad_while_01 hiper_expression PARENTESIS_D quad_while_02 bloque quad_while_03'
     
 def p_quad_while_01(p):
   'quad_while_01 :'
-  first_quadruple_expresion_index = len(l_quadruples)
-  s_jumps.append(first_quadruple_expresion_index)
+  first_quadruple_expression_index = len(l_quadruples)
+  s_jumps.append(first_quadruple_expression_index)
 
 def p_quad_while_02(p):
   'quad_while_02 :'
-  res_expresion_type = s_types.pop()
+  res_expression_type = s_types.pop()
 
-  if(res_expresion_type == -1):
+  if(res_expression_type == -1):
     error("Type mismatch in while")
 
   else:
-    res_expresion = s_operands.pop()
-    quadruple_GOTOF = ('GOTOF', res_expresion, None, None)
+    res_expression = s_operands.pop()
+    quadruple_GOTOF = ('GOTOF', res_expression, None, None)
     l_quadruples.append(quadruple_GOTOF)
 
     index_previous_GOTOF = len(l_quadruples)-1
@@ -1000,11 +1000,11 @@ def p_quad_while_02(p):
 def p_quad_while_03(p):
   'quad_while_03 :'
   index_previous_GOTOF = s_jumps.pop() 
-  index_expresion = s_jumps.pop()
+  index_expression = s_jumps.pop()
   # print("index_previous_GOTOF",index_previous_GOTOF)
-  # print("index_expresion",index_expresion)
+  # print("index_expression",index_expression)
 
-  quadruple_GOTO = ('GOTO', None, None, index_expresion)
+  quadruple_GOTO = ('GOTO', None, None, index_expression)
   # l_quadruples
   l_quadruples.append(quadruple_GOTO)
   # print("quadruple_GOTO",quadruple_GOTO)
@@ -1016,28 +1016,34 @@ def p_quad_while_03(p):
   l_quadruples[index_previous_GOTOF] = new_quadruple
 
 def p_ciclo_for_01(p):
-  'ciclo_for_01 : FOR variable ASIGNA exp quad_for_01 ciclo_for_02'
+  'ciclo_for_01 : FOR aux_ID ASIGNA exp quad_for_01 ciclo_for_02'
 
 def p_ciclo_for_02(p):
-  'ciclo_for_02 : UNTIL quad_for_02 hiper_expresion quad_for_03 bloque quad_for_04'
+  'ciclo_for_02 : UNTIL quad_for_02 hiper_expression quad_for_03 bloque quad_for_04'
 
 def p_quad_for_01(p):
   'quad_for_01 :'
   exp_type = s_types.pop()
   exp_result = s_operands.pop()  
-  # print("exp_type", exp_type)
 
-  var_type = s_types.pop()
-  variable = s_operands.pop()
+  # var_id = variable_tuple[1]
+  var_id = s_dimensions[-1][1]
+  variable = variable_validation(var_id, 0)
+
+  var_type = variable.get_data_type()
+  variable_address = variable.get_address()
+
+  # var_type = s_types.pop()
+  # variable = s_operands.pop()
 
   if exp_type != var_type:
-    error(exp_type+" not assignable to "+var_type)
+    error("Type %s not assignable to %s" % (exp_type, var_type))
 
   elif(var_type != 0): # Not int
-    error("Variable "+variable+" is not of type INT")
+    error("Variable %s is not of type int" % variable)
 
   else:
-    quadruple_EQUAL = ('EQUAL', exp_result, None, variable)
+    quadruple_EQUAL = ('=', exp_result, None, variable_address)
     l_quadruples.append(quadruple_EQUAL)
 
 
@@ -1049,33 +1055,47 @@ def p_quad_for_02(p):
 
 def p_quad_for_03(p):
   'quad_for_03 :'
-  expresion_type = s_types.pop()
-  expresion_result = s_operands.pop()  
-  # print("expresion_type:", expresion_type )
+  expression_type = s_types.pop()
+  expression_result = s_operands.pop()  
+  # print("expression_type:", expression_type )
 
-  if(expresion_type != 3):
+  if(expression_type != 3):
       error("Expression result from FOR must be boolean")
 
   else:
-      # var_type = s_types.pop()
-      # variable = s_operands.pop()
-
       # Generate incomplete quadruple to skip Bloque
-      quad_GOTOF = ('GOTOF', expresion_result, None, None)
-      l_quadruples.append(quad_GOTOF)
+      quad_GOTOV = ('GOTOV', expression_result, None, None)
+      l_quadruples.append(quad_GOTOV)
 
       # Save the index to the incomplete GOTOF
-      index_GOTOF = len(l_quadruples)-1
-      s_jumps.append(index_GOTOF)
+      index_GOTOV = len(l_quadruples)-1
+      s_jumps.append(index_GOTOV)
 
 def p_quad_for_04(p):
   'quad_for_04 :'
+
+  variable_tuple = s_dimensions.pop()
+  var_id = variable_tuple[1]
+
+  constant_1_address = store_constant(0, 1)
+  variable = variable_validation(var_id, 0)
+  variable_address = variable.get_address()
+
+  scope = 'global' if s_scopes[-1] == 'global' else 'local'
+  id_virtual_address = memory_handler.new_variable(0, scope, 'temporal')
+  
+  quad_variable_plus_1 = ('+', variable_address, constant_1_address, id_virtual_address)
+  l_quadruples.append(quad_variable_plus_1)
+
+  quad_assign_to_for_id = ('=', id_virtual_address, None, variable_address)
+  l_quadruples.append(quad_assign_to_for_id)
+
   # Obtain saved indexes
   index_pending_GOTF = s_jumps.pop()
-  index_to_expresion = s_jumps.pop()
+  index_to_expression = s_jumps.pop()
 
   # quadruple to check value of the FOR´s expression
-  quadruple_GOTO = ('GOTO', None, None, index_to_expresion)
+  quadruple_GOTO = ('GOTO', None, None, index_to_expression)
   l_quadruples.append(quadruple_GOTO)
 
   # Add the missing index to the previous GOTOF to skip Bloque when expression is false
@@ -1083,10 +1103,10 @@ def p_quad_for_04(p):
   pending_GOTF= (pending_GOTF[0], pending_GOTF[1], None, len(l_quadruples))
   l_quadruples[index_pending_GOTF] = pending_GOTF
 
-def p_hiper_expresion(p):
-  '''hiper_expresion : super_expresion hiper_expresion_02 quadruple_creation_AND
+def p_hiper_expression(p):
+  '''hiper_expression : super_expression hiper_expression_02 quadruple_creation_AND
 
-  hiper_expresion_02 : AND and_append super_expresion
+  hiper_expression_02 : AND and_append super_expression
                       | vacio'''
 
 def p_quadruple_creation_AND(p):
@@ -1099,10 +1119,10 @@ def p_and_append(p):
   'and_append :'
   s_operators.append('&')
 
-def p_super_expresion(p):
-  '''super_expresion : expresion super_expresion_02 quadruple_creation_OR
+def p_super_expression(p):
+  '''super_expression : expression super_expression_02 quadruple_creation_OR
 
-  super_expresion_02 : OR or_append expresion
+  super_expression_02 : OR or_append expression
                       | vacio'''
 
 def p_quadruple_creation_OR(p):
@@ -1116,8 +1136,8 @@ def p_or_append(p):
   s_operators.append('|')
 
 ################# FALTA AGREGAR el (==)
-def p_expresion(p):
-  '''expresion : exp m quadruple_creation_relational
+def p_expression(p):
+  '''expression : exp m quadruple_creation_relational
 
       m         : MAYOR_QUE greater_than_append exp
                 | MENOR_QUE less_than_append exp
@@ -1197,7 +1217,7 @@ def p_factor(p):
   '''factor : varcte 
             | MENOS varcte
             | aux_ID factor_02
-            | PARENTESIS_I parenthesis_left_append hiper_expresion PARENTESIS_D parenthesis_left_pop'''
+            | PARENTESIS_I parenthesis_left_append hiper_expression PARENTESIS_D parenthesis_left_pop'''
 
   if len(p) == 2:
     # factor : varcte
@@ -1243,7 +1263,7 @@ def p_factor_02(p):
     variable = variable_validation(var_id, 0)
 
     if not variable:
-      error("Variable "+var_id+" is not declared")
+      error("Variable %s is not declared" % var_id)
         
     else:
       s_operands.append(variable.get_address())
@@ -1273,7 +1293,7 @@ def p_factor_02(p):
       variable = variable_validation(elem2, 1)
 
       if not variable:
-        error("Array "+elem2+" not declared")
+        error("Array %s not declared" % elem2)
       
       array_name = elem2
 
@@ -1289,7 +1309,7 @@ def p_factor_02(p):
       
       # Generate quadruple (S1 + BaseAddress)
       scope = 'global' if s_scopes[-1] == 'global' else 'local'
-      array_virtual_address = memory_handler.new_variable(5, 'global', 'temporal')
+      array_virtual_address = memory_handler.new_variable(5, scope, 'temporal')
       quadruple_PLUS_BaseAddress = ('+', dimension_1, (base_address,), array_virtual_address)
       l_quadruples.append(quadruple_PLUS_BaseAddress)
 
@@ -1305,13 +1325,13 @@ def p_factor_02(p):
 
       # Validate that second dimension type is int
       if not dimension_2_type == 0:
-        error("Indexing with non int type on matrix")
+        error("Indexing with non int type on matrix %s" % matrix_id)
 
       # Validate if variable exists
       variable = variable_validation(matrix_id, 2)
 
       if not variable:
-        error("Matrix "+ matrix_id +" not declared")
+        error("Matrix %s not declared" % matrix_id)
 
       # Get matrix information from varsTable
       matrix_dimension = variable.get_dimensions()
@@ -1329,7 +1349,7 @@ def p_factor_02(p):
 
       # Gnerate quadruple (s1 * m1)
       scope = 'global' if s_scopes[-1] == 'global' else 'local'
-      m1_virtual_address = memory_handler.new_variable(dimension_1_type,scope,"temporal")
+      m1_virtual_address = memory_handler.new_variable(dimension_1_type, scope,"temporal")
       quadruple_s1_times_m1 = ('*', dimension_1, second_upper_limit_address, m1_virtual_address) # s1 * m1
       l_quadruples.append(quadruple_s1_times_m1)
       print(quadruple_s1_times_m1)
@@ -1358,11 +1378,11 @@ def p_factor_02(p):
     func_name = s_dimensions[-1][1]
 
     if not function_directory.scope_exists(func_name):
-      error("Function "+func_name+" not declared")
+      error("Function %s not declared" % func_name)
 
     # Verify number of arguments in function call
     elif function_directory.get_scope(func_name).get_number_of_parameters() != argument_counter:
-      error("Incoherence in number of arguments in function call "+func_name)
+      error("Incoherence in number of arguments in function call  %s" % func_name) 
             
     else:
       # ('ERA', func_name, scope, None) = 
@@ -1380,7 +1400,7 @@ def p_factor_02(p):
 
         # Verify argument type
         if argument_type != function_directory.get_scope(func_name).params_table[argument_index]:
-          error("Argument type is incorrect in function call "+func_name)
+          error("Argument type is incorrect in function call %s" % func_name) 
 
         else:
           quadruple_PARAMETER = ('PARAMETER', argument, None, argument_index)
@@ -1401,14 +1421,14 @@ def p_factor_02(p):
     method_name = p[3]
 
     if not class_directory.scope_exists(class_name):
-      error("Class "+class_name+" not declared")
+      error("Class %s not declared" % class_name)   
     
     elif not class_directory.get_class(class_name).get_scope(method_name):
-      error("Method "+method_name+" not declared")
+      error("Method %s not declared" % method_name)    
 
     # Verify number of arguments in function call
     elif class_directory.get_class(class_name).get_scope(method_name).get_number_of_parameters() != argument_counter:
-      error("Incoherence in number of arguments in method call "+method_name)     
+      error("Incoherence in number of arguments in method call  %s" % method_name)    
             
     else:
       # ('ERA', func_name, scope, None) = 
@@ -1426,12 +1446,12 @@ def p_factor_02(p):
 
         # Verify argument type
         if argument_type != class_directory.get_class(class_name).get_scope(method_name).params_table[argument_index]:
-            error("Argument type is incorrect in function call "+method_name)
+          error("Argument type is incorrect in function call %s" % method_name)
 
         else:
-            quadruple_PARAMETER = ('PARAMETER', argument, None, argument_index)
-            l_quadruples.append(quadruple_PARAMETER)
-            argument_index +=1
+          quadruple_PARAMETER = ('PARAMETER', argument, None, argument_index)
+          l_quadruples.append(quadruple_PARAMETER)
+          argument_index +=1
 
       quadruple_GOSUB = ('GOSUB', method_name, None, None)
       l_quadruples.append(quadruple_GOSUB)
@@ -1485,10 +1505,6 @@ def p_constant_char_assginment(p):
 def p_error(p):
   if p:
       error("Syntax error at '%s'" % p.value)
-
-  # else:
-  #     print('Syntax error at EOF')
-
 
 ## Contruir parser
 parser = yacc.yacc()

@@ -165,4 +165,4 @@ Se corrigió la generación de cuádruplos para arreglos y matrices, así como l
 
 #### 29/05/2021
 
-Se implementó el manejo de apuntadores para la indexación de arreglos y matrices. Se implementó el operador relacional de == en semántica. Se desarrolló la funcionalidad en máquina virtual para la escritura de múltples elementos en una misma línea. Se implementó el estatuto de asignación en máquina virtual.
+Se implementó el manejo de apuntadores para la indexación de arreglos y matrices. Se implementó el operador relacional de == en semántica. Se desarrolló la funcionalidad en máquina virtual para la escritura de múltples elementos en una misma línea. Se implementó el estatuto de asignación en máquina virtual. Se implementaron los ciclos for y while en máquina virtual.

@@ -83,6 +83,13 @@ class VirtualMachine:
     if r_type == 5:
       r_value = self.get_value(r_value)
     
+    if l_value == None:
+      error("Uninitialized left variable")
+    
+    if r_value == None:
+      error("Uninitialized right variable")
+
+    
     ################### FALTA VALIDAR SI ES TIPO POINTER
     # res_type = sc.result_type(l_type, r_type)
 
@@ -119,7 +126,7 @@ class VirtualMachine:
       self.__main.push(assignTo, value)
     else:
       self.__s_contexts[-1].push(assignTo, value)
-    print("Execute: %s = %s" % (assignTo, value))
+    # print("Execute: %s = %s" % (assignTo, value))
 
   def cast(self, value, v_type):
     '''Casts a value to a specific data type'''
@@ -144,21 +151,28 @@ class VirtualMachine:
       operator = quadruple[0]
 
       if operator == 'GOTO':
-        print("execute GOTO: ", quadruple[3])
+        # print("execute GOTO: ", quadruple[3])
         self.__quadruple_iterator = quadruple[3]
       
       elif operator == 'GOTOV':
-        print("execute GOTOV: ", quadruple[1], quadruple[3])
-        if quadruple[1]:
+        # print("execute GOTOV: ", quadruple[1], quadruple[3])
+        condition = self.get_value(quadruple[1])
+        if condition:
           self.__quadruple_iterator = quadruple[3]
+        else:
+          self.proceed()
       
       elif operator == 'GOTOF':
-        print("execute GOTOF: ", quadruple[1], quadruple[3])
-        if quadruple[1]:
+        # print("execute GOTOF: ", quadruple[1], quadruple[3])
+        condition = self.get_value(quadruple[1])
+        # print("condition",condition)
+        if not condition:
           self.__quadruple_iterator = quadruple[3]
+        else:
+          self.proceed()
 
       elif operator == 'PRINT':
-        print("execute PRINT")
+        # print("execute PRINT")
         res = ""
         value_type = mh.get_type_from_address(quadruple[3])
         value = self.get_value(quadruple[3])
@@ -176,19 +190,11 @@ class VirtualMachine:
             break
         
         print(res)
-
-        # if value == 0:
-        #   print(int(value))
-        # else:
-        #   if value_type == 4:
-        #     print(value[1:-1])
-        #   else:
-        #     print(value)
         self.proceed()
         
 
       elif operator in ['+', '-', '*', '/', '&', '|', '<', '>', '<>', '==']:
-        print("execute binary operation")
+        # print("execute binary operation")
         # Execute binary operation and send temporal result to memory
         value = self.binary_operation(quadruple)
         assignTo = quadruple[3]
@@ -231,6 +237,6 @@ class VirtualMachine:
         
 
       elif operator == 'END':
-        print("execute END")
+        print("")
         break
 
