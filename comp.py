@@ -15,7 +15,7 @@ from Utilities import error, types
 lexer = lex.lex()
 
 # Read text file (prueba3.txt / prueba2.txt)
-f = open('prueba3.txt','r')
+f = open('prueba4.txt','r')
 data = f.read()
 
 # Test lex with text file
@@ -118,7 +118,6 @@ def variable_declaration(variable):
     class_name = s_scopes[-1]
 
     virtual_address = variable_allocation(variable_dimensions, "global", "variable")
-    # virtual_address = memory_handler.new_variable(current_type, "global", "variable")
 
     # There's an error adding global variable into Function Directory
     if not class_directory.add_attribute(class_name, current_scope, variable_id, current_type, virtual_address, variable_dimensions):
@@ -132,7 +131,6 @@ def variable_declaration(variable):
     class_name = s_scopes[-1]
 
     virtual_address = variable_allocation(variable_dimensions, "local", "variable")
-    # virtual_address = memory_handler.new_variable(current_type, "local", "variable" )
 
     # There's an error adding local variable into Function Directory
     if not class_directory.add_variable(class_name, method_name, variable_id, current_type, virtual_address, variable_dimensions):
@@ -150,7 +148,6 @@ def variable_declaration(variable):
       function_name = current_scope
 
       virtual_address = variable_allocation(variable_dimensions, "local", "variable")
-      # virtual_address = memory_handler.new_variable(current_type, "local", "variable")
 
       # There's an error adding global variable into Function Directory
       if not function_directory.add_item(function_name, variable_id, current_type, virtual_address, variable_dimensions):
@@ -194,7 +191,6 @@ def generate_expression_quadruple():
       if s_scopes[-1] == 'global':
         variable_dimensions = (0,0,0) # Normal variable
         temporal_virtual_address = variable_allocation(variable_dimensions, "global", "temporal")
-        # temporal_virtual_address = memory_handler.new_variable(current_type, "global", "temporal")  
         
         print("TEMPORAL GLOBAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
 
@@ -204,12 +200,10 @@ def generate_expression_quadruple():
 
         variable_dimensions = (0,0,0) # Normal variable
         temporal_virtual_address = variable_allocation(variable_dimensions, "local", "temporal")
-        # temporal_virtual_address = memory_handler.new_variable(current_type, "local", "temporal")
 
         print("TEMPORAL LOCAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
 
-        function_directory.get_scope(function_name).add_to_count(current_type, "variable")
-
+        function_directory.get_scope(function_name).add_to_count(current_type, "temporal")
 
       # expression is inside a method
       elif len(s_scopes) == 4:
@@ -242,7 +236,6 @@ def variable_validation(variable_id, dimension_type):
   variable = None
   # ID is inside Main
   if len(s_scopes) == 0:
-
     # Check if ID is a global variable in Main
     variable = function_directory.var_exists(current_scope, variable_id)   
 
@@ -280,14 +273,32 @@ def variable_validation(variable_id, dimension_type):
   else:
     return variable
 
-# Returns address if string constant exists
 def store_constant(data_type, constant_value):
+  """Returns address if constant literal exists"""
   virtual_address = memory_handler.constant_exists(data_type, constant_value)
 
   if not virtual_address: # Not saved constant, add it to constant directory
     virtual_address = memory_handler.new_constant(data_type, constant_value)
   
   return virtual_address
+
+def guadalupan_patch(variable):
+  """Sends the result of a non-void function or method to a temporal"""
+  variable_type = variable.get_data_type()
+  variable_address = variable.get_address()
+  
+  # Obtain a new temporal variable to store the return of the function
+  temporal_virtual_address = memory_handler.new_variable(variable_type, "global", 'temporal')
+
+  # Assign the return of the function into a temporal variable
+  quadruple_parche = ('=', variable_address, None, temporal_virtual_address)
+  l_quadruples.append(quadruple_parche)
+
+  # Put temporal variable in stack
+  s_operands.append(temporal_virtual_address)
+  s_types.append(variable_type)
+  
+  
 #  ------------------------------------------------------------------------
 
 # --------------------------- GRAMMAR -----------------------------
@@ -336,7 +347,7 @@ def p_main(p):
       print(index, "\t", l_quadruples[index])
   print("")
   
-  virtual_machine = VirtualMachine(l_quadruples, class_directory, function_directory, memory_handler.get_constants_directory())
+  virtual_machine = VirtualMachine(l_quadruples, function_directory, class_directory, memory_handler.get_constants_directory())
   virtual_machine.run()
     
 
@@ -357,19 +368,19 @@ def p_append_END_quad(p):
   print(quadruple_END)
 
 def p_bloque(p):
-  '''bloque     : LLAVE_I estatutos LLAVE_D
+  '''bloque : LLAVE_I estatutos LLAVE_D
 
-      estatutos  : estatuto estatutos
-                | vacio'''
+  estatutos : estatuto estatutos
+            | vacio'''
 
 def p_declaracion_clases(p):
   '''declaracion_clases : clases clases_02 
                         | vacio '''
 
 def p_clases(p):
-  '''clases       : CLASS ID herencia LLAVE_I 
+  '''clases    : CLASS ID herencia LLAVE_I 
                   
-      herencia     : MENOR_QUE INHERITS MAYOR_QUE 
+      herencia    : MENOR_QUE INHERITS MAYOR_QUE 
                   | vacio'''
   if(p[1] == 'class'):
     if not class_directory.add_class(p[2]):
@@ -385,12 +396,12 @@ def p_clases(p):
 def p_clases_02(p):
   '''clases_02 : atributos metodos LLAVE_D PUNTO_COMA pop_scope nueva_clase   
 
-      atributos : declaracion_variables 
+     atributos : declaracion_variables 
 
-      metodos   : declaracion_funciones pop_scope
+     metodos   : declaracion_funciones pop_scope
       
-      nueva_clase : clases clases_02
-                  | vacio'''
+   nueva_clase : clases clases_02
+               | vacio'''
   # The 'pop_scope' in metodos is to take out 'Class_Globales'
 
 def p_declaracion_variables(p):
@@ -483,8 +494,8 @@ def p_variables_02(p):
 
 def p_tipo_simple(p):
   '''tipo_simple : INT
-                  | FLOAT 
-                  | CHAR'''
+                 | FLOAT 
+                 | CHAR'''
   global current_type
   current_type = p[1]
   if current_type == 'int':
@@ -497,7 +508,7 @@ def p_tipo_simple(p):
 
 def p_declaracion_funciones(p):
   '''declaracion_funciones : funciones funciones2
-                          | vacio'''
+                           | vacio'''
 
 def p_current_type_void_function(p):
   'current_type_void_function :'
@@ -515,13 +526,16 @@ def p_funciones(p):
       function_name = p[3]
       current_scope = s_scopes[-1]
       if(current_scope == 'global'): # Add function in Function Directory
-          # print("Scope added in stack: ", p[3])
-
-          # Add function into Function Directory
+          # Function already exists
           if not function_directory.add_scope(function_name, current_type):
             error("Function %s already declared in function directory" % function_name)
 
           else:
+            # Create global variable for function return
+            if current_type != 'VOID':
+              var_function_name = (current_scope, (0,0,0), function_name)
+              variable_declaration(var_function_name)
+
             # Insert reference of where to jump to execute the function's quadruples when called
             inital_address = len(l_quadruples)
             function_directory.get_scope(function_name).set_initial_address(inital_address)
@@ -530,6 +544,12 @@ def p_funciones(p):
             print("FUNCTION added in Function Directory: ", function_name, current_type)
 
       else: # Add method in class directory
+
+        # Create global variable (attribute) for method return
+        if current_type != 'VOID':
+          var_function_name = (current_scope, (0,0,0), function_name)
+          variable_declaration(var_function_name)
+
         s_scopes.pop() # Remove 'class_globals'
         class_name = s_scopes[-1] # Class scope
         s_scopes.append(current_scope) # Add 'class_globals'
@@ -557,7 +577,7 @@ def p_func_closure(p):
 
   if(s_scopes[-1] == 'global'):
     # Delete vars table from function
-    # function_directory.get_scope(func_name).remove_vars_table()
+    function_directory.get_scope(func_name).remove_vars_table()
 
     # Resets local variables and local temporal counters to the base address
     memory_handler.reset_locals_counters()
@@ -565,22 +585,20 @@ def p_func_closure(p):
     quadruple = ('ENDPROC', None, None, None)
     l_quadruples.append(quadruple)
 
-    # Set number of temporals in function
-    function_scope = function_directory.get_scope(func_name)
       
   else:
     class_globals = s_scopes.pop() # Remove 'class_globals'
     class_name = s_scopes[-1]
 
+    # Delete vars table from method
+    class_scope = class_directory.get_class(class_name)
+    class_scope.get_scope(func_name).remove_vars_table()
+
     # Resets local variables and local temporal counters to the base address
     memory_handler.reset_locals_counters()
 
     quadruple = ('ENDPROC', None, None, None)
     l_quadruples.append(quadruple)
-
-    # Set number of temporals in method
-    # class_scope = class_directory.get_class(class_name)
-    # function_scope = class_scope.get_scope(func_name)
 
     s_scopes.append(class_globals)
 
@@ -788,10 +806,7 @@ def p_llamada_void(p):
       error("Incoherence in number of arguments in function call %s" % func_name)
             
     else:
-      # ('ERA', func_name, scope, None) = 
-        # scope '0' = FunctionDirectory
-        # scope '1' = ClassDirectory
-      quadruple_ERA = ('ERA', func_name, 0, None)
+      quadruple_ERA = ('ERA', func_name, None, None)
       l_quadruples.append(quadruple_ERA)
 
       argument_counter = 0
@@ -808,12 +823,22 @@ def p_llamada_void(p):
           error("Argument type is incorrect in function call %s" % func_name)
           
         else:
-          quadruple_PARAMETER = ('PARAMETER', argument, None, argument_counter)
+          # local_variable_dimensions = (0,0,0)
+          # local_variable_address = variable_allocation(local_variable_dimensions, 'local', 'variable')
+          
+          quadruple_PARAMETER = ('PARAMETER', argument, argument_type, argument_counter)
           l_quadruples.append(quadruple_PARAMETER)
           argument_counter +=1
 
-        quadruple_GOSUB = ('GOSUB', func_name, None, None)
-        l_quadruples.append(quadruple_GOSUB)
+      quadruple_GOSUB = ('GOSUB', func_name, None, None)
+      l_quadruples.append(quadruple_GOSUB)
+
+      # # Obtain variable information of the function´s global variable
+      # variable = variable_validation(func_name, 0)
+
+      # # Assign the return value of the function into a temporal
+      # guadalupan_patch(variable)
+        
 
   elif len(p) == 8: # void methods from a class
     class_name = p[1]
@@ -828,10 +853,7 @@ def p_llamada_void(p):
       error("Incoherence in number of arguments in method call %s" % method_name)
 
     else:
-      # ('ERA', func_name, scope, None) = 
-      # scope '0' = FunctionDirectory
-      # scope '1' = ClassDirectory
-      quadruple_ERA = ('ERA', method_name, 1, None)
+      quadruple_ERA = ('ERA', method_name, None, None)
       l_quadruples.append(quadruple_ERA)
 
       argument_counter = 0
@@ -846,12 +868,18 @@ def p_llamada_void(p):
         if argument_type != class_directory.get_class(class_name).get_scope(method_name).params_table[argument_counter]:
           error("Argument type is incorrect in function call %s" % method_name)
 
-        quadruple_PARAMETER = ('PARAMETER', argument, None, argument_counter)
+        quadruple_PARAMETER = ('PARAMETER', argument, argument_type, argument_counter)
         l_quadruples.append(quadruple_PARAMETER)
         argument_counter +=1
 
-      quadruple_GOSUB = ('GOSUB', method_name, None, None)
+      quadruple_GOSUB = ('GOSUB', method_name, class_name, None)
       l_quadruples.append(quadruple_GOSUB)
+
+      # # Obtain variable information of the method's global variable
+      # variable = variable_validation(method_name, 0)
+      
+      # # Assign the return value of the method into a temporal
+      # guadalupan_patch(variable)
 
 def p_posible_exp(p):
   '''posible_exp : exp append_argument I
@@ -884,7 +912,47 @@ def p_retorno(p):
   expression_result = s_operands.pop()
   expression_type = s_types.pop()
 
-  quadruple_RETURN = ('RETURN', None, None, expression_result)
+  if len(s_scopes) not in [2, 4]:
+    error("Return statement used outside a function or method scope")
+    
+  func_name = s_scopes.pop()
+  func_variable = None
+
+  if s_scopes[-1] == 'global': # Return of a function
+    if function_directory.get_scope(func_name).get_data_type() == 'VOID':
+      error("Return statement used on void function %s" % func_name)
+
+    func = function_directory.get_scope('global')
+    func_variable = func.search(func_name)
+    func_type = func_variable.get_data_type()
+
+    # Check expression type with return type
+    if func_type != expression_type:
+      error("Invalid return type in function %s, func_type: %s, exp_type: %s" % (func_name, func_type, expression_type))
+  else: # Return of a method
+    class_globals = s_scopes.pop()
+    class_name = s_scopes[-1]
+
+    class_dir = class_directory.get_class(class_name)
+
+    if class_dir.get_scope(func_name).get_data_type() == 'VOID':
+      error("Return statement used on void method %s of class %s " % (func_name, class_name))
+
+    class_global_scope = class_dir.get_scope('class_globals')
+    func_variable = class_global_scope.search(func_name)
+    method_type =  func_variable.get_data_type()
+
+    # Check expression type with return type
+    if method_type != expression_type:
+      error("Invalid return type in method %s" % func_name)
+    
+    s_scopes.append(class_globals)
+  
+  s_scopes.append(func_name)
+
+  func_variable_address = func_variable.get_address()
+  
+  quadruple_RETURN = ('RETURN', expression_result, None, func_variable_address)
   l_quadruples.append(quadruple_RETURN)
   print(quadruple_RETURN)
 
@@ -1001,13 +1069,10 @@ def p_quad_while_03(p):
   'quad_while_03 :'
   index_previous_GOTOF = s_jumps.pop() 
   index_expression = s_jumps.pop()
-  # print("index_previous_GOTOF",index_previous_GOTOF)
-  # print("index_expression",index_expression)
+
 
   quadruple_GOTO = ('GOTO', None, None, index_expression)
-  # l_quadruples
   l_quadruples.append(quadruple_GOTO)
-  # print("quadruple_GOTO",quadruple_GOTO)
 
   index_skip = len(l_quadruples) # index to skip while
 
@@ -1259,7 +1324,7 @@ def p_factor_02(p):
     if s_dimensions[-1][0] == 'id':
       var_id = s_dimensions.pop()[1]
 
-    print("s_dimensions.pop(single_ID):", var_id)
+    # Check if variable is declared
     variable = variable_validation(var_id, 0)
 
     if not variable:
@@ -1372,7 +1437,6 @@ def p_factor_02(p):
       s_operands.append(matrix_virtual_address)
       s_types.append(dimension_2_type)
 
-
   # It is a function
   elif(len(p) == 5 and p[1] != '['): # LLamada a funcion non-void
     func_name = s_dimensions[-1][1]
@@ -1385,10 +1449,7 @@ def p_factor_02(p):
       error("Incoherence in number of arguments in function call  %s" % func_name) 
             
     else:
-      # ('ERA', func_name, scope, None) = 
-        # scope '0' = FunctionDirectory
-        # scope '1' = ClassDirectory
-      quadruple_ERA = ('ERA', func_name, 0, None)
+      quadruple_ERA = ('ERA', func_name, None, None)
       l_quadruples.append(quadruple_ERA)
 
       argument_index = 0
@@ -1399,20 +1460,27 @@ def p_factor_02(p):
         argument_type = s_function_call_argument_types.popleft()
 
         # Verify argument type
-        if argument_type != function_directory.get_scope(func_name).params_table[argument_index]:
+        if argument_type != function_directory.get_scope(func_name).get_params_table()[argument_index]:
           error("Argument type is incorrect in function call %s" % func_name) 
 
         else:
-          quadruple_PARAMETER = ('PARAMETER', argument, None, argument_index)
+          quadruple_PARAMETER = ('PARAMETER', argument, argument_type, argument_index)
           l_quadruples.append(quadruple_PARAMETER)
           argument_index +=1
 
       quadruple_GOSUB = ('GOSUB', func_name, None, None)
       l_quadruples.append(quadruple_GOSUB)
 
-  
-  elif len(p) == 8:
-    print("Matriz")
+      # Obtain variable information of the function´s global variable
+      variable = variable_validation(func_name, 0)
+
+      if not variable:
+        error("Invalid call of void function %s" % func_name)
+      
+      # Assign the return value of the function into a temporal
+      guadalupan_patch(variable)
+
+
 
   # PUNTO ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D
   elif len(p) == 7: # non-void method call
@@ -1431,10 +1499,7 @@ def p_factor_02(p):
       error("Incoherence in number of arguments in method call  %s" % method_name)    
             
     else:
-      # ('ERA', func_name, scope, None) = 
-        # scope '0' = FunctionDirectory
-        # scope '1' = ClassDirectory
-      quadruple_ERA = ('ERA', method_name, 1, None)
+      quadruple_ERA = ('ERA', method_name, None, None)
       l_quadruples.append(quadruple_ERA)
 
       argument_index = 0
@@ -1449,12 +1514,21 @@ def p_factor_02(p):
           error("Argument type is incorrect in function call %s" % method_name)
 
         else:
-          quadruple_PARAMETER = ('PARAMETER', argument, None, argument_index)
+          quadruple_PARAMETER = ('PARAMETER', argument, argument_type, argument_index)
           l_quadruples.append(quadruple_PARAMETER)
           argument_index +=1
 
-      quadruple_GOSUB = ('GOSUB', method_name, None, None)
+      quadruple_GOSUB = ('GOSUB', method_name, class_name, None)
       l_quadruples.append(quadruple_GOSUB)
+
+      #Obtain variable information of the method's global variable
+      variable = variable_validation(method_name, 0)
+
+      if not variable:
+        error("Invalid call of void method %s" % method_name)
+      
+      # Assign the return value of the method into a temporal
+      guadalupan_patch(variable)
 
 def p_array_helper(p):
   '''array_helper : CORCHETE_D

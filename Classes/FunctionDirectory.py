@@ -5,19 +5,41 @@ class FunctionDirectory:
   def __init__(self):
     self.__dir = {} # function_name : Scope()
 
-  # Check if scope exists
   def scope_exists(self, scope):
+    """Checks if scope exists
+    
+        Parameters
+        ----------
+        scope : str
+            The name of the scope to search for
+
+        Returns
+        -------
+        Scope or bool
+          The Scope or False"""
     return self.__dir.get(scope, False)
 
-  # Check if var is in global or specific scope
   def var_exists(self, scope, var_id):
+    """Checks if variable is in a specific scope
+        
+        Parameters
+        ----------
+        scope : str
+            The name of the scope to search on
+        var_id :
+            The name of the variable to search for
+        
+        Returns
+        -------
+        Variable or bool
+          The Variable or False"""
     if self.__dir[scope].search(var_id):
       return self.__dir[scope].search(var_id)
     else:
       return False
 
-  # Add a scope to the FunctionDirectory
   def add_scope(self, scope, data_type):
+    """Adds a scope to the FunctionDirectory"""
     if self.scope_exists(scope):
       return False
     else:
@@ -30,23 +52,20 @@ class FunctionDirectory:
     else:
       return self.__dir[scope].add_parameter(var_id, var_data_type, address, dimensions)
 
-  # Add item to scope
   def add_item(self, scope, var_id, var_data_type, address, dimensions):
+    """Adds item to scope"""
     if not self.scope_exists(scope):
       return False
     else:
       return self.__dir[scope].add_item(var_id, var_data_type, address, dimensions)
 
-  # Delete object
   def remove(self):
+    """Deletes the object"""
     del self
 
-  # Get scope's items
   def get_scope(self, scope):
+    """Gets scope from function directory"""
     if not self.scope_exists(scope):
       return False
     else:
       return self.__dir[scope]
-
-  def print(self):
-    print(self.__dir)

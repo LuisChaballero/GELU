@@ -1,0 +1,36 @@
+
+program test0 ;
+
+var int i, j, k;
+var float f;
+
+func void uno(int a, int b) {
+    if (a>0) {
+        i = a+b*j+i;
+        print ( i+j );
+        uno (a-i, i);
+    }
+    else {
+        print ( a + b );
+    }
+}
+
+func int dos(int a, float g) {
+    var int i;
+    i = a;
+    while (a > 0) {
+        a=a-k*j;
+        uno(i, a+k);
+        g=g*j-k;
+    }
+    return a;
+}
+
+main() { 
+    i=2; 
+    k=i+1;
+    f=3.14;
+    j=1;
+
+    print( dos(j,f));   
+}

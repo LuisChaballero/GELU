@@ -4,37 +4,36 @@ program test0 ;
 var int i, j, k;
 var float f;
 
-func void uno(int a, int b) {
-  var int i, j;
-    if (a>b) {
-        i = a+b*j+i;
-        print ( i+j );
-        uno (a-i, i);
-    }
-    else {
-        print ( a + b );
-    }
-}
+#func void uno(int a, int b) {
+#    if (a>0) {
+#        i = a+b*j+i;
+#        print ( i+j );
+#        uno (a-i, i);
+#    }
+#    else {
+#        print ( a + b );
+#    }
+#}
 
 func int dos(int a, float g) {
-    var float i;
-    var int j, k;
-    i=g;
-    while (a>j) {
+    var int i;
+    i = a;
+    while (a > 0) {
         a=a-k*j;
-        uno(a*a, k+k);
+        #uno(i, a+k);
         g=g*j-k;
     }
-    return  (i+k*j);
+    return(0);
+    return(i+k*j);
 }
 
 main() { 
-    i=k; 
-    k=i+i;
-    f=f;
+    i=2; 
+    k=i+1;
+    f=3.14;
+    j=1;
+    
 
-    while (i > j) {
-        print( i ,j*i,f*k+f);
-    }
+    print(dos(i+k, f*3) + 3);
    
 }
