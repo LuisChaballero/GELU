@@ -15,7 +15,7 @@ from Utilities import error, types
 lexer = lex.lex()
 
 # Read text file (prueba3.txt / prueba2.txt)
-f = open('prueba4.txt','r')
+f = open('prueba3.txt','r')
 data = f.read()
 
 # Test lex with text file
@@ -172,12 +172,9 @@ def generate_expression_quadruple():
 
   # Get operator
   operator = s_operators.pop()
-  print("Right_type:", right_type)
-  print("Left_type:", left_type)
 
   # Validate result data type with semantic cube
   res_type = sc.result_type(left_type, right_type, operator)
-  print("result_type:", res_type)
 
   global current_type
   current_type = res_type
@@ -192,7 +189,7 @@ def generate_expression_quadruple():
         variable_dimensions = (0,0,0) # Normal variable
         temporal_virtual_address = variable_allocation(variable_dimensions, "global", "temporal")
         
-        print("TEMPORAL GLOBAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
+        # print("TEMPORAL GLOBAL VIRTUAL_ADDRESS:", temporal_virtual_address, res_type, left_operand, right_operand, operator)
 
       # expression is inside a function
       elif len(s_scopes) == 2:
@@ -703,7 +700,7 @@ def p_variable_02(p):
       # Get array information from varsTable
       upper_limit = variable.get_dimensions()[1]
       base_address = variable.get_address()
-  
+      array_type = variable.get_data_type()
       upper_limit_address = memory_handler.constant_exists(0, upper_limit)
 
       # Generate quadruple (VER dim1)
@@ -718,7 +715,7 @@ def p_variable_02(p):
 
       # Push to stacks
       s_operands.append(index_address)
-      s_types.append(dimension_1_type)
+      s_types.append(array_type)
 
     else: # we are having a matrix
       dimension_2 = elem1
@@ -741,6 +738,7 @@ def p_variable_02(p):
       first_upper_limit = matrix_dimension[1]
       second_upper_limit = matrix_dimension[2]
       base_address = variable.get_address()
+      matrix_type = variable.get_data_type()
 
       # Get dimensions' limits as address
       first_upper_limit_address = memory_handler.constant_exists(0, first_upper_limit)
@@ -773,7 +771,7 @@ def p_variable_02(p):
 
       # Push to stacks
       s_operands.append(matrix_virtual_address)
-      s_types.append(dimension_2_type)
+      s_types.append(matrix_type)
 
 def p_asignacion(p):
   'asignacion : variable ASIGNA exp PUNTO_COMA'
@@ -1310,11 +1308,26 @@ def p_factor(p):
          
 def p_aux_ID(p):
   'aux_ID : ID'
+  print("\n\n(1)", s_operands)
   print("\nENTRAAAAAAAAAA ID", p[1])
   s_dimensions.append(('id', p[1]))
+  # s_dimensions.append(p[1])
+
+# def p_first_dimension(p):
+#   'first_dimension : '
+#   print("+++++++++++++++++++++++++++++++++++FIRST DIMENSION")
+#   dimension_1 = s_operands.pop()
+#   dimension_1_type = s_types.pop()
+#   print("s_operands.pop() => dimension_1:",dimension_1)
+
+#   s_dimensions.append((dimension_1, dimension_1_type))
+  
+# # s_dimensions = [arr, mat ]
+# # arr[mat[0,1]]
 
 def p_factor_02(p):
-  '''factor_02 : CORCHETE_I exp array_helper
+  '''factor_02 : CORCHETE_I exp CORCHETE_D
+  array_helper
                | PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D 
                | PUNTO ID 
                | PUNTO ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D
@@ -1338,9 +1351,12 @@ def p_factor_02(p):
   elif len(p) == 3:
       print("Atributo de clase")
 
-  # Can be array or matrix
+ # Can be array or matrix
   elif len(p) == 4 and p[1] != '(':
+    print("\n\n(3)",s_operands)
     # Array/Matrix first dimension
+    print("./././././s_operands en factor_02", s_operands)
+    print("./././././s_operands.pop() en factor_02", s_operands[-1])
     dimension_1 = s_operands.pop()
     dimension_1_type = s_types.pop()
 
@@ -1365,6 +1381,7 @@ def p_factor_02(p):
       # Get array information from varsTable
       upper_limit = variable.get_dimensions()[1]
       base_address = variable.get_address()
+      array_type = variable.get_data_type()
 
       upper_limit_address = memory_handler.constant_exists(0, upper_limit)
 
@@ -1380,7 +1397,7 @@ def p_factor_02(p):
 
       # Push to stacks
       s_operands.append(array_virtual_address)
-      s_types.append(dimension_1_type)
+      s_types.append(array_type)
 
     else: # we are having a matrix
       dimension_2 = elem1
@@ -1400,6 +1417,7 @@ def p_factor_02(p):
 
       # Get matrix information from varsTable
       matrix_dimension = variable.get_dimensions()
+      matrix_type = variable.get_data_type()
       first_upper_limit = matrix_dimension[1]
       second_upper_limit = matrix_dimension[2]
       base_address = variable.get_address()
@@ -1425,7 +1443,7 @@ def p_factor_02(p):
 
       # Generate quadruple (S1 * m1 + S2)
       s2_virtual_address = memory_handler.new_variable(dimension_2_type, scope, 'temporal')
-      quadruple_sum_s2 = ('+',m1_virtual_address, dimension_2, s2_virtual_address )
+      quadruple_sum_s2 = ('+', m1_virtual_address, dimension_2, s2_virtual_address )
       l_quadruples.append(quadruple_sum_s2)
       
       # Generate quadruple (S1 * m1 + S2 + BaseAddress)
@@ -1435,7 +1453,7 @@ def p_factor_02(p):
 
       # Push to stacks
       s_operands.append(matrix_virtual_address)
-      s_types.append(dimension_2_type)
+      s_types.append(matrix_type)
 
   # It is a function
   elif(len(p) == 5 and p[1] != '['): # LLamada a funcion non-void
@@ -1479,8 +1497,6 @@ def p_factor_02(p):
       
       # Assign the return value of the function into a temporal
       guadalupan_patch(variable)
-
-
 
   # PUNTO ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D
   elif len(p) == 7: # non-void method call
@@ -1532,14 +1548,121 @@ def p_factor_02(p):
 
 def p_array_helper(p):
   '''array_helper : CORCHETE_D
-                  | COMA exp CORCHETE_D ''' 
+                  | COMA exp  CORCHETE_D ''' 
+  print("\n\n(2)", s_operands)
   if len(p) == 4:
     # Matrix second dimension
+    print("./././././s_operands.pop()", s_operands[-1])
     dimension_2 = s_operands.pop()
     dimension_2_type = s_types.pop()
 
     # Add second dimension to stack
     s_dimensions.append((dimension_2, dimension_2_type))
+
+# def p_array_helper(p):
+#   '''array_helper : CORCHETE_D
+#                   | COMA exp CORCHETE_D ''' 
+
+#   print("ñññññññññññññññññññññññññññ array_helper")
+#   if len(p) == 2: # array
+#     dimension_1, dimension_1_type = s_dimensions.pop()
+#     array_id = s_dimensions.pop()
+    
+#     # Validate that first dimension type is int
+#     if not dimension_1_type == 0:
+#       error("Indexing with non int type on array")
+
+#     # Validate if variable exists
+#     variable = variable_validation(array_id, 1)
+
+#     if not variable:
+#       error("Array %s not declared" % array_id)
+
+#     # Get array information from varsTable
+#     upper_limit = variable.get_dimensions()[1]
+#     base_address = variable.get_address()
+
+#     # Get constant address for upper limit
+#     upper_limit_address = memory_handler.constant_exists(0, upper_limit)
+
+#     print("Array VER:",('VER', dimension_1, array_id, upper_limit_address))
+
+#     # Generate quadruple (VER dim1)
+#     quadruple_VER = ('VER', dimension_1, array_id, upper_limit_address)
+#     l_quadruples.append(quadruple_VER)
+    
+#     # Generate quadruple (S1 + BaseAddress)
+#     scope = 'global' if s_scopes[-1] == 'global' else 'local'
+#     array_virtual_address = memory_handler.new_variable(5, scope, 'temporal')
+#     quadruple_PLUS_BaseAddress = ('+', dimension_1, (base_address,), array_virtual_address)
+#     l_quadruples.append(quadruple_PLUS_BaseAddress)
+
+#     # Push to stacks
+#     s_operands.append(array_virtual_address)
+#     s_types.append(dimension_1_type)
+
+
+#   elif len(p) == 4: # matrix
+    # Matrix second dimension
+    # dimension_2 = s_operands.pop()
+    # dimension_2_type = s_types.pop()
+
+    # print("s_operands.pop() => dimension_2: ", dimension_2)
+
+    # dimension_1, dimension_1_type = s_dimensions.pop()
+    # matrix_id = s_dimensions.pop()
+
+    # print("s_dimensions.pop(Matrix):", matrix_id)
+
+    # # Validate that second dimension type is int
+    # if not dimension_1_type == 0 or not dimension_2_type == 0:
+    #   error("Indexing with non int type on matrix %s" % matrix_id)
+
+    # # Validate if variable exists
+    # variable = variable_validation(matrix_id, 2)
+
+    # if not variable:
+    #   error("Matrix %s not declared" % matrix_id)
+
+    # # Get matrix information from varsTable
+    # matrix_dimension = variable.get_dimensions()
+    # first_upper_limit = matrix_dimension[1]
+    # second_upper_limit = matrix_dimension[2]
+    # base_address = variable.get_address()
+
+    # # Get dimensions' limits as address
+    # first_upper_limit_address = memory_handler.constant_exists(0, first_upper_limit)
+    # second_upper_limit_address = memory_handler.constant_exists(0, second_upper_limit)
+
+    # # Generate quadruple (VER dim1)
+    # quadruple_VER = ('VER', dimension_1, matrix_id, first_upper_limit_address)
+    # l_quadruples.append(quadruple_VER)
+
+    # # Gnerate quadruple (s1 * m1)
+    # scope = 'global' if s_scopes[-1] == 'global' else 'local'
+    # m1_virtual_address = memory_handler.new_variable(dimension_1_type, scope, "temporal")
+    # quadruple_s1_times_m1 = ('*', dimension_1, second_upper_limit_address, m1_virtual_address) # s1 * m1
+    # l_quadruples.append(quadruple_s1_times_m1)
+    # print(quadruple_s1_times_m1)
+
+    # # Generate quadruple (VER dim2) 
+    # quadruple_VER = ('VER', dimension_2, matrix_id, second_upper_limit_address)
+    # l_quadruples.append(quadruple_VER)
+
+    # # Generate quadruple (S1 * m1 + S2)
+    # s2_virtual_address = memory_handler.new_variable(dimension_2_type, scope, 'temporal')
+    # quadruple_sum_s2 = ('+', m1_virtual_address, dimension_2, s2_virtual_address )
+    # l_quadruples.append(quadruple_sum_s2)
+    
+    # # Generate quadruple (S1 * m1 + S2 + BaseAddress)
+    # matrix_virtual_address = memory_handler.new_variable(5, scope, 'temporal')
+    # quadruple_PLUS_BaseAddress = ('+', s2_virtual_address, (base_address,), matrix_virtual_address)
+    # l_quadruples.append(quadruple_PLUS_BaseAddress)
+
+    # # Push to stacks
+    # s_operands.append(matrix_virtual_address)
+    # s_types.append(dimension_2_type)
+    
 
 def p_multiple_exp(p):
   '''multiple_exp : COMA exp multiple_exp

@@ -1,9 +1,13 @@
-program test;
-var int i, mat[3,4], k;
-main() {
-  
-  for i = 0 until (i > 3) {
-    print(i);
-  }
 
+program test0 ;
+
+var int mat[2,2], mat2[2,2];
+var int p;
+
+main() { 
+    mat[0,0] = 4;
+    mat2[1,0] = 5;
+
+    p = mat2[1,0] + mat[0,0];
+    print(p);
 }

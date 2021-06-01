@@ -41,6 +41,7 @@ class VirtualMachine:
   
   def current_process(self):
     '''Retrieves the current quadruple running'''
+    print(self.__quadruple_iterator, self.__quadruple_list[self.__quadruple_iterator])
     return self.__quadruple_list[self.__quadruple_iterator]
 
   def get_value(self, virtual_address):
@@ -127,7 +128,8 @@ class VirtualMachine:
 
   def assign(self, assignTo, value):
     '''Assigns vale to the specified address depending on the memory context'''
-    if len(self.__s_execution) == 0:
+    scope = mh.get_scope_from_address(assignTo)
+    if scope == 'global':
       self.__main.push(assignTo, value)
     else:
       self.__s_execution[-1].push(assignTo, value)
@@ -251,7 +253,12 @@ class VirtualMachine:
         print("execute PRINT")
         res = ""
         value_type = mh.get_type_from_address(quadruple[3])
+
         value = self.get_value(quadruple[3])
+
+        if value_type == 5:
+          value = self.get_value(value)
+
         res += str(self.cast(value, value_type))
 
         while True:
@@ -260,6 +267,10 @@ class VirtualMachine:
           if next_process[0] == 'PRINT':
             next_type = mh.get_type_from_address(next_process[3])
             next_value = self.get_value(next_process[3])
+
+            if next_type == 5:
+              next_value = self.get_value(next_value)
+
             res = res + str(self.cast(next_value, next_type))
             self.proceed()
           else:
@@ -284,6 +295,7 @@ class VirtualMachine:
       elif operator == '=':
         l_type = mh.get_type_from_address(quadruple[1])
         l_value = self.get_value(quadruple[1])
+        print(l_value)
 
         if l_type == 5: # Check if it is a pointer
           l_value = self.get_value(l_value)
@@ -294,7 +306,7 @@ class VirtualMachine:
           assignTo = self.get_value(assignTo)
         
         if l_value == None:
-          error("Trying to assign empty address")
+          error("Trying to assign empty address %s" % l_value)
 
         self.assign(assignTo, l_value)
         self.proceed()
