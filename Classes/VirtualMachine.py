@@ -280,13 +280,25 @@ class VirtualMachine:
         self.proceed()
         
       elif operator == 'READ':
+        # Get information from quadruple
         assignTo = quadruple[3]
         data_type = mh.get_type_from_address(assignTo)
+
+        # Ask for user input
         read_input = input()
+
+        # Save user input in the address of the value of the pointer (array or matrix)
+        if data_type == 5:
+          assignTo = self.get_value(assignTo)
+          data_type = mh.get_type_from_address(assignTo)
+
         size = len(read_input)
+        # Catch possible errors of different value type
         try:
+          # Cast char to string
           if data_type == 2 and size == 1:
             read_input = str(read_input)
+          # Cast to other types
           elif data_type != 2:
             read_input = self.cast(read_input, data_type)
           else:
@@ -294,8 +306,7 @@ class VirtualMachine:
         except (ValueError):
           error("Expected a %s type value on read." % types[data_type])
 
-        print(read_input)
-        
+        # Put value in memory
         self.assign(assignTo, read_input)
         self.proceed()
 

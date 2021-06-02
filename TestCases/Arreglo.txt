@@ -1,0 +1,12 @@
+
+program arreglo;
+
+var int arr[3], res;
+
+main() { 
+    # Pedir numero a usuario
+    read arr[2];
+
+    res = arr[2] / 2 ;
+    print(res);
+}

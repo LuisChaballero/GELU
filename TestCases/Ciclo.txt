@@ -1,0 +1,14 @@
+
+program ciclo;
+
+var int n, num;
+
+main() { 
+    # Pedir numero a usuario
+    read num;
+
+    # Loop that runs until the condition is met
+    for n = num until (n == 7) {
+        print(n);
+    }
+}

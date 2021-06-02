@@ -1,0 +1,12 @@
+
+program funcion;
+
+func int mult(int a, int b) {
+    var int resultado;
+    resultado = a * b;
+    return resultado;
+}
+
+main() {
+    print(mult(2,-3));
+}

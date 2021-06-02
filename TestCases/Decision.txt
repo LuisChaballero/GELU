@@ -1,0 +1,16 @@
+
+program decision;
+
+var float n, num;
+
+main() { 
+    # Ask for user input
+    read n;
+
+   if (n > 5 & n < 10 ){
+       print("Number is between 5 and 10");
+   }
+   else {
+       print("Number is NOT between 5 and 10");
+   }
+}

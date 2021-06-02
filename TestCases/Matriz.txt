@@ -1,0 +1,11 @@
+
+program matriz;
+
+var int mat[2,3];
+var int p;
+
+main() { 
+    mat[1,1] = 7;
+    p = mat[1,1] - 5 ;
+    print(p);
+}

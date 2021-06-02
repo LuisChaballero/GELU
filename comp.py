@@ -17,9 +17,9 @@ from Helpers.Utilities import error, types
 
 lexer = lex.lex()
 
-# Read text file (prueba3.txt / prueba2.txt)
-# f = open('Tests\prueba2.txt','r')
-f = open(os.path.join(os.path.dirname(__file__), './Tests/', 'vector_sort.txt'), 'r')
+# Read text file
+# f = open(os.path.join(os.path.dirname(__file__), './Tests/', 'vector_sort.txt'), 'r')
+f = open(os.path.join(os.path.dirname(__file__), './TestCases/', 'Decision.txt'), 'r')
 data = f.read()
 
 # Test lex with text file
