@@ -1,0 +1,55 @@
+# Program to sort a vector
+program vector_sort;
+
+var int vect[10], i, j, temp, n;
+
+main() {
+  
+  n = 10;
+
+  vect[0] = 9;
+  vect[1] = 8;
+  vect[2] = 7;
+  vect[3] = 6;
+  vect[4] = 5;
+  vect[5] = 4;
+  vect[6] = 3;
+  vect[7] = 2;
+  vect[8] = 1;
+  vect[9] = 0;
+
+  print(vect[0]);
+  print(vect[1]);
+  print(vect[2]);
+  print(vect[3]);
+  print(vect[4]);
+  print(vect[5]);
+  print(vect[6]);
+  print(vect[7]);
+  print(vect[8]);
+  print(vect[9]);
+
+  # Iterate the array 
+  for i = 0 until (i == n) {
+    for j = 0 until (j == n-i-1) {
+      # Swap the elements of the vector
+      if (vect[j] > vect[j+1]) {
+        temp = vect[j];
+        vect[j] = vect[j+1];
+        vect[j+1] = temp;
+      }
+    }
+  }
+
+  print(vect[0]);
+  print(vect[1]);
+  print(vect[2]);
+  print(vect[3]);
+  print(vect[4]);
+  print(vect[5]);
+  print(vect[6]);
+  print(vect[7]);
+  print(vect[8]);
+  print(vect[9]);
+
+}

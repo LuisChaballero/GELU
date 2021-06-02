@@ -1,0 +1,23 @@
+# Program to obtain the nth Fibonacci number recursively
+program fibo_rec;
+
+func int fibo(int nthNumber) {
+    var int num1, num2;
+
+    print("nthNumber: ", nthNumber);
+    if (nthNumber == 0) {
+        return 0;
+    } else {
+        if (nthNumber == 1) {
+            return 1;
+        } 
+    }  
+    num1 = nthNumber-1;
+    num2 = nthNumber-2;
+    return fibo(num1) + fibo(num2);
+}
+
+main() { 
+    print(fibo(14));  
+    #print(suma(0));
+}

@@ -1,0 +1,27 @@
+# Program to obtain the nth Fibonacci number iteratively
+program fibo_it;
+
+var int n;
+
+func int fibo(int nthNumber) {
+  var int a, b, c, i;
+  a = 0;
+  b = 1;
+
+  if (n == 0) {
+    return a;
+  }
+
+  for i = 2 until i > n {
+    c = a + b;
+    a = b;
+    b = c;
+  }
+  return b;
+}
+
+main() {
+  n = 9;
+
+  print(fibo(n));
+}

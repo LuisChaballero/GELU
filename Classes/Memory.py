@@ -1,4 +1,4 @@
-from Utilities import error
+from Helpers.Utilities import error
 import Classes.MemoryHandler as mh
 # Class definition for memoryHandler to...
 class Memory:

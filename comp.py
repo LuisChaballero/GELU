@@ -1,21 +1,24 @@
+import os
 import types
 import ply.lex as lex
 import ply.yacc as yacc
 import Classes.MemoryHandler as mh
-import SemanticCube as sc
+import Helpers.SemanticCube as sc
 from lexer import *
 from collections import deque
 from Classes.FunctionDirectory import FunctionDirectory
 from Classes.ClassDirectory import ClassDirectory
 from Classes.VirtualMachine import VirtualMachine
-from Utilities import error, types
+from Helpers.Utilities import error, types
+
 
 # --------------
 # Build lexer
 lexer = lex.lex()
 
 # Read text file (prueba3.txt / prueba2.txt)
-f = open('prueba3.txt','r')
+# f = open('Tests\prueba2.txt','r')
+f = open(os.path.join(os.path.dirname(__file__), './Tests/', 'prueba3.txt'), 'r')
 data = f.read()
 
 # Test lex with text file
@@ -36,6 +39,7 @@ memory_handler = None
 s_scopes = deque()                        # To keep track of scopes
 s_operators = deque()                     # To keep track of operators in expressions
 s_operands = deque()                      # To keep track of operands in expressions
+s_assignment = deque()
 s_types = deque()                         # To keep track of the operands' types
 s_print_items = deque()                   # To keep track of all the strings and expressions used in a PRINT
 s_jumps = deque()                         # To keep track of all the conditional jumps for GOTO
@@ -134,7 +138,7 @@ def variable_declaration(variable):
 
     # There's an error adding local variable into Function Directory
     if not class_directory.add_variable(class_name, method_name, variable_id, current_type, virtual_address, variable_dimensions):
-      error("Failed at declaring local vairbale %s in method %s on class %s" % (variable_id, method_name, class_name))
+      error("Failed at declaring local variable %s in method %s on class %s" % (variable_id, method_name, class_name))
 
     # Update the number of local variables used in method 
     class_directory.get_class(class_name).get_scope(method_name).add_to_count(current_type, "variable")
@@ -284,8 +288,11 @@ def guadalupan_patch(variable):
   variable_type = variable.get_data_type()
   variable_address = variable.get_address()
   
+  # Global or local temporal
+  scope = 'local' if len(s_scopes) in [2,4] else 'global'
+    
   # Obtain a new temporal variable to store the return of the function
-  temporal_virtual_address = memory_handler.new_variable(variable_type, "global", 'temporal')
+  temporal_virtual_address = memory_handler.new_variable(variable_type, scope, 'temporal')
 
   # Assign the return of the function into a temporal variable
   quadruple_parche = ('=', variable_address, None, temporal_virtual_address)
@@ -656,7 +663,7 @@ def p_variable(p):
   '''variable : aux_ID variable_02'''
 
 def p_variable_02(p):
-  '''variable_02 : CORCHETE_I exp array_helper
+  '''variable_02 : CORCHETE_I parenthesis_left_append exp array_helper
                  | vacio '''
   # It is a single ID 
   if len(p) == 2:
@@ -669,12 +676,12 @@ def p_variable_02(p):
     if not variable:
       error("Variable %s is not declared" % var_id)
         
-    else:
-      s_operands.append(variable.get_address())
-      s_types.append(variable.get_data_type())
+    s_assignment.append((variable.get_address(), variable.get_data_type()))
+    # s_operands.append(variable.get_address())
+    # s_types.append(variable.get_data_type())
 
   # Can be array or matrix
-  elif len(p) == 4:
+  elif len(p) == 5:
     # Array/Matrix first dimension
     dimension_1 = s_operands.pop()
     dimension_1_type = s_types.pop()
@@ -709,13 +716,14 @@ def p_variable_02(p):
       
       # Generate quadruple (S1 + BaseAddress)
       scope = 'global' if s_scopes[-1] == 'global' else 'local'
-      index_address = memory_handler.new_variable(5, scope, 'temporal')
-      quadruple_PLUS_BaseAddress = ('+', dimension_1, (base_address,), index_address)
+      array_virtual_address = memory_handler.new_variable(5, scope, 'temporal')
+      quadruple_PLUS_BaseAddress = ('+', dimension_1, (base_address,), array_virtual_address)
       l_quadruples.append(quadruple_PLUS_BaseAddress)
 
       # Push to stacks
-      s_operands.append(index_address)
-      s_types.append(array_type)
+      s_assignment.append((array_virtual_address, array_type))
+      # s_operands.append(array_virtual_address)
+      # s_types.append(array_type)
 
     else: # we are having a matrix
       dimension_2 = elem1
@@ -770,8 +778,9 @@ def p_variable_02(p):
       l_quadruples.append(quadruple_PLUS_BaseAddress)
 
       # Push to stacks
-      s_operands.append(matrix_virtual_address)
-      s_types.append(matrix_type)
+      s_assignment.append((matrix_virtual_address, matrix_type))
+      # s_operands.append(matrix_virtual_address)
+      # s_types.append(matrix_type)
 
 def p_asignacion(p):
   'asignacion : variable ASIGNA exp PUNTO_COMA'
@@ -779,8 +788,9 @@ def p_asignacion(p):
   expression_result = s_operands.pop() # Result of the expression 
   expression_type = s_types.pop() # Result's type
 
-  variable_operand = s_operands.pop()
-  variable_type = s_types.pop()
+  # variable_operand = s_operands.pop()
+  # variable_type = s_types.pop()
+  variable_operand, variable_type = s_assignment.pop()
 
   if(variable_type == expression_type):
     quadruple = ('=', expression_result, None, variable_operand) 
@@ -830,12 +840,6 @@ def p_llamada_void(p):
 
       quadruple_GOSUB = ('GOSUB', func_name, None, None)
       l_quadruples.append(quadruple_GOSUB)
-
-      # # Obtain variable information of the function´s global variable
-      # variable = variable_validation(func_name, 0)
-
-      # # Assign the return value of the function into a temporal
-      # guadalupan_patch(variable)
         
 
   elif len(p) == 8: # void methods from a class
@@ -873,11 +877,6 @@ def p_llamada_void(p):
       quadruple_GOSUB = ('GOSUB', method_name, class_name, None)
       l_quadruples.append(quadruple_GOSUB)
 
-      # # Obtain variable information of the method's global variable
-      # variable = variable_validation(method_name, 0)
-      
-      # # Assign the return value of the method into a temporal
-      # guadalupan_patch(variable)
 
 def p_posible_exp(p):
   '''posible_exp : exp append_argument I
@@ -934,7 +933,7 @@ def p_retorno(p):
     class_dir = class_directory.get_class(class_name)
 
     if class_dir.get_scope(func_name).get_data_type() == 'VOID':
-      error("Return statement used on void method %s of class %s " % (func_name, class_name))
+      error("Return statement used on void method %s of class %s" % (func_name, class_name))
 
     class_global_scope = class_dir.get_scope('class_globals')
     func_variable = class_global_scope.search(func_name)
@@ -952,6 +951,10 @@ def p_retorno(p):
   
   quadruple_RETURN = ('RETURN', expression_result, None, func_variable_address)
   l_quadruples.append(quadruple_RETURN)
+
+  quadruple_ENDPROC = ('ENDPROC', None, None, None)
+  l_quadruples.append(quadruple_ENDPROC)
+    
   print(quadruple_RETURN)
 
 def p_escritura(p):
@@ -1093,6 +1096,9 @@ def p_quad_for_01(p):
   var_id = s_dimensions[-1][1]
   variable = variable_validation(var_id, 0)
 
+  if not variable:
+    error("Variable %s not declared" % var_id)
+
   var_type = variable.get_data_type()
   variable_address = variable.get_address()
 
@@ -1198,7 +1204,6 @@ def p_or_append(p):
   'or_append :'
   s_operators.append('|')
 
-################# FALTA AGREGAR el (==)
 def p_expression(p):
   '''expression : exp m quadruple_creation_relational
 
@@ -1213,7 +1218,6 @@ def p_quadruple_creation_relational(p):
   if len(s_operators) != 0:
     if s_operators[-1]  in ['>' , '<', '<>', '==']:
       generate_expression_quadruple()
-
 
 def p_greater_than_append(p):
   'greater_than_append :'
@@ -1232,48 +1236,48 @@ def p_equal_append(p):
   s_operators.append('==')
 
 def p_exp(p):
-    '''exp : termino quadruple_creation_01 n
+  '''exp : termino quadruple_creation_01 n
 
-       n   : MAS addition_append exp 
-           | MENOS substraction_append exp
-           | vacio'''               
+      n   : MAS addition_append exp 
+          | MENOS substraction_append exp
+          | vacio'''               
 
 def p_addition_append(p):
-    'addition_append :'
-    # Push addition operator into operator stack
-    s_operators.append('+')
+  'addition_append :'
+  # Push addition operator into operator stack
+  s_operators.append('+')
 
 def p_substraction_append(p):
-    'substraction_append :'
-    # Push substraction operator into operator stack
-    s_operators.append('-')
+  'substraction_append :'
+  # Push substraction operator into operator stack
+  s_operators.append('-')
 
 def p_quadruple_creation_01(p):
-    'quadruple_creation_01 :'
-    if(len(s_operators) != 0): 
-      if(s_operators[-1] == '+' or s_operators[-1] == '-'):
-        generate_expression_quadruple()
+  'quadruple_creation_01 :'
+  if(len(s_operators) != 0): 
+    if(s_operators[-1] == '+' or s_operators[-1] == '-'):
+      generate_expression_quadruple()
 
 def p_termino(p):
-    '''termino : factor quadruple_creation_02 o
+  '''termino : factor quadruple_creation_02 o
 
-       o       : POR multiplication_append termino 
-               | ENTRE divition_append termino
-               | vacio'''
+      o       : POR multiplication_append termino 
+              | ENTRE divition_append termino
+              | vacio'''
 
 def p_multiplication_append(p):
-    'multiplication_append :'
-    s_operators.append('*')
+  'multiplication_append :'
+  s_operators.append('*')
 
 def p_divition_append(p):
-    'divition_append :'
-    s_operators.append('/')
+  'divition_append :'
+  s_operators.append('/')
 
 def p_quadruple_creation_02(p): 
-    'quadruple_creation_02 :'
-    if len(s_operators) != 0:
-      if(s_operators[-1] == '*' or s_operators[-1] == '/'):
-        generate_expression_quadruple()
+  'quadruple_creation_02 :'
+  if len(s_operators) != 0:
+    if(s_operators[-1] == '*' or s_operators[-1] == '/'):
+      generate_expression_quadruple()
 
 
 def p_factor(p):
@@ -1311,24 +1315,57 @@ def p_aux_ID(p):
   print("\n\n(1)", s_operands)
   print("\nENTRAAAAAAAAAA ID", p[1])
   s_dimensions.append(('id', p[1]))
-  # s_dimensions.append(p[1])
 
-# def p_first_dimension(p):
-#   'first_dimension : '
-#   print("+++++++++++++++++++++++++++++++++++FIRST DIMENSION")
-#   dimension_1 = s_operands.pop()
-#   dimension_1_type = s_types.pop()
-#   print("s_operands.pop() => dimension_1:",dimension_1)
+def p_remove_dimension(p):
+  'remove_dimension :'
+  print("REMOVE DIMENSION")
+  # dimension_1 = s_operands.pop()
+  # dimension_1_type = s_types.pop()
 
-#   s_dimensions.append((dimension_1, dimension_1_type))
+  # # Validate that first dimension type is int
+  # if not dimension_1_type == 0:
+  #   error("Indexing with non int type on array")
   
-# # s_dimensions = [arr, mat ]
-# # arr[mat[0,1]]
+  # # Get tuple from stack of dimensions can be ('id', ID) or (dim2, tim_type)
+  # elem1, elem2 = s_dimensions[-1]
+
+  # if elem1 == 'id': # we are having an array
+  #   s_dimensions.pop()
+
+  #   # Validate if variable exists
+  #   variable = variable_validation(elem2, 1)
+
+  #   if not variable:
+  #     # error("Dimensional Array %s not declared" % elem2)
+  #     error("Dimensional variable %s not declared" % elem2)
+    
+  #   array_name = elem2
+
+  #   # Get array information from varsTable
+  #   upper_limit = variable.get_dimensions()[1]
+  #   base_address = variable.get_address()
+  #   array_type = variable.get_data_type()
+
+  #   upper_limit_address = memory_handler.constant_exists(0, upper_limit)
+
+  #   # Generate quadruple (VER dim1)
+  #   quadruple_VER = ('VER', dimension_1, array_name, upper_limit_address)
+  #   l_quadruples.append(quadruple_VER)
+    
+  #   # Generate quadruple (S1 + BaseAddress)
+  #   scope = 'global' if s_scopes[-1] == 'global' else 'local'
+  #   array_virtual_address = memory_handler.new_variable(5, scope, 'temporal')
+  #   quadruple_PLUS_BaseAddress = ('+', dimension_1, (base_address,), array_virtual_address)
+  #   l_quadruples.append(quadruple_PLUS_BaseAddress)
+
+  #   # Push to stacks
+  #   s_operands.append(array_virtual_address)
+  #   s_types.append(array_type)
+#########################################
 
 def p_factor_02(p):
-  '''factor_02 : CORCHETE_I exp CORCHETE_D
-  array_helper
-               | PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D 
+  '''factor_02 : CORCHETE_I parenthesis_left_append exp array_helper
+               | PARENTESIS_I parenthesis_left_append reset_argument_counter posible_exp PARENTESIS_D parenthesis_left_pop
                | PUNTO ID 
                | PUNTO ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D
                | vacio'''
@@ -1352,7 +1389,8 @@ def p_factor_02(p):
       print("Atributo de clase")
 
  # Can be array or matrix
-  elif len(p) == 4 and p[1] != '(':
+  elif len(p) == 5 and p[1] != '(':
+    print("elif len(p) == 4 and p[1] != '(':")
     print("\n\n(3)",s_operands)
     # Array/Matrix first dimension
     print("./././././s_operands en factor_02", s_operands)
@@ -1456,7 +1494,7 @@ def p_factor_02(p):
       s_types.append(matrix_type)
 
   # It is a function
-  elif(len(p) == 5 and p[1] != '['): # LLamada a funcion non-void
+  elif(len(p) == 7 and p[1] != '['): # LLamada a funcion non-void
     func_name = s_dimensions[-1][1]
 
     if not function_directory.scope_exists(func_name):
@@ -1512,7 +1550,7 @@ def p_factor_02(p):
 
     # Verify number of arguments in function call
     elif class_directory.get_class(class_name).get_scope(method_name).get_number_of_parameters() != argument_counter:
-      error("Incoherence in number of arguments in method call  %s" % method_name)    
+      error("Incoherence in number of arguments in method call %s" % method_name)    
             
     else:
       quadruple_ERA = ('ERA', method_name, None, None)
@@ -1527,7 +1565,7 @@ def p_factor_02(p):
 
         # Verify argument type
         if argument_type != class_directory.get_class(class_name).get_scope(method_name).params_table[argument_index]:
-          error("Argument type is incorrect in function call %s" % method_name)
+          error("Argument type is incorrect in method call %s" % method_name)
 
         else:
           quadruple_PARAMETER = ('PARAMETER', argument, argument_type, argument_index)
@@ -1547,10 +1585,11 @@ def p_factor_02(p):
       guadalupan_patch(variable)
 
 def p_array_helper(p):
-  '''array_helper : CORCHETE_D
-                  | COMA exp  CORCHETE_D ''' 
+  '''array_helper : CORCHETE_D parenthesis_left_pop
+                  | COMA exp CORCHETE_D parenthesis_left_pop''' 
   print("\n\n(2)", s_operands)
-  if len(p) == 4:
+  if len(p) == 5:
+    print("ARRAY HELPER")
     # Matrix second dimension
     print("./././././s_operands.pop()", s_operands[-1])
     dimension_2 = s_operands.pop()
@@ -1558,6 +1597,9 @@ def p_array_helper(p):
 
     # Add second dimension to stack
     s_dimensions.append((dimension_2, dimension_2_type))
+
+  # else:
+  #   print("ARRAY END -> ]")
 
 # def p_array_helper(p):
 #   '''array_helper : CORCHETE_D

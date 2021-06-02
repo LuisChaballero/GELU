@@ -1,6 +1,6 @@
 # VirtualMachine class ...
-import SemanticCube as sc
-from Utilities import ranges, GLOBALS_BASE_ADDRESS, LOCALS_BASE_ADDRESS, CONSTANTS_BASE_ADDRESS, OBJECTS_BASE_ADDRESS, error
+import Helpers.SemanticCube as sc
+from Helpers.Utilities import ranges, GLOBALS_BASE_ADDRESS, LOCALS_BASE_ADDRESS, CONSTANTS_BASE_ADDRESS, OBJECTS_BASE_ADDRESS, error
 import Classes.MemoryHandler as mh
 from Classes.Memory import Memory
 from Classes.FunctionDirectory import FunctionDirectory
@@ -295,7 +295,7 @@ class VirtualMachine:
       elif operator == '=':
         l_type = mh.get_type_from_address(quadruple[1])
         l_value = self.get_value(quadruple[1])
-        print(l_value)
+        # print(l_value)
 
         if l_type == 5: # Check if it is a pointer
           l_value = self.get_value(l_value)
