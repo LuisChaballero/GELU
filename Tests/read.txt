@@ -1,0 +1,10 @@
+
+program test0 ;
+
+var int i, j, k;
+var int f;
+
+main() { 
+    read f;
+    print("f: ",f);
+}

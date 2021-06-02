@@ -1,6 +1,6 @@
 # GELU
 
-GELU is an Object Oriented Programming language developed with the purpose of becoming a friendly and uncomplicated tool for anyone who is just starting to learn how to program. It provides mechanisms for the definition of classes, attributes, methods and single inheritance, as well as assignment, condition, loops, writes, among other basic statements and expressions.
+GELU is an Object Oriented Programming language developed with the purpose of becoming a friendly and uncomplicated tool for anyone who is just starting to learn how to program. It provides mechanisms for the definition of classes, attributes, methods, as well as variables, assignments, conditions, loops, writes, among other basic statements and expressions.
 
 ---
 

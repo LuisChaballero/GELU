@@ -1,0 +1,46 @@
+# Program to obtain the product between two matricesbetween
+program mat_product;
+
+var int matA[3,3], matB[3,3], matC[3,3];
+var int i, j, k;
+
+main() {
+
+  matA[0,0] = 0;
+  matA[0,1] = -2;
+  matA[0,2] = 10;
+  matA[1,0] = 6;
+  matA[1,1] = 2;
+  matA[1,2] = -12;
+  matA[2,0] = 1;
+  matA[2,1] = 11;
+  matA[2,2] = 3;
+
+  matB[0,0] = -1;
+  matB[0,1] = 13;
+  matB[0,2] = 3;
+  matB[1,0] = 6;
+  matB[1,1] = 2;
+  matB[1,2] = -5;
+  matB[2,0] = 20;
+  matB[2,1] = -8;
+  matB[2,2] = 29;
+
+  for i = 0 until (i == 3) {
+    for j = 0 until (j == 3) {
+      matC[i,j] = 0;
+      for k = 0 until (k == 3) {
+        matC[i,j] = matC[i,j] + matA[i,k] * matB[k,j];
+      }
+    }
+  }
+
+  for i = 0 until (i == 3) {
+    for j = 0 until (j == 3) {
+      print(matC[i,j], " ");
+    }
+    print("");
+  }
+
+
+}

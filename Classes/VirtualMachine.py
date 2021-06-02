@@ -1,6 +1,6 @@
 # VirtualMachine class ...
 import Helpers.SemanticCube as sc
-from Helpers.Utilities import ranges, GLOBALS_BASE_ADDRESS, LOCALS_BASE_ADDRESS, CONSTANTS_BASE_ADDRESS, OBJECTS_BASE_ADDRESS, error
+from Helpers.Utilities import ranges, GLOBALS_BASE_ADDRESS, LOCALS_BASE_ADDRESS, CONSTANTS_BASE_ADDRESS, OBJECTS_BASE_ADDRESS, error, types
 import Classes.MemoryHandler as mh
 from Classes.Memory import Memory
 from Classes.FunctionDirectory import FunctionDirectory
@@ -41,7 +41,7 @@ class VirtualMachine:
   
   def current_process(self):
     '''Retrieves the current quadruple running'''
-    print(self.__quadruple_iterator, self.__quadruple_list[self.__quadruple_iterator])
+    # print(self.__quadruple_iterator, self.__quadruple_list[self.__quadruple_iterator])
     return self.__quadruple_list[self.__quadruple_iterator]
 
   def get_value(self, virtual_address):
@@ -95,10 +95,6 @@ class VirtualMachine:
     if r_value == None:
       error("Uninitialized right variable")
 
-    
-    ################### FALTA VALIDAR SI ES TIPO POINTER
-    # res_type = sc.result_type(l_type, r_type)
-
     if operator == '+':
       return l_value + r_value
     elif operator == '-':
@@ -142,7 +138,7 @@ class VirtualMachine:
     elif v_type == 1:
       return float(value)
     elif v_type in [2,4]:
-      return str(value[1:-1])
+      return str(value[1:-1]) 
     elif v_type == 3:
       return bool(value)
     else:
@@ -151,7 +147,7 @@ class VirtualMachine:
   # Method to execute the list of quadruples
   def run(self):
     '''Simulates a virtual machine executing all quadruples'''
-
+    print("-----Start program execution-----")
     # Execute quadruples
     while True:
       quadruple = self.current_process()
@@ -182,7 +178,7 @@ class VirtualMachine:
         self.__s_execution.append(Memory())
         
         self.proceed()
-        print("\nExecute ERA")
+        # print("\nExecute ERA")
 
       elif operator == 'PARAMETER':
         # print('START PARAMETER')
@@ -207,7 +203,7 @@ class VirtualMachine:
         local_address = current_context.get_handler().new_variable(argument_type, 'local', 'variable')
 
         current_context.push(local_address, argument_value)
-        print("Execute PARAMETER: address: %s value: %s" % (argument_address, argument_value))
+        # print("Execute PARAMETER: address: %s value: %s" % (argument_address, argument_value))
         self.proceed()
 
       elif operator == 'GOSUB':
@@ -223,10 +219,10 @@ class VirtualMachine:
         self.__s_jumps.append(self.__quadruple_iterator+1)
         
         self.__quadruple_iterator = function_instruction_pointer
-        print("Execute GOSUB")
+        # print("Execute GOSUB")
 
       elif operator == 'RETURN':
-        print("Execute RETURN")
+        # print("Execute RETURN")
         function_return_address = quadruple[1]
         function_var_address = quadruple[3]
 
@@ -247,10 +243,10 @@ class VirtualMachine:
         # Continue with next process
         self.__quadruple_iterator = self.__s_jumps.pop()
 
-        print("Execute ENDPROC")
+        # print("Execute ENDPROC")
 
       elif operator == 'PRINT':
-        print("execute PRINT")
+        # print("execute PRINT")
         res = ""
         value_type = mh.get_type_from_address(quadruple[3])
 
@@ -264,14 +260,18 @@ class VirtualMachine:
         while True:
           next_process = self.next_process()
 
-          if next_process[0] == 'PRINT':
+          if next_process[0] == 'PRINT2':
             next_type = mh.get_type_from_address(next_process[3])
             next_value = self.get_value(next_process[3])
 
             if next_type == 5:
               next_value = self.get_value(next_value)
+            
+            if next_type == 2:
+              res = res + next_value
+            else:
+              res = res + str(self.cast(next_value, next_type))
 
-            res = res + str(self.cast(next_value, next_type))
             self.proceed()
           else:
             break
@@ -279,16 +279,30 @@ class VirtualMachine:
         print(res)
         self.proceed()
         
+      elif operator == 'READ':
+        assignTo = quadruple[3]
+        data_type = mh.get_type_from_address(assignTo)
+        read_input = input()
+        size = len(read_input)
+        try:
+          if data_type == 2 and size == 1:
+            read_input = str(read_input)
+          elif data_type != 2:
+            read_input = self.cast(read_input, data_type)
+          else:
+            error("Expected a %s type value on read" % types[data_type])
+        except (ValueError):
+          error("Expected a %s type value on read." % types[data_type])
+
+        print(read_input)
+        
+        self.assign(assignTo, read_input)
+        self.proceed()
 
       elif operator in ['+', '-', '*', '/', '&', '|', '<', '>', '<>', '==']:
-        # print("execute binary operation")
         # Execute binary operation and send temporal result to memory
         value = self.binary_operation(quadruple)
         assignTo = quadruple[3]
-        # if len(self.__s_execution) == 0:
-        #   self.__main.push(assignTo, value)
-        # else:
-        #   self.__s_execution[-1].push(assignTo, value)
         self.assign(assignTo, value)
         self.proceed()
       

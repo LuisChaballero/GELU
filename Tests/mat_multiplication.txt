@@ -17,16 +17,13 @@ func void multiplicacionMatrices() {
    for m = 0 until m > 1 {
        for n = 0 until n > 1 {
            res = (mat[m,n] * mat2[m,n]);
-           # Multiplicacion de matrices UWU
            print(mat[m,n], " * ", mat2[m,n], " = ", res);
-           print() 
        }
-       print("\n");
+       print("");
    }
   
 }
 
 main() { 
-    
     multiplicacionMatrices();
 }
