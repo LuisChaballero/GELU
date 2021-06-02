@@ -16,6 +16,7 @@ class VarsTable:
     return len(self.__table)
 
   def search(self, id):
+    """Searches for an id inside the table"""
     if not id in self.__table: 
       return False
     else:

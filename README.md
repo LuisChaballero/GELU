@@ -52,11 +52,11 @@ def example():
 | 4 | Muy bueno | Existe y ejecuta de manera eficiente |
 
 ### Dimensions
-- [ ] Expresiones aritméticas/Lógicas y Relacionales
+- [X] Expresiones aritméticas/Lógicas y Relacionales
 - [ ] Estatutos de Interacción (Entrada / Salida)
-- [ ] Estatutos de Control de Flujo (Ciclos, Decisiones)
-- [ ] Elementos de cambio de contexto (Funciones/Métodos parametrizables)
-- [ ] Manejo de Elementos NO-Atómicos (Arreglos, Listas, ..) 
+- [X] Estatutos de Control de Flujo (Ciclos, Decisiones)
+- [X] Elementos de cambio de contexto (Funciones/Métodos parametrizables)
+- [X] Manejo de Elementos NO-Atómicos (Arreglos, Listas, ..) 
 - [ ] Elementos propios del tipo de proyecto (Output gráfico, Móvil, Objetos, Otros, etc.)
 - [ ] Documentación completa y bien presentada
 - [ ] Descripción de estructuras de datos usadas durante la compilación
@@ -67,10 +67,10 @@ def example():
 
 ## Testing
 
-- [ ] Factorial
-- [ ] Fibonacci iterative
-- [ ] Fibonacci recursive
-- [ ] Vector sort
+- [X] Factorial
+- [X] Fibonacci iterative
+- [X] Fibonacci recursive
+- [X] Vector sort
 - [ ] Vector find
 - [ ] Matrix product
 - [ ] OOP testing
@@ -81,88 +81,92 @@ def example():
 
 #### Primer avance - 9/04/2021
 
-Se llevó a cabo el planteamiento del proyecto y sus requerimientos, se definió la lista de tokens, los diagramas de sintaxis y la gramática del lenguaje.
+Project planning and requirements specifications. Defined the list of tokens, syntax diagrams as well as language grammar.
 
 #### Segundo avance - 16/04/2021
 
-Se agrego la creación de tablas de símbolos y de variables. También se definió la tabla de consideraciones semánticas y las precedencia de los operadores.
+The table of semantic considerations was defined. Implemented Variable Table as well as semantic considerations and precedence.
 
 #### 19/04/2021
 
-Se implemento la declaración de variables multiples 
+Implemented multiple variable declarations.
 
 #### Tercer avance - 23/04/2021
 
-Se implemento la generación del código intermedio para las expresiones básicas (Sin considerar paréntesis y operadores de comparación). Se agrego una implementación simple para los valores temporales sin utilizar el manejo de memoria.
+Implemented intermediate code generation for basic expressions without considering parenthesis and relational operators. Started the local and global variable counter implementation.
 
 #### 26/04/2021
 
-Se implemento el cubo semántico de tipos.
+Implemented Semantic Cube.
 
 #### Cuarto avance - 01/05/2021
 
-Se implementaron los cuádruplos para los estatutos no lineales IF y WHILE. Queda pendiente el estatuto FOR y creación de cuádruplos para constantes.    
+Intermediate code generation for non-linear statements IF and WHILE. FOR statement is still missing.  
 
 #### 06/05/2021
 
-Se implemento el cuádruplo para el estatuto no lineal FOR.
+Intermediate code generation for non-linear statement FOR.
 
 #### Quinto avance  - 10/05/2021
 
-Se creó el directorio para clases. Se modificó parte de la gramática para los puntos neurálgicos de la implementación de clases. Queda pendiente el añadir los atributos y métodos de cada clase al directorio de clases.
+Class Directory implementation. Modification of the grammar to add neural points for the class implementation. Adding attributes and methods to the Class Directory is still missing.
 
 #### 11/05/2021
 
-Se implementaron funciones adicionales en ClassDirectory. Se implementó la añadidura de los métodos y atributos de una clase al directorio de clases. Falta la añadidura de los parámetros de los métodos de las clases.
+Additional functions implemented on Class Directory to add methods and attributes to a specific class. Adding parameters to the Variable Table is still missing.
 
 #### 12/05/2021
 
-Se implementó la añadidura de los parámetros a los métodos de clases. 
+Method parameters addition to Variable Table implemented.
 
 #### Sexto avance - 15/05/2021
 
-Se modificaron las clases de la implementación del directorio de funciones para manejar el guardado de parámetros, la dirección de inicialización. Se implementaron los cuádruplos en la declaración de funciones y métodos. Se modificó parte de la gramática en las expresiones (Algunos tenían que ser Exp en ves de Expresion). Queda pendiente los cuádruplos de las llamadas a función
+Modified implementation of Function Directory to allow addition parameters. Added neural points in function and method declarations for intermediate code generation. Modified the grammar, changed some Expressions for Exp. Function call quadruples still missing.
 
 #### 16/05/2021
 
-Se modificó la gramática para considerar la llamada a métodos void de una clase. Se implementaron los cuádruplos de llamadas a funciones. Queda pendiente validar el tipo de retorno en las funciones
+Modified the grammar to consider void method call. Implemented neural points to generate intermediate code for function calls. Function return type validation is still missing.
 
 #### 21/05/2021
 
-Se creo la clase de memoryHandler y se implementaron las direcciones virtuales para los operandos 
-
-#### 21/05/2021
-
-Se implementaron las direcciones virtuales para los temporales y se agrego la detección de errores cuando se inicializa una variable que ya existe. 
+Implemented virtual addresses for temporals and added error detection when initializing an already existing variable.
 
 #### 22/05/2021
 
-Se implemento el directorio de constantes y la ejecución de las operaciones aritméticas en la maquina virtual.
+Created the constant directory. Implemented Virtual Machine execution of arithmetic operations.
 
 #### 23/05/2021
 
-Se modificó la gramática para aceptar declaración de arreglos
+Modified the grammar to allow array and matrix declaration.
 
 #### 24/05/2021
 
-Se implementaron las operaciones lógicas en las expresiones y la maquina virtual. Se hizo refactor para simplificar la gramática. Se implementaron las constantes negativas
+Added logic operations between expressions in semantic and their execution in Virtual Machine. Refactored the grammar to handle ambiguity and implemented negative constants.
 
 #### 25/05/2021
 
-Refactorización de clase SemanticCube. Se creú un archivo de utilidades para contener la información estática definida en el proyecto. Se comenzó la implementación de los puntos neurálgicos para arreglos en regla 'factor'.
+Semantic Cube refactor, implemented a Utility file to keep the project’s relevant static information. Started Factor neural points implementation.
 
 #### 26/05/2021
 
-Refactorización de la clase MemoryHelper, se creó una nueva clase Memory para implementar específicamente en Máquina Virtual.
+Refactor of Memory Helper class, created a new Memory class and splitted responsibilities among them. 
 
 #### 27/05/2021
 
-Se hizo modificación de la clase MemoryHelper para hacer validaciones de stack overflow en el manejo de las direcciones virtuales. Se crearon nuevas funciones para obtener el tipo de dato y scope de una variable o constante por su scope. Se modificó el esquema de memoria para aceptar constantes strings, se implementó su guardado en memoria. Se trabajó una función en máquina vrtual para ejecutar todos los cuádruplos de operadores binarios.
+Modified Memory Helper to make stack overflow validations when assigning virtual addresses to variables in semantic. Created a new function to retrieve the data type and scope from a variable or constant depending on the range of their address in memory. Modified the memory structure and ranges to accept strings as constants and implemented their storage. Developed a routine in Virtual Machine to simplify the code for binary operation quadruples.
 
 #### 28/05/2021
 
-Se corrigió la generación de cuádruplos para arreglos y matrices, así como la asignación de direcciones en memoria virtual. Se cambiaron los cuádruplos para no llevar los límites de dimensiones sino sus direcciones en memoria.
+Array and matrix quadruples fixed, as well as the virtual memory address delegation. Modified the structure of the quadruples to contain their virtual address instead of the dimension lower limits.
 
 #### 29/05/2021
 
-Se implementó el manejo de apuntadores para la indexación de arreglos y matrices. Se implementó el operador relacional de == en semántica. Se desarrolló la funcionalidad en máquina virtual para la escritura de múltples elementos en una misma línea. Se implementó el estatuto de asignación en máquina virtual.
+Implemented pointer handling for matrix and array indexation. Added relational operator == in semantic. Developed a function in Virtual Machine to handle prints with multiple arguments as a single line write. Execution of assignment and cycles in Virtual Machine.
+
+#### 30/05/2021
+
+Implemented the execution of functions. Added error handling in Return quadruple. Still missing forced return in non-void functions.
+
+#### 01/06/2021
+
+Finished implementation of functions, arrays and matrices in execution. Tested functionality of functions and dimensional variables.

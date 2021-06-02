@@ -1,4 +1,4 @@
-from Utilities import ranges, types, error, GLOBALS_BASE_ADDRESS, LOCALS_BASE_ADDRESS, CONSTANTS_BASE_ADDRESS, OBJECTS_BASE_ADDRESS
+from Helpers.Utilities import ranges, types, error, GLOBALS_BASE_ADDRESS, LOCALS_BASE_ADDRESS, CONSTANTS_BASE_ADDRESS, OBJECTS_BASE_ADDRESS
 
 class MemoryHandler():
   def __init__(self):
@@ -49,7 +49,7 @@ class MemoryHandler():
     # Check if address is for a constant
     if is_constant:
       if not CONSTANTS_BASE_ADDRESS[data_type] <= virtual_address < (CONSTANTS_BASE_ADDRESS[data_type] + ranges["constant"]): # Count exceeded
-        error("Too many '"+types[data_type]+"' constants")
+        error("Too many %s constants" % types[data_type])
 
     else: # is variable or temporal
       # Is an int, float, char
@@ -67,10 +67,10 @@ class MemoryHandler():
       elif data_type in [3,5]: # bool or pointer
         if scope == "global":
           if not GLOBALS_BASE_ADDRESS[item_type][data_type] <= virtual_address < (GLOBALS_BASE_ADDRESS[item_type][data_type] + ranges[item_type]):
-              error("Too many '"+types[data_type]+"' global temporal variables")
+              error("Too many '%s' global temporal variables" % types[data_type])
         elif scope == "local": # local
           if not LOCALS_BASE_ADDRESS[item_type][data_type] <= virtual_address < (LOCALS_BASE_ADDRESS[item_type][data_type] + ranges[item_type]):
-              error("Too many '"+types[data_type]+"' local temporal variables")
+              error("Too many '%s' local temporal variables" % types[data_type])
 
     return virtual_address
 

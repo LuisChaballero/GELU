@@ -1,8 +1,0 @@
-program test;
-var int i, mat[3,4], k;
-main() {
-  i = 2;
-  mat[2,1] = i + 3;
-  k = mat[2,1];
-  print("Resultado: ",k - 3);
-}

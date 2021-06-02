@@ -1,0 +1,25 @@
+# Program to calculate the factorial of a number
+program factorial;
+
+var int n;
+
+func int factorial(int n) {
+    var int i, factorial;
+    factorial = 1;
+    if (n < 0) {
+        print("Error! Factorial of a negative number doesn't exist");
+        return -1;
+    } else {
+        for i = 1 until i > n  {
+            factorial = factorial * i;
+        }
+        #print("Factorial of ", n, " = ", factorial);
+        return factorial;
+    }
+
+}
+
+main() {
+    n = 17;
+    print("Factorial of ", n, " = ", factorial(n));
+}
