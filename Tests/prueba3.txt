@@ -1,0 +1,14 @@
+
+program test0 ;
+
+var int mat[2,2], mat2[2,2], arr[5,6];
+var int p;
+
+main() { 
+    mat[0,0] = 4;
+    mat2[1,0] = 5;
+    arr[mat[0,0], mat2[1,0]] = 7;
+    p = arr[4,5];
+    print(p);
+    print('X');
+}
