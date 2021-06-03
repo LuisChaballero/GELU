@@ -170,3 +170,7 @@ Implemented the execution of functions. Added error handling in Return quadruple
 #### 01/06/2021
 
 Finished implementation of functions, arrays and matrices in execution. Tested functionality of functions and dimensional variables.
+
+#### 02/06/2021
+
+Finished implementation of functions, arrays and matrices in execution. Tested functionality of functions and dimensional variables.
