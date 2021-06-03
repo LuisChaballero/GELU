@@ -1,22 +1,13 @@
 
 program test0 ;
 
-var int foo , A, B, E;
+var int foo;
 
 
-func int suma(char lol, int x, int y, float a) {
-    var int mat[3, 4];
-    var float arr[5];
-}
-
-func int resta(int num) {
-    var int mat[3,4];
-    var float arr[5];
-}
 
 main() {
-    foo1 = ( A * ( B + C * D - E ) ) / ( B + (E - C * D / E + A) ) ;
-    print("HELLO WORLD UWU!", foo1, "LOL", foo1);
+    # foo1 = ( A * ( B + C * D - E ) ) / ( B + (E - C * D / E + A) ) ;
+    # print("HELLO WORLD UWU!", foo1, "LOL", foo1);
 }
 
 

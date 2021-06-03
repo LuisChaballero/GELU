@@ -18,7 +18,6 @@ from Helpers.Utilities import error, types
 lexer = lex.lex()
 
 # Read text file
-# f = open(os.path.join(os.path.dirname(__file__), './Tests/', 'vector_sort.txt'), 'r')
 f = open(os.path.join(os.path.dirname(__file__), './TestCases/', 'Arreglo.txt'), 'r')
 data = f.read()
 
