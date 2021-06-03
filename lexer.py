@@ -37,8 +37,6 @@ reserved = {
     'void': 'VOID',
     'var':'VAR',
     'int': 'INT',
-    'file': 'FILE',
-    'dataframe': 'DATAFRAME',
     'float': 'FLOAT', 
     'char': 'CHAR',
     'print': 'PRINT',

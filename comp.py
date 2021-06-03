@@ -19,7 +19,7 @@ lexer = lex.lex()
 
 # Read text file
 # f = open(os.path.join(os.path.dirname(__file__), './Tests/', 'vector_sort.txt'), 'r')
-f = open(os.path.join(os.path.dirname(__file__), './TestCases/', 'Decision.txt'), 'r')
+f = open(os.path.join(os.path.dirname(__file__), './TestCases/', 'Arreglo.txt'), 'r')
 data = f.read()
 
 # Test lex with text file
@@ -448,10 +448,6 @@ def p_variables_02(p):
       elif len(p) == 9: 
         variable_dimensions = (2, p[4], p[6])
         # Add ctein into constant directotry
-
-      # print("----------------------p[2]",p[2])
-      # print("variable_dimensions:", variable_dimensions)
-      # print("current_scope",current_scope)
 
       # Add variable to memory_handler
       variable = (current_scope, variable_dimensions, p[2])
@@ -1184,7 +1180,7 @@ def p_quad_for_04(p):
   l_quadruples[index_pending_GOTF] = pending_GOTF
 
 def p_hiper_expression(p):
-  '''hiper_expression : super_expression hiper_expression_02 quadruple_creation_AND
+  '''hiper_expression : super_expression   quadruple_creation_AND
 
   hiper_expression_02 : AND and_append super_expression
                       | vacio'''
@@ -1323,8 +1319,6 @@ def p_factor(p):
          
 def p_aux_ID(p):
   'aux_ID : ID'
-  # print("\n\n(1)", s_operands)
-  # print("\nENTRAAAAAAAAAA ID", p[1])
   s_dimensions.append(('id', p[1]))
 
 def p_factor_02(p):
@@ -1354,11 +1348,7 @@ def p_factor_02(p):
 
  # Can be array or matrix
   elif len(p) == 5 and p[1] != '(':
-    # print("elif len(p) == 4 and p[1] != '(':")
-    # print("\n\n(3)",s_operands)
-    # Array/Matrix first dimension
-    # print("./././././s_operands en factor_02", s_operands)
-    # print("./././././s_operands.pop() en factor_02", s_operands[-1])
+    # First dimension of array or matrix
     dimension_1 = s_operands.pop()
     dimension_1_type = s_types.pop()
 
@@ -1368,7 +1358,6 @@ def p_factor_02(p):
       
     # Get tuple from stack of dimensions can be ('id', ID) or (dim2, tim_type)
     elem1, elem2 = s_dimensions.pop()
-    # print("s_dimensions.pop(Array or Matrix):", elem1, elem2)
 
     if elem1 == 'id': # we are having an array
 
@@ -1405,7 +1394,6 @@ def p_factor_02(p):
       dimension_2 = elem1
       dimension_2_type = elem2
       message, matrix_id = s_dimensions.pop()
-      # print("s_dimensions.pop(Matrix):", message, matrix_id)
 
       # Validate that second dimension type is int
       if not dimension_2_type == 0:
@@ -1553,9 +1541,6 @@ def p_array_helper(p):
                   | COMA exp CORCHETE_D parenthesis_left_pop''' 
   print("\n\n(2)", s_operands)
   if len(p) == 5:
-    # print("ARRAY HELPER")
-    # Matrix second dimension
-    # print("./././././s_operands.pop()", s_operands[-1])
     dimension_2 = s_operands.pop()
     dimension_2_type = s_types.pop()
 
