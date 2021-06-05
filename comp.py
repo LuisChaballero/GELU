@@ -18,7 +18,7 @@ from Helpers.Utilities import error, types
 lexer = lex.lex()
 
 # Read text file
-f = open(os.path.join(os.path.dirname(__file__), './TestCases/', 'Arreglo.txt'), 'r')
+f = open(os.path.join(os.path.dirname(__file__), './Tests/', 'factorial_rec.txt'), 'r')
 data = f.read()
 
 # Test lex with text file
@@ -36,17 +36,18 @@ class_directory = None
 memory_handler = None
 
 # Declared stacks
-s_scopes = deque()                        # To keep track of scopes
-s_operators = deque()                     # To keep track of operators in expressions
-s_operands = deque()                      # To keep track of operands in expressions
+s_scopes = deque()                          # To keep track of scopes
+s_operators = deque()                       # To keep track of operators in expressions
+s_operands = deque()                        # To keep track of operands in expressions
 s_assignment = deque()
-s_types = deque()                         # To keep track of the operands' types
-s_print_items = deque()                   # To keep track of all the strings and expressions used in a PRINT
-s_jumps = deque()                         # To keep track of all the conditional jumps for GOTO
-s_function_call_arguments = deque()       # To verify the arguments in a function call with parameters table
-s_function_call_argument_types = deque()  # Arguments' type in a function call
-s_dimensions = deque()                    # To keep track of the context when evaluating nested arrays or matrices
-s_variables = deque()                     # To keep track of IDs in declaration
+s_types = deque()                           # To keep track of the operands' types
+s_print_items = deque()                     # To keep track of all the strings and expressions used in a PRINT
+s_jumps = deque()                           # To keep track of all the conditional jumps for GOTO
+s_function_call_arguments = deque()         # To verify the arguments in a function call with parameters table
+s_function_call_argument_types = deque()    # Arguments' type in a function call
+s_function_call_argument_counters = deque() # To keep track of the argument counter of each function_call
+s_dimensions = deque()                      # To keep track of the context when evaluating nested arrays or matrices
+s_variables = deque()                       # To keep track of IDs in declaration
 
 # Declared lists
 l_quadruples = [] # To save the code optimization in form of quadruples. (op, op_izq, op_der, res)
@@ -66,7 +67,7 @@ temporal_variable_base_name = "temp"
 temporal_variable_count = 0
 
 # Counter to verify the arguments in a function call with the parameters table
-argument_counter = 0
+# argument_counter = 0
 
 # --------------------------- HELPER FUNCTIONS ----------------------------
 
@@ -800,8 +801,9 @@ def p_llamada_void(p):
                   | ID PUNTO ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D PUNTO_COMA'''
 
   if len(p) == 7: # Void function calls
-    global argument_counter
     func_name = p[1]
+    argument_counter = s_function_call_argument_counters[-1]
+
     if not function_directory.scope_exists(func_name):
       error("Function %s not declared" % func_name)
 
@@ -813,7 +815,7 @@ def p_llamada_void(p):
       quadruple_ERA = ('ERA', func_name, None, None)
       l_quadruples.append(quadruple_ERA)
 
-      argument_counter = 0
+      argument_index = 0
       # Create PARAMETER quadruple for each argument
       while(len(s_function_call_arguments) > 0):
         # Remove the argument in order
@@ -823,16 +825,20 @@ def p_llamada_void(p):
         function_scope = function_directory.get_scope(func_name)
         
         # Verify argument type
-        if argument_type != function_scope.get_params_table()[argument_counter]:
+        if argument_type != function_scope.get_params_table()[argument_index]:
           error("Argument type is incorrect in function call %s" % func_name)
           
         else:
           # local_variable_dimensions = (0,0,0)
           # local_variable_address = variable_allocation(local_variable_dimensions, 'local', 'variable')
           
-          quadruple_PARAMETER = ('PARAMETER', argument, argument_type, argument_counter)
+          quadruple_PARAMETER = ('PARAMETER', argument, argument_type, argument_index)
           l_quadruples.append(quadruple_PARAMETER)
-          argument_counter +=1
+          argument_index +=1
+
+      # Remove function call and its argument counter from stack
+      s_function_call_argument_counters.pop()
+      s_dimensions.pop()
 
       quadruple_GOSUB = ('GOSUB', func_name, None, None)
       l_quadruples.append(quadruple_GOSUB)
@@ -841,6 +847,8 @@ def p_llamada_void(p):
   elif len(p) == 8: # void methods from a class
     class_name = p[1]
     method_name = p[3]
+    argument_counter = s_function_call_argument_counters[-1]
+
     if not class_directory.scope_exists(class_name):
       print("Class %s not declared" % class_name)
 
@@ -854,7 +862,7 @@ def p_llamada_void(p):
       quadruple_ERA = ('ERA', method_name, None, None)
       l_quadruples.append(quadruple_ERA)
 
-      argument_counter = 0
+      argument_index = 0
 
       # Create PARAMETER quadruple for each argument
       while(len(s_function_call_arguments) > 0):
@@ -863,15 +871,20 @@ def p_llamada_void(p):
         argument_type = s_function_call_argument_types.popleft()
 
         # Verify argument type
-        if argument_type != class_directory.get_class(class_name).get_scope(method_name).params_table[argument_counter]:
+        if argument_type != class_directory.get_class(class_name).get_scope(method_name).params_table[argument_index]:
           error("Argument type is incorrect in function call %s" % method_name)
 
-        quadruple_PARAMETER = ('PARAMETER', argument, argument_type, argument_counter)
+        quadruple_PARAMETER = ('PARAMETER', argument, argument_type, argument_index)
         l_quadruples.append(quadruple_PARAMETER)
-        argument_counter +=1
+        argument_index +=1
+
+      # Remove function call and its argument counter from stack
+      s_function_call_argument_counters.pop()
+      s_dimensions.pop()
 
       quadruple_GOSUB = ('GOSUB', method_name, class_name, None)
       l_quadruples.append(quadruple_GOSUB)
+
 
 
 def p_posible_exp(p):
@@ -883,19 +896,21 @@ def p_posible_exp(p):
        
 def p_reset_argument_counter(p):
   'reset_argument_counter :'
-  global argument_counter
-  argument_counter = 0
+  s_function_call_argument_counters.append(0)
 
 def p_append_argument(p):
   'append_argument :'
+  
   argument = s_operands.pop()
   argument_type = s_types.pop()
 
+  # Add argument in stack
   s_function_call_arguments.append(argument)
   s_function_call_argument_types.append(argument_type)
 
-  global argument_counter
-  argument_counter+=1
+  # Add argument counter in stack
+  argument_counter = s_function_call_argument_counters.pop() 
+  s_function_call_argument_counters.append(argument_counter + 1)
 
 def p_lectura(p):
   'lectura : READ variable PUNTO_COMA'
@@ -1319,6 +1334,7 @@ def p_factor(p):
 def p_aux_ID(p):
   'aux_ID : ID'
   s_dimensions.append(('id', p[1]))
+  print("aux_ID ->",p[1])
 
 def p_factor_02(p):
   '''factor_02 : CORCHETE_I parenthesis_left_append exp array_helper
@@ -1448,6 +1464,10 @@ def p_factor_02(p):
   elif(len(p) == 7 and p[1] != '['): # LLamada a funcion non-void
     func_name = s_dimensions[-1][1]
 
+    # Get argument counter from current function call
+    argument_counter = s_function_call_argument_counters[-1]
+    #print("func_name:",func_name, argument_counter)
+
     if not function_directory.scope_exists(func_name):
       error("Function %s not declared" % func_name)
 
@@ -1458,6 +1478,7 @@ def p_factor_02(p):
     else:
       quadruple_ERA = ('ERA', func_name, None, None)
       l_quadruples.append(quadruple_ERA)
+      # print(quadruple_ERA)
 
       argument_index = 0
       # Create PARAMETER quadruple for each argument
@@ -1475,8 +1496,13 @@ def p_factor_02(p):
           l_quadruples.append(quadruple_PARAMETER)
           argument_index +=1
 
+      # Remove current function call and its argument counter
+      s_dimensions.pop()
+      s_function_call_argument_counters.pop()
+      
       quadruple_GOSUB = ('GOSUB', func_name, None, None)
       l_quadruples.append(quadruple_GOSUB)
+      print("GOSUB", func_name )
 
       # Obtain variable information of the function´s global variable
       variable = variable_validation(func_name, 0)
@@ -1487,11 +1513,15 @@ def p_factor_02(p):
       # Assign the return value of the function into a temporal
       guadalupan_patch(variable)
 
+      
+
   # PUNTO ID PARENTESIS_I reset_argument_counter posible_exp PARENTESIS_D
   elif len(p) == 7: # non-void method call
     # class_name = s_dimensions.pop()[0]
     class_name = s_dimensions[-1][0]
     method_name = p[3]
+
+    argument_counter = s_function_call_argument_counters[-1]
 
     if not class_directory.scope_exists(class_name):
       error("Class %s not declared" % class_name)   
@@ -1510,7 +1540,7 @@ def p_factor_02(p):
       argument_index = 0
       # Create PARAMETER quadruple for each argument
       while(len(s_function_call_arguments) > 0):
-        # Remove the argument in order
+        # Remove the argument in ordr
         argument = s_function_call_arguments.popleft()
         argument_type = s_function_call_argument_types.popleft()
 
@@ -1523,9 +1553,13 @@ def p_factor_02(p):
           l_quadruples.append(quadruple_PARAMETER)
           argument_index +=1
 
+      # Remove function call and its argument counter from stack
+      s_function_call_argument_counters.pop()
+      s_dimensions.pop()
+
       quadruple_GOSUB = ('GOSUB', method_name, class_name, None)
       l_quadruples.append(quadruple_GOSUB)
-
+      
       #Obtain variable information of the method's global variable
       variable = variable_validation(method_name, 0)
 

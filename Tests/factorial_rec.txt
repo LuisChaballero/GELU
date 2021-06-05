@@ -1,0 +1,26 @@
+# Program to recursively calculate the factorial of a number
+program factorial;
+
+var int num;
+
+func int patito(int i) {
+  return i*3;
+}
+
+func int pelos(int i) {
+  return patito(i * 2);
+}
+
+func int factorial(int n) {
+    if (n == 0) {
+        return 1;
+    } 
+    return (n * factorial(n-1));}
+
+main() {
+   print("Enter a number to calculate its factorial: ");
+   read num;
+   #print(num, "! = ", factorial(num));
+
+   print("factorial(pelos(1) * 2) = ", factorial(pelos(1) * 2 ));
+}

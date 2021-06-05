@@ -1,0 +1,51 @@
+# Program to find an element in a matrix
+program factorial;
+
+var int mat[5,10], rows, cols, num;
+
+func int find_in_mat(int n) {
+  var int i, j;
+    
+  for i = 0 until i == rows {
+    for j = 0 until j == cols {
+      if (mat[i,j] == n) {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+func void mat_init(int start, int jump) {
+  var int i, j, val;
+
+  val = start;
+
+  for i = 0 until i == rows {
+    for j = 0 until j == cols {
+      mat[i,j] = val;
+      val = val + jump;
+    }
+  }
+}
+
+main() {
+
+  rows = 5;
+  cols = 10;
+
+  mat_init(0, 1);
+
+  print("Enter a number to find in mat: ");
+  read num;
+
+  if (find_in_mat(num) == 1) {
+    print("");
+    print("✅ Number ",num, " was found in mat");
+  } else {
+    print("");
+    print("🚫 Number ",num, " was NOT found in mat");
+  }
+
+  print("");
+}
