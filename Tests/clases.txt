@@ -1,0 +1,46 @@
+program n;
+
+class Persona {
+  var int edad;
+};
+
+class Perro {
+  var int edad;
+  var char c;
+  var float peso;
+};
+
+var Perro perro;
+var Persona persona;
+var int x, y;
+var float f;
+var char c;
+
+func int calculo2(int j) {
+  return j * 2;
+}
+
+func int calculo(int i){
+  return i + calculo2(persona.edad);
+}
+
+main() {
+
+  x = 2;
+  
+  persona.edad = 5;
+
+  for x = 0 until x == 10 {
+    persona.edad = x;
+    print(calculo(persona.edad));
+  }
+  
+
+  #perro.edad = x;
+  #perro.c = c;
+  #perro.peso = f;
+  #
+  #print(perro.edad);
+  #print(perro.c);
+  #print(perro.peso);
+}

@@ -1,22 +1,46 @@
 
 from Classes.FunctionDirectory import FunctionDirectory
+from Helpers.Utilities import error
 # from FunctionDirectory import FunctionDirectory  # Import Table class
 
 class ClassDirectory:
   def __init__(self):
     self.__dir = {} # class_name : FunctionDirectory()
 
+  # Gets the functionDirectory by class number
+  def find_by_number(self, class_number):
+    for c in self.__dir.values():
+      if c.get_class_number() == class_number:
+        return c
+    return None
+
+  # 
+  def get_attribute_from_class_number(self, class_number, attribute_id):
+    functionDir = self.find_by_number(class_number)
+    if functionDir == None:
+      error("Class with class number %s does not exist" % class_number)
+
+    variable = functionDir.get_scope('class_globals').search(attribute_id)
+    if not variable:
+      error("Attribute %s does not exist on class number %s" % (attribute_id, class_number))
+    
+    return variable
+
   # Add a class to the ClassDirectory
-  def add_class(self, class_name):
+  def add_class(self, class_name, class_number):
     if self.scope_exists(class_name): # Class already exists
       return False
     else:
-      self.__dir[class_name] = FunctionDirectory()
+      self.__dir[class_name] = FunctionDirectory(class_number)
       return self.__dir[class_name]
 
   # Check if a class or attributes_Table exists
   def scope_exists(self, scope):
     return self.__dir.get(scope, False)
+
+  # Method to get the number of classes in class directory
+  def count(self):
+    return len(self.__dir)
 
   # Add an attributes Table to a class
   def add_attributes_Table(self, class_name, scope, data_type):

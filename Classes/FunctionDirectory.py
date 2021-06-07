@@ -2,8 +2,13 @@ from Classes.Scope import Scope
 # from Scope import Scope
 
 class FunctionDirectory:
-  def __init__(self):
+  def __init__(self, class_number=None):
     self.__dir = {} # function_name : Scope()
+    self.__class_number = class_number
+
+  def get_class_number(self):
+    """Gets the number of class declared"""
+    return self.__class_number
 
   def scope_exists(self, scope):
     """Checks if scope exists

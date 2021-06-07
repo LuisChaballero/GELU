@@ -1,4 +1,4 @@
-from Helpers.Utilities import ranges, types, error, GLOBALS_BASE_ADDRESS, LOCALS_BASE_ADDRESS, CONSTANTS_BASE_ADDRESS, OBJECTS_BASE_ADDRESS
+from Helpers.Utilities import ranges, types, error, GLOBALS_BASE_ADDRESS, LOCALS_BASE_ADDRESS, CONSTANTS_BASE_ADDRESS
 
 class MemoryHandler():
   def __init__(self):
@@ -43,7 +43,12 @@ class MemoryHandler():
                                   2: CONSTANTS_BASE_ADDRESS[2],  # Char
                                   4: CONSTANTS_BASE_ADDRESS[4]   # String
                                 }
-
+    
+    self.__class_instance_counters = {
+      'global': {},
+      'local': {}
+    }
+  
   # Method to validate an address considering the data_type, scope, item_type, and is_constant
   def is_address_valid(self, virtual_address, data_type, scope, item_type, is_constant=False):
     # Check if address is for a constant
@@ -126,6 +131,15 @@ class MemoryHandler():
     available_address = self.__constants_counters[data_type]
     # Returns address when valid
     return self.is_address_valid(available_address, data_type, None, None, True)
+
+  def next_instance_address(self, scope, instance_count, class_number):
+    if scope == 'global':
+      base_address = GLOBALS_BASE_ADDRESS['instance']
+      available_address = base_address + (class_number * 100) + instance_count
+    elif scope == 'local':
+      base_address = LOCALS_BASE_ADDRESS['instance']
+      available_address = base_address + (class_number * 100) + instance_count
+    return available_address
     
   def new_variable(self, data_type, scope, item_type, size_allocation=1):
     '''Handles variable declaration for 'variable' and 'temporal\''''
@@ -151,6 +165,32 @@ class MemoryHandler():
   def constant_exists(self, data_type, constant_value):
     return self.__constants_directory[data_type].get(constant_value, False)
 
+  # Method to get the count of classed in class instance counter by scope
+  def number_of_classes(self, scope):
+    return len(self.__class_instance_counters[scope])
+
+  # Method to add instance to class instance counter
+  def add_instance(self, class_name, scope):
+    self.__class_instance_counters[scope][class_name] += 1
+
+  
+  def new_instance(self, class_name, scope, class_number):
+    '''Handle global and local instance declaration'''
+    # Validate number of instances 
+
+    if not self.__class_instance_counters[scope].get(class_name, False):
+      self.__class_instance_counters[scope][class_name] = 0
+
+    instance_count = self.__class_instance_counters[scope][class_name]
+    if instance_count == 100:
+        return None
+
+    instance_address = self.next_instance_address(scope, instance_count, class_number)
+
+    self.add_instance(class_name, scope) # Add 1 to count of class instances
+
+    return instance_address
+
   # Method to reset local addresses counters
   def reset_locals_counters(self):
     self.__local_variable_counters = {
@@ -166,6 +206,40 @@ class MemoryHandler():
       3: LOCALS_BASE_ADDRESS['temporal'][3],
       5: LOCALS_BASE_ADDRESS['temporal'][5]
     }
+    self.__class_instance_counters['local'] = {}
+
+  # Method to reset all memory handler's global and temporal counters
+  def reset(self):
+    self.__global_variable_counters = {
+      0: GLOBALS_BASE_ADDRESS['variable'][0], 
+      1: GLOBALS_BASE_ADDRESS['variable'][1], 
+      2: GLOBALS_BASE_ADDRESS['variable'][2]
+    }
+    self.__global_temporal_counters = {
+      0: GLOBALS_BASE_ADDRESS['temporal'][0], 
+      1: GLOBALS_BASE_ADDRESS['temporal'][1], 
+      2: GLOBALS_BASE_ADDRESS['temporal'][2],
+      3: GLOBALS_BASE_ADDRESS['temporal'][3],
+      5: GLOBALS_BASE_ADDRESS['temporal'][5]
+    }
+
+    self.__local_variable_counters = {
+      0: LOCALS_BASE_ADDRESS['variable'][0],
+      1: LOCALS_BASE_ADDRESS['variable'][1],
+      2: LOCALS_BASE_ADDRESS['variable'][2]
+    }
+    self.__local_temporal_counters = {
+      0: LOCALS_BASE_ADDRESS['temporal'][0],
+      1: LOCALS_BASE_ADDRESS['temporal'][1],
+      2: LOCALS_BASE_ADDRESS['temporal'][2],
+      3: LOCALS_BASE_ADDRESS['temporal'][3],
+      5: LOCALS_BASE_ADDRESS['temporal'][5]
+    }
+
+    self.__class_instance_counters = {
+      'global': {},
+      'local': {}
+    }
 
   # Method to get the constants directory
   def get_constants_directory(self):
@@ -177,10 +251,8 @@ def get_scope_from_address(virtual_address):
     return 'global'
   elif virtual_address in range(LOCALS_BASE_ADDRESS['variable'][0], CONSTANTS_BASE_ADDRESS[0]):
     return 'local'
-  elif virtual_address in range(CONSTANTS_BASE_ADDRESS[0], OBJECTS_BASE_ADDRESS):
+  elif virtual_address in range(CONSTANTS_BASE_ADDRESS[0], CONSTANTS_BASE_ADDRESS[4] + ranges['constant']):
     return 'constant'
-  elif virtual_address in range(OBJECTS_BASE_ADDRESS, OBJECTS_BASE_ADDRESS+ranges['instance']):
-    return 'instance'
   else:
     error("Invalid address")
 
@@ -207,8 +279,18 @@ def get_type_from_address(virtual_address):
   elif (virtual_address in range(GLOBALS_BASE_ADDRESS['temporal'][3], GLOBALS_BASE_ADDRESS['temporal'][5]) or 
         virtual_address in range(LOCALS_BASE_ADDRESS['temporal'][3], LOCALS_BASE_ADDRESS['temporal'][5])):
     return 3
-  elif virtual_address in range(CONSTANTS_BASE_ADDRESS[4], OBJECTS_BASE_ADDRESS):
+  elif virtual_address in range(CONSTANTS_BASE_ADDRESS[4], CONSTANTS_BASE_ADDRESS[4] + ranges['constant']):
     return 4
   elif (virtual_address in range(GLOBALS_BASE_ADDRESS['temporal'][5], LOCALS_BASE_ADDRESS['variable'][0]) or
         virtual_address in range(LOCALS_BASE_ADDRESS['temporal'][5], CONSTANTS_BASE_ADDRESS[0])):
     return 5
+  elif (virtual_address in range(GLOBALS_BASE_ADDRESS['instance'], LOCALS_BASE_ADDRESS['variable'][0]) or
+        virtual_address in range(LOCALS_BASE_ADDRESS['instance'], CONSTANTS_BASE_ADDRESS[0])):
+    return 6
+
+def get_class_number_from_address(instance_virtual_address):
+  """Gets the class number from an instance's virtual adrress"""
+  if instance_virtual_address in range(GLOBALS_BASE_ADDRESS['instance'], LOCALS_BASE_ADDRESS['variable'][0]):
+    return int((instance_virtual_address - GLOBALS_BASE_ADDRESS['instance']) / 100)
+  elif instance_virtual_address in range(LOCALS_BASE_ADDRESS['instance'], CONSTANTS_BASE_ADDRESS[0]):
+    return int((instance_virtual_address - LOCALS_BASE_ADDRESS['instance']) / 100)

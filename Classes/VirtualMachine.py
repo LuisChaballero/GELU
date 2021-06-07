@@ -1,6 +1,6 @@
 # VirtualMachine class ...
 import Helpers.SemanticCube as sc
-from Helpers.Utilities import ranges, GLOBALS_BASE_ADDRESS, LOCALS_BASE_ADDRESS, CONSTANTS_BASE_ADDRESS, OBJECTS_BASE_ADDRESS, error, types
+from Helpers.Utilities import ranges, GLOBALS_BASE_ADDRESS, LOCALS_BASE_ADDRESS, CONSTANTS_BASE_ADDRESS, error, types
 import Classes.MemoryHandler as mh
 from Classes.Memory import Memory
 from Classes.FunctionDirectory import FunctionDirectory
@@ -71,14 +71,21 @@ class VirtualMachine:
     """Executes a binary operation"""
     operator, l_address, r_operand, res_address = quadruple
     
-    l_type = mh.get_type_from_address(l_address) # Check for operands data types infered from address
-    
-    # Get operand_address values
-    l_value = self.get_value(l_address)
+    if type(l_address) == list:
+      l_instance_memory = self.get_value(l_address[0])
+      l_value = l_instance_memory.value(l_address[1])
+      l_type = mh.get_type_from_address(l_address[1])
+    else:
+      l_type = mh.get_type_from_address(l_address) # Check for operands data types infered from address
+      l_value = self.get_value(l_address)
 
     if type(r_operand) == tuple: # We want the literal
       r_value = r_operand[0]
       r_type = 0
+    elif type(r_operand) == list:
+      r_instance_memory = self.get_value(r_operand[0])
+      r_value = r_instance_memory.value(r_operand[1])
+      r_type = mh.get_type_from_address(r_operand[1])
     else: # We want the value
       r_value = self.get_value(r_operand)
       r_type = mh.get_type_from_address(r_operand)
@@ -124,12 +131,28 @@ class VirtualMachine:
 
   def assign(self, assignTo, value):
     '''Assigns vale to the specified address depending on the memory context'''
-    scope = mh.get_scope_from_address(assignTo)
-    if scope == 'global':
-      self.__main.push(assignTo, value)
+    if type(assignTo) == list: # is a class instnace
+      r_memory = self.get_value(assignTo[0])
+      r_assignTo = assignTo[1]
+      r_assignTo_type = mh.get_type_from_address(assignTo[1])
+
+      if r_assignTo_type == 5: # Check if it is a pointer
+        r_assignTo = r_memory.value(r_assignTo)
+
+      r_memory.push(r_assignTo, value)
+
     else:
-      self.__s_execution[-1].push(assignTo, value)
-    # print("Execute: %s = %s" % (assignTo, value))
+      r_assignTo = assignTo
+      r_assignTo_type = mh.get_type_from_address(r_assignTo)
+
+      if r_assignTo_type == 5: # Check if it is a pointer
+        r_assignTo = self.get_value(r_assignTo)
+
+      scope = mh.get_scope_from_address(r_assignTo)
+      if scope == 'global':
+        self.__main.push(assignTo, value)
+      else:
+        self.__s_execution[-1].push(assignTo, value)
 
   def cast(self, value, v_type):
     '''Casts a value to a specific data type'''
@@ -137,10 +160,14 @@ class VirtualMachine:
       return int(value)
     elif v_type == 1:
       return float(value)
-    elif v_type in [2,4]:
-      return str(value[1:-1]) 
+    elif v_type == 2:
+      if len(value) > 1:
+        error("Expected char type")
+      return str(value) 
     elif v_type == 3:
       return bool(value)
+    elif v_type == 4:
+      return str(value[1:-1]) 
     else:
       error("Invalid casting to %s" % v_type)
 
@@ -168,22 +195,34 @@ class VirtualMachine:
       elif operator == 'GOTOF':
         # print("execute GOTOF: ", quadruple[1], quadruple[3])
         condition = self.get_value(quadruple[1])
-        # print("condition",condition)
         if not condition:
           self.__quadruple_iterator = quadruple[3]
         else:
           self.proceed()
 
       elif operator == 'ERA':
-        self.__s_execution.append(Memory())
+        # ERA for a function 
+        if quadruple[2] == None: # function or method
+          self.__s_execution.append(Memory())
+
+        else: # ERA for a class instance
+          class_name = quadruple[1]
+          class_instance_address = quadruple[2]
+
+          scope = mh.get_scope_from_address(class_instance_address)
+
+          if scope == 'global':
+            self.__main.push(class_instance_address, Memory())
+          elif scope == 'local':
+            self.__s_execution[-1].push(class_instance_address, Memory())
         
         self.proceed()
         # print("\nExecute ERA")
 
       elif operator == 'PARAMETER':
+        '''
         # print('START PARAMETER')
         argument_address = quadruple[1]
-        argument_index = quadruple[3]
         argument_type = quadruple[2]
 
         # Function/method call was made inside another function/method
@@ -204,6 +243,53 @@ class VirtualMachine:
 
         current_context.push(local_address, argument_value)
         # print("Execute PARAMETER: address: %s value: %s" % (argument_address, argument_value))
+        self.proceed()
+        '''
+        # print('START PARAMETER')
+        argument_address = quadruple[1]
+        argument_type = quadruple[2]
+
+        # Function/method call was made inside another function/method
+        if len(self.__s_execution) > 1:
+            
+          # Take out current execution so you can get argument value from previous execution
+          current_context = self.__s_execution.pop()
+
+          if type(argument_address) == list: # Is a class instance
+            argument_memory = self.get_value(argument_address[0])
+            argument_value = argument_memory.value(argument_address[1])
+            
+            if argument_type == 5:
+              argument_value = argument_memory.value(argument_value)
+          
+          else:
+            argument_value = self.get_value(argument_address)
+
+            if argument_type == 5:
+              argument_value = self.get_value(argument_value)
+
+          self.__s_execution.append(current_context)
+
+        else: # Function call was from main
+          
+          current_context = self.__s_execution[-1]
+
+          if type(argument_address) == list: # Is a class instance
+            argument_memory = self.get_value(argument_address[0])
+            argument_value = argument_memory.value(argument_address[1])
+            
+            if argument_type == 5:
+              argument_value = argument_memory.value(argument_value)
+          
+          else:
+            argument_value = self.get_value(argument_address)
+
+            if argument_type == 5:
+              argument_value = self.get_value(argument_value)
+        
+        # Create variable on new memory to save the argument value from call
+        local_address = current_context.get_handler().new_variable(argument_type, 'local', 'variable')
+        current_context.push(local_address, argument_value)
         self.proceed()
 
       elif operator == 'GOSUB':
@@ -226,12 +312,27 @@ class VirtualMachine:
         function_return_address = quadruple[1]
         function_var_address = quadruple[3]
 
-        function_return = self.get_value(function_return_address)
-        
-        if self.class_context == None:
-          self.__main.push(function_var_address, function_return)
+        # if type(function_return_address) == list: # Is an instance of a class
+        #   instance_memory = self.get_value(function_return_address[0])
+        #   function_return = instance_memory.get_value(function_return_address[1])
+        # else:
+        #   function_return = self.get_value(function_return_address)
+
+        if type(function_return_address) == list: # Check if it is a class instance
+          l_memory = self.get_value(function_return_address[0])
+          l_value = l_memory.value(function_return_address[1])
+          l_type = mh.get_type_from_address(function_return_address[1])
+          
+          if l_type == 5: # Check if it is a pointer
+            l_value = l_memory.value(l_value)
         else:
-          self.class_context.push(function_var_address, function_return)
+          l_value = self.get_value(function_return_address)
+          l_type = mh.get_type_from_address(function_return_address)
+
+          if l_type == 5: # Check if it is a pointer
+            l_value = self.get_value(l_value)
+        
+        self.assign(function_var_address, l_value)
         
         self.proceed()
                   
@@ -248,30 +349,52 @@ class VirtualMachine:
       elif operator == 'PRINT':
         # print("execute PRINT")
         res = ""
-        value_type = mh.get_type_from_address(quadruple[3])
 
-        value = self.get_value(quadruple[3])
+        value_address = quadruple[3]
 
-        if value_type == 5:
-          value = self.get_value(value)
+        if type(value_address) == list: # Is an instance of a class
+          value_memory = self.get_value(value_address[0])
+          value_type = mh.get_type_from_address(value_address[1])
+          value = value_memory.value(value_address[1])
 
+          if value_type == 5:
+            value = value_memory.value(value)
+
+        else:
+          value_type = mh.get_type_from_address(value_address)
+          value = self.get_value(value_address)
+
+          if value_type == 5:
+            value = self.get_value(value)
+
+        # if next_value_type == 2:
+        #   res = res + next_value
+        # else:
         res += str(self.cast(value, value_type))
 
         while True:
           next_process = self.next_process()
 
           if next_process[0] == 'PRINT2':
-            next_type = mh.get_type_from_address(next_process[3])
-            next_value = self.get_value(next_process[3])
-
-            if next_type == 5:
-              next_value = self.get_value(next_value)
             
-            if next_type == 2:
-              res = res + next_value
-            else:
-              res = res + str(self.cast(next_value, next_type))
+            next_value_address = next_process[3]
 
+            if type(next_value_address) == list: # Is an instance of a class
+              next_value_memory = self.get_value(next_value_address[0])
+              next_value_type = mh.get_type_from_address(next_value_address[1])
+              next_value = next_value_memory.value(next_value_address[1])
+
+              if next_value_type == 5:
+                next_value = next_value_memory.value(next_value)
+
+            else:
+              next_value_type = mh.get_type_from_address(next_value_address)
+              next_value = self.get_value(next_value_address)
+
+              if next_value_type == 5:
+                next_value = self.get_value(next_value)
+
+            res += str(self.cast(next_value, next_value_type))
             self.proceed()
           else:
             break
@@ -282,32 +405,28 @@ class VirtualMachine:
       elif operator == 'READ':
         # Get information from quadruple
         assignTo = quadruple[3]
-        data_type = mh.get_type_from_address(assignTo)
+
+        if type(assignTo) == list: # is a class instance
+          value_type = mh.get_type_from_address(assignTo[1])
+        else:
+          value_type = mh.get_type_from_address(assignTo)
+
+        # Save user input in the address of the value of the pointer (array or matrix)
+        if value_type == 5:
+          assignTo = self.get_value(assignTo)
+          value_type = mh.get_type_from_address(assignTo)
 
         # Ask for user input
         read_input = input()
-
-        # Save user input in the address of the value of the pointer (array or matrix)
-        if data_type == 5:
-          assignTo = self.get_value(assignTo)
-          data_type = mh.get_type_from_address(assignTo)
-
-        size = len(read_input)
+        
         # Catch possible errors of different value type
         try:
-          # Cast char to string
-          if data_type == 2 and size == 1:
-            read_input = str(read_input)
-          # Cast to other types
-          elif data_type != 2:
-            read_input = self.cast(read_input, data_type)
-          else:
-            error("Expected a %s type value on read" % types[data_type])
+          read_input = self.cast(read_input, value_type)
         except (ValueError):
-          error("Expected a %s type value on read." % types[data_type])
+          error("Expected a %s type value on read." % types[value_type])
 
         # Put value in memory
-        self.assign(assignTo, read_input)
+        self.assign(quadruple[3], read_input)
         self.proceed()
 
       elif operator in ['+', '-', '*', '/', '&', '|', '<', '>', '<>', '==']:
@@ -318,28 +437,36 @@ class VirtualMachine:
         self.proceed()
       
       elif operator == '=':
-        l_type = mh.get_type_from_address(quadruple[1])
-        l_value = self.get_value(quadruple[1])
-        # print(l_value)
+        l_address = quadruple[1]
+        r_address = quadruple[3]
 
-        if l_type == 5: # Check if it is a pointer
-          l_value = self.get_value(l_value)
+        if type(l_address) == list: # Check if it is a class instance
+          l_memory = self.get_value(l_address[0])
+          l_value = l_memory.value(l_address[1])
+          l_type = mh.get_type_from_address(l_address[1])
+          
+          if l_type == 5: # Check if it is a pointer
+            l_value = l_memory.value(l_value)
+            
+        else:
+          l_value = self.get_value(l_address)
+          l_type = mh.get_type_from_address(l_address)
 
-        assignTo_type = mh.get_type_from_address(quadruple[3])
-        assignTo = quadruple[3]
-        if assignTo_type == 5: # Check if it is a pointer
-          assignTo = self.get_value(assignTo)
-        
-        if l_value == None:
-          error("Trying to assign empty address %s" % l_value)
+          if l_type == 5: # Check if it is a pointer
+            l_value = self.get_value(l_value)
 
-        self.assign(assignTo, l_value)
+        self.assign(r_address, l_value)
         self.proceed()
 
       elif operator == 'VER':
         # Verify correct indexation for array and matrix
         index_address = quadruple[1]
-        index_value = self.get_value(index_address)
+        
+        if type(index_address) == list: # Is an instance of a class
+          index_memory = self.get_value(index_address[0])
+          index_value = index_memory.get_value(index_address[1])
+        else:
+          index_value = self.get_value(index_address)
 
         upper_limit_address = quadruple[3]
         upper_limit = self.get_value(upper_limit_address)
